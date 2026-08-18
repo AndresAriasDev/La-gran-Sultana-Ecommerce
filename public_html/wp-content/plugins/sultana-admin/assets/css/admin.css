@@ -108,7 +108,11 @@ input:focus-visible {
 }
 
 button,
-.sultana-admin-login button {
+.sultana-admin-login button,
+.sultana-admin-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 44px;
     border: 0;
     border-radius: 6px;
@@ -118,10 +122,12 @@ button,
     font: inherit;
     font-weight: 800;
     padding: 11px 16px;
+    text-decoration: none;
 }
 
 button:hover,
-.sultana-admin-login button:hover {
+.sultana-admin-login button:hover,
+.sultana-admin-secondary-action:hover {
     background: var(--sultana-admin-primary-dark);
 }
 
@@ -315,7 +321,27 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     opacity: 0.62;
 }
 
+.sultana-admin-muted-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 6px;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: 800;
+    padding: 10px 16px;
+    text-decoration: none;
+}
+
+.sultana-admin-muted-action:hover {
+    border-color: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-dark);
+}
+
 .sultana-admin-search,
+.sultana-admin-notice,
 .sultana-admin-product-table-wrap,
 .sultana-admin-empty,
 .sultana-admin-pagination {
@@ -329,6 +355,14 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     display: grid;
     gap: 10px;
     padding: 18px;
+}
+
+.sultana-admin-notice {
+    border-color: #b7e4c7;
+    background: #f0fff4;
+    color: #22543d;
+    font-weight: 800;
+    padding: 12px 14px;
 }
 
 .sultana-admin-search label {
@@ -474,6 +508,231 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     opacity: 0.58;
 }
 
+.sultana-admin-error-list {
+    border: 1px solid #f0b8b8;
+    border-radius: 8px;
+    background: #fff1f1;
+    color: #8a1f1f;
+    padding: 14px 16px;
+}
+
+.sultana-admin-error-list ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+
+.sultana-admin-product-form-screen,
+.sultana-admin-product-form {
+    display: grid;
+    gap: 18px;
+}
+
+.sultana-admin-form-section {
+    display: grid;
+    gap: 12px;
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    box-shadow: var(--sultana-admin-shadow);
+    padding: 20px;
+}
+
+.sultana-admin-form-section h2 {
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.25;
+}
+
+.sultana-admin-form-section label,
+.sultana-admin-category-list legend {
+    font-weight: 800;
+}
+
+.sultana-admin-form-section input[type="text"],
+.sultana-admin-form-section input[type="number"],
+.sultana-admin-form-section input[type="file"],
+.sultana-admin-form-section textarea,
+.sultana-admin-form-section select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #b9c2cf;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.sultana-admin-form-section textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.sultana-admin-form-section input[type="file"] {
+    height: auto;
+    background: var(--sultana-admin-surface-soft);
+}
+
+.sultana-admin-field-help {
+    margin-top: -4px;
+    color: var(--sultana-admin-muted);
+    font-size: 14px;
+}
+
+.sultana-admin-product-images {
+    display: grid;
+    gap: 12px;
+}
+
+.sultana-admin-image-upload-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    min-height: 44px;
+    border-radius: 6px;
+    background: var(--sultana-admin-primary);
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 11px 16px;
+}
+
+.sultana-admin-image-upload-button:hover {
+    background: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-image-upload-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+.sultana-admin-image-upload-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.sultana-admin-image-upload-input:focus-visible + .sultana-admin-image-status,
+.sultana-admin-image-upload-button:focus-visible {
+    outline: 3px solid var(--sultana-admin-focus);
+    outline-offset: 2px;
+}
+
+.sultana-admin-image-status {
+    min-height: 22px;
+    color: var(--sultana-admin-muted);
+    font-weight: 700;
+}
+
+.sultana-admin-image-status:empty {
+    display: none;
+}
+
+.sultana-admin-image-status.is-error {
+    color: #8a1f1f;
+}
+
+.sultana-admin-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 12px;
+}
+
+.sultana-admin-image-item {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    background: var(--sultana-admin-surface-soft);
+    padding: 8px;
+}
+
+.sultana-admin-image-item.is-dragging {
+    opacity: 0.55;
+}
+
+.sultana-admin-image-item img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: var(--sultana-admin-surface);
+    object-fit: cover;
+}
+
+.sultana-admin-image-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    border-radius: 999px;
+    background: rgba(31, 41, 51, 0.86);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 900;
+    padding: 4px 8px;
+}
+
+.sultana-admin-image-controls {
+    display: grid;
+    grid-template-columns: 40px 40px minmax(0, 1fr);
+    gap: 6px;
+}
+
+.sultana-admin-image-controls button {
+    min-height: 38px;
+    padding: 7px 9px;
+    font-size: 13px;
+}
+
+.sultana-admin-image-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.sultana-admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.sultana-admin-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+}
+
+.sultana-admin-category-list {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+
+.sultana-admin-category-list legend {
+    margin-bottom: 4px;
+    padding: 0;
+}
+
+.sultana-admin-category-list label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    font-weight: 600;
+}
+
+.sultana-admin-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding-bottom: 8px;
+}
+
 .sultana-admin-page--message {
     width: min(100% - 32px, 720px);
     margin: 48px auto;
@@ -552,6 +811,11 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     }
 
     .sultana-admin-page-header button {
+        width: 100%;
+    }
+
+    .sultana-admin-page-header .sultana-admin-secondary-action,
+    .sultana-admin-page-header .sultana-admin-muted-action {
         width: 100%;
     }
 
@@ -658,6 +922,36 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-pagination span {
         min-width: 78px;
     }
+
+    .sultana-admin-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sultana-admin-form-section {
+        padding: 16px;
+    }
+
+    .sultana-admin-form-actions {
+        flex-direction: column-reverse;
+        padding-bottom: 12px;
+    }
+
+    .sultana-admin-form-actions .sultana-admin-muted-action,
+    .sultana-admin-form-actions button {
+        width: 100%;
+    }
+
+    .sultana-admin-image-upload-button {
+        width: 100%;
+    }
+
+    .sultana-admin-image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+    }
+
+    .sultana-admin-image-controls button {
+        min-height: 42px;
+    }
 }
 
 @media (max-width: 380px) {
@@ -682,5 +976,9 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-card__icon {
         width: 42px;
         height: 42px;
+    }
+
+    .sultana-admin-image-grid {
+        grid-template-columns: 1fr;
     }
 }

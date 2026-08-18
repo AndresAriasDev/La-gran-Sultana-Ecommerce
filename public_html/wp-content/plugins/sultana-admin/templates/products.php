@@ -26,6 +26,7 @@ $page        = absint( $screen_data['page'] ?? 1 );
 $total       = absint( $screen_data['total'] ?? 0 );
 $total_pages = absint( $screen_data['total_pages'] ?? 1 );
 $pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
+$notice      = $screen_data['notice'] ?? '';
 
 ?>
 <section class="sultana-admin-products" aria-labelledby="sultana-admin-products-title">
@@ -34,10 +35,16 @@ $pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
             <p class="sultana-admin-kicker"><?php esc_html_e( 'Catálogo', 'sultana-admin' ); ?></p>
             <h1 id="sultana-admin-products-title"><?php esc_html_e( 'Productos', 'sultana-admin' ); ?></h1>
         </div>
-        <button class="sultana-admin-secondary-action" type="button" disabled aria-disabled="true">
+        <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
             <?php esc_html_e( 'Nuevo producto', 'sultana-admin' ); ?>
-        </button>
+        </a>
     </div>
+
+    <?php if ( '' !== $notice ) : ?>
+        <div class="sultana-admin-notice" role="status">
+            <?php echo esc_html( $notice ); ?>
+        </div>
+    <?php endif; ?>
 
     <form class="sultana-admin-search" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" role="search">
         <label for="sultana-admin-product-search"><?php esc_html_e( 'Buscar productos', 'sultana-admin' ); ?></label>

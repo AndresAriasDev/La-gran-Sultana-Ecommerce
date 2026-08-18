@@ -2,6 +2,8 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\Admin\Products\ProductController;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -10,10 +12,13 @@ class Bootstrap
 {
     public static function init(): void
     {
+        add_action( 'init', [ Capabilities::class, 'ensure_role_capabilities' ], 5 );
         add_action( 'init', [ Router::class, 'register_rewrite_rules' ] );
         add_filter( 'query_vars', [ Router::class, 'register_query_vars' ] );
         add_action( 'template_redirect', [ Router::class, 'handle_request' ], 0 );
         add_action( 'admin_init', [ self::class, 'redirect_store_managers_from_wp_admin' ] );
+        add_action( 'wp_ajax_' . ProductController::IMAGE_UPLOAD_ACTION, [ ProductController::class, 'ajax_upload_product_image' ] );
+        add_action( 'wp_ajax_' . ProductController::IMAGE_DELETE_ACTION, [ ProductController::class, 'ajax_delete_product_image' ] );
     }
 
     public static function dependencies_status(): array

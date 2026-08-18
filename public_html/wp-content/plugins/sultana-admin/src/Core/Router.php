@@ -17,6 +17,7 @@ class Router
         add_rewrite_rule( '^gestion/?$', 'index.php?' . self::QUERY_VAR . '=dashboard', 'top' );
         add_rewrite_rule( '^gestion/login/?$', 'index.php?' . self::QUERY_VAR . '=login', 'top' );
         add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
+        add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
     }
@@ -32,7 +33,7 @@ class Router
     {
         $route = self::current_route();
 
-        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'orders' ], true ) ) {
+        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'orders' ], true ) ) {
             return;
         }
 
@@ -56,6 +57,11 @@ class Router
         }
 
         if ( ! current_user_can( Capabilities::ACCESS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( 'product_new' === $route && ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -84,6 +90,11 @@ class Router
         return home_url( '/gestion/productos/' );
     }
 
+    public static function new_product_url(): string
+    {
+        return home_url( '/gestion/productos/nuevo/' );
+    }
+
     public static function orders_url(): string
     {
         return home_url( '/gestion/pedidos/' );
@@ -100,14 +111,14 @@ class Router
     {
         status_header( 200 );
         nocache_headers();
-        Assets::enqueue();
+        Assets::enqueue( $route );
 
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
-        $active_route = $route;
+        $active_route = 'product_new' === $route ? 'products' : $route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
-        $screen_data  = 'products' === $route ? ProductController::prepare_list_screen() : [];
+        $screen_data  = self::screen_data( $route );
 
         require SULTANA_ADMIN_PATH . 'templates/layout.php';
     }
@@ -141,6 +152,10 @@ class Router
                 'title'    => __( 'Productos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/products.php',
             ],
+            'product_new' => [
+                'title'    => __( 'Nuevo producto', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/product-new.php',
+            ],
             'orders'    => [
                 'title'    => __( 'Pedidos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/orders.php',
@@ -148,6 +163,19 @@ class Router
         ];
 
         return $screens[ $route ] ?? $screens['dashboard'];
+    }
+
+    private static function screen_data( string $route ): array
+    {
+        if ( 'products' === $route ) {
+            return ProductController::prepare_list_screen();
+        }
+
+        if ( 'product_new' === $route ) {
+            return ProductController::prepare_create_screen();
+        }
+
+        return [];
     }
 
     private static function handle_login_request(): void

@@ -2,6 +2,7 @@
 
 namespace Sultana\Admin\Products;
 
+use Sultana\Admin\Core\Capabilities;
 use Sultana\Admin\Core\Router;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -10,6 +11,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ProductController
 {
+    public const CREATE_NONCE_ACTION = 'sultana_admin_create_simple_product';
+    public const IMAGE_UPLOAD_NONCE_ACTION = 'sultana_admin_product_image_upload';
+    public const IMAGE_UPLOAD_ACTION = 'sultana_admin_upload_product_image';
+    public const IMAGE_DELETE_ACTION = 'sultana_admin_delete_product_image';
+
     public static function prepare_list_screen(): array
     {
         $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
@@ -34,7 +40,99 @@ class ProductController
             'total_pages' => $listing['total_pages'],
             'products'   => $listing['products'],
             'pagination' => self::pagination_links( $listing['page'], $listing['total_pages'], $search ),
+            'notice'     => self::list_notice(),
         ];
+    }
+
+    public static function prepare_create_screen(): array
+    {
+        $service = new ProductService();
+        $form    = $service->default_simple_product_data();
+        $errors  = [];
+
+        if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
+            if ( ! is_user_logged_in() || ! current_user_can( Capabilities::ACCESS_CAPABILITY ) || ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
+                $errors[] = __( 'No tienes permisos para crear productos.', 'sultana-admin' );
+            } elseif ( ! self::verify_create_nonce() ) {
+                $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
+            } else {
+                $form   = self::posted_simple_product_data();
+                $result = $service->create_simple_product( $form );
+
+                if ( $result['success'] ) {
+                    wp_safe_redirect( add_query_arg( 'notice', 'product_created', Router::products_url() ) );
+                    exit;
+                }
+
+                $errors = $result['errors'];
+            }
+        }
+
+        return [
+            'form'            => $form,
+            'errors'          => $errors,
+            'categories'      => $service->get_product_categories(),
+            'brands'          => $service->get_product_brands(),
+            'brand_taxonomy' => $service->get_brand_taxonomy(),
+            'selected_images' => ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
+        ];
+    }
+
+    public static function ajax_upload_product_image(): void
+    {
+        if ( ! self::can_handle_image_ajax() ) {
+            wp_send_json_error(
+                [
+                    'message' => __( 'No tienes permisos para subir imagenes.', 'sultana-admin' ),
+                ],
+                403
+            );
+        }
+
+        $service = new ProductImageService();
+        $result  = $service->upload_temporary_image( 'image' );
+
+        if ( empty( $result['success'] ) ) {
+            wp_send_json_error(
+                [
+                    'message' => $result['error'] ?? __( 'No se pudo subir la imagen.', 'sultana-admin' ),
+                ],
+                400
+            );
+        }
+
+        wp_send_json_success(
+            [
+                'image' => $result['image'],
+            ]
+        );
+    }
+
+    public static function ajax_delete_product_image(): void
+    {
+        if ( ! self::can_handle_image_ajax() ) {
+            wp_send_json_error(
+                [
+                    'message' => __( 'No tienes permisos para eliminar imagenes.', 'sultana-admin' ),
+                ],
+                403
+            );
+        }
+
+        $attachment_id = isset( $_POST['attachment_id'] ) ? absint( wp_unslash( $_POST['attachment_id'] ) ) : 0;
+        $service       = new ProductImageService();
+        $result        = $service->delete_temporary_image( $attachment_id );
+
+        if ( empty( $result['success'] ) ) {
+            wp_send_json_error(
+                [
+                    'message' => $result['error'] ?? __( 'No se pudo eliminar la imagen.', 'sultana-admin' ),
+                ],
+                400
+            );
+        }
+
+        wp_send_json_success();
     }
 
     private static function pagination_links( int $page, int $total_pages, string $search ): array
@@ -53,5 +151,57 @@ class ProductController
                 ? add_query_arg( array_merge( $base_args, [ 'product_page' => $page + 1 ] ), Router::products_url() )
                 : '',
         ];
+    }
+
+    private static function list_notice(): string
+    {
+        $notice = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
+
+        if ( 'product_created' === $notice ) {
+            return __( 'Producto creado correctamente.', 'sultana-admin' );
+        }
+
+        return '';
+    }
+
+    private static function verify_create_nonce(): bool
+    {
+        $nonce = isset( $_POST['sultana_admin_product_nonce'] )
+            ? sanitize_text_field( wp_unslash( $_POST['sultana_admin_product_nonce'] ) )
+            : '';
+
+        return wp_verify_nonce( $nonce, self::CREATE_NONCE_ACTION );
+    }
+
+    private static function posted_simple_product_data(): array
+    {
+        $category_ids = isset( $_POST['category_ids'] ) && is_array( $_POST['category_ids'] )
+            ? array_map( 'absint', wp_unslash( $_POST['category_ids'] ) )
+            : [];
+
+        return [
+            'name'              => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
+            'regular_price'     => isset( $_POST['regular_price'] ) ? wc_clean( wp_unslash( $_POST['regular_price'] ) ) : '',
+            'sale_price'        => isset( $_POST['sale_price'] ) ? wc_clean( wp_unslash( $_POST['sale_price'] ) ) : '',
+            'sku'               => isset( $_POST['sku'] ) ? wc_clean( wp_unslash( $_POST['sku'] ) ) : '',
+            'short_description' => isset( $_POST['short_description'] ) ? wp_kses_post( wp_unslash( $_POST['short_description'] ) ) : '',
+            'category_ids'      => array_values( array_filter( array_unique( $category_ids ) ) ),
+            'brand_id'          => isset( $_POST['brand_id'] ) ? absint( wp_unslash( $_POST['brand_id'] ) ) : 0,
+            'stock_quantity'    => isset( $_POST['stock_quantity'] ) ? wc_clean( wp_unslash( $_POST['stock_quantity'] ) ) : '',
+            'product_image_ids' => isset( $_POST['product_image_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['product_image_ids'] ) ) : '',
+            'status'            => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'draft',
+        ];
+    }
+
+    private static function can_handle_image_ajax(): bool
+    {
+        if ( ! check_ajax_referer( self::IMAGE_UPLOAD_NONCE_ACTION, 'nonce', false ) ) {
+            return false;
+        }
+
+        return is_user_logged_in()
+            && current_user_can( Capabilities::ACCESS_CAPABILITY )
+            && current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY )
+            && current_user_can( Capabilities::UPLOAD_FILES_CAPABILITY );
     }
 }
