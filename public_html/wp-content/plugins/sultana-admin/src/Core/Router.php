@@ -13,6 +13,8 @@ class Router
     public static function register_rewrite_rules(): void
     {
         add_rewrite_rule( '^gestion/?$', 'index.php?' . self::QUERY_VAR . '=dashboard', 'top' );
+        add_rewrite_rule( '^gestion/login/?$', 'index.php?' . self::QUERY_VAR . '=login', 'top' );
+        add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
     }
 
     public static function register_query_vars( array $vars ): array
@@ -24,22 +26,33 @@ class Router
 
     public static function handle_request(): void
     {
-        if ( 'dashboard' !== self::current_route() ) {
+        $route = self::current_route();
+
+        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout' ], true ) ) {
             return;
         }
 
+        if ( 'logout' === $route ) {
+            Auth::handle_logout();
+        }
+
+        if ( ! Bootstrap::dependencies_available() ) {
+            self::render_dependencies_unavailable();
+            exit;
+        }
+
+        if ( 'login' === $route ) {
+            self::handle_login_request();
+            exit;
+        }
+
         if ( ! is_user_logged_in() ) {
-            wp_safe_redirect( wp_login_url( self::dashboard_url() ) );
+            wp_safe_redirect( self::login_url() );
             exit;
         }
 
         if ( ! current_user_can( Capabilities::ACCESS_CAPABILITY ) ) {
             self::render_forbidden();
-            exit;
-        }
-
-        if ( ! Bootstrap::dependencies_available() ) {
-            self::render_dependencies_unavailable();
             exit;
         }
 
@@ -50,6 +63,16 @@ class Router
     public static function dashboard_url(): string
     {
         return home_url( '/gestion/' );
+    }
+
+    public static function login_url(): string
+    {
+        return home_url( '/gestion/login/' );
+    }
+
+    public static function logout_url(): string
+    {
+        return home_url( '/gestion/logout/' );
     }
 
     private static function current_route(): string
@@ -63,17 +86,40 @@ class Router
     {
         status_header( 200 );
         nocache_headers();
+        Assets::enqueue();
 
         $current_user = wp_get_current_user();
-        $logout_url   = wp_logout_url( home_url( '/' ) );
+        $logout_url   = self::logout_url();
 
         require SULTANA_ADMIN_PATH . 'templates/dashboard.php';
+    }
+
+    private static function handle_login_request(): void
+    {
+        if ( is_user_logged_in() && current_user_can( Capabilities::ACCESS_CAPABILITY ) ) {
+            wp_safe_redirect( self::dashboard_url() );
+            exit;
+        }
+
+        $login_error = Auth::handle_login();
+
+        self::render_login( $login_error );
+    }
+
+    private static function render_login( string $login_error = '' ): void
+    {
+        status_header( 200 );
+        nocache_headers();
+        Assets::enqueue();
+
+        require SULTANA_ADMIN_PATH . 'templates/login.php';
     }
 
     private static function render_forbidden(): void
     {
         status_header( 403 );
         nocache_headers();
+        Assets::enqueue();
 
         self::render_basic_page(
             __( 'Acceso denegado', 'sultana-admin' ),
@@ -85,6 +131,7 @@ class Router
     {
         status_header( 503 );
         nocache_headers();
+        Assets::enqueue();
 
         self::render_basic_page(
             __( 'Sultana Admin no esta disponible', 'sultana-admin' ),
@@ -104,7 +151,7 @@ class Router
             <?php wp_head(); ?>
         </head>
         <body>
-            <main style="max-width:720px;margin:48px auto;padding:24px;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <main class="sultana-admin-page sultana-admin-page--message">
                 <h1><?php echo esc_html( $title ); ?></h1>
                 <p><?php echo esc_html( $message ); ?></p>
             </main>

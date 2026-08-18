@@ -1,0 +1,102 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f6f7f9;
+    color: #1f2933;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.5;
+}
+
+.sultana-admin-page,
+.sultana-admin-login {
+    width: min(100% - 32px, 720px);
+    margin: 48px auto;
+}
+
+.sultana-admin-page,
+.sultana-admin-login__panel {
+    background: #ffffff;
+    border: 1px solid #d9dee5;
+    border-radius: 8px;
+    padding: 28px;
+    box-shadow: 0 10px 30px rgba(31, 41, 51, 0.08);
+}
+
+.sultana-admin-page h1,
+.sultana-admin-login h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    line-height: 1.2;
+}
+
+.sultana-admin-page p,
+.sultana-admin-login p {
+    margin: 0 0 20px;
+}
+
+.sultana-admin-login form {
+    display: grid;
+    gap: 12px;
+}
+
+.sultana-admin-login label {
+    font-weight: 600;
+}
+
+.sultana-admin-login input[type="text"],
+.sultana-admin-login input[type="password"] {
+    width: 100%;
+    border: 1px solid #b9c2cf;
+    border-radius: 6px;
+    padding: 11px 12px;
+    font: inherit;
+}
+
+.sultana-admin-login__remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.sultana-admin-login__error {
+    margin: 0 0 18px;
+    border: 1px solid #f0b8b8;
+    border-radius: 6px;
+    background: #fff1f1;
+    color: #8a1f1f;
+    padding: 10px 12px;
+}
+
+.sultana-admin-page button,
+.sultana-admin-login button {
+    border: 0;
+    border-radius: 6px;
+    background: #b8325f;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 700;
+    padding: 11px 16px;
+}
+
+.sultana-admin-page button:hover,
+.sultana-admin-login button:hover {
+    background: #99284e;
+}
+
+@media (max-width: 520px) {
+    .sultana-admin-page,
+    .sultana-admin-login {
+        width: min(100% - 20px, 720px);
+        margin: 20px auto;
+    }
+
+    .sultana-admin-page,
+    .sultana-admin-login__panel {
+        padding: 20px;
+    }
+}

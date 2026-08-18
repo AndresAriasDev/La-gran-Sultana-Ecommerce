@@ -20,6 +20,8 @@ define( 'SULTANA_ADMIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SULTANA_ADMIN_URL', plugin_dir_url( __FILE__ ) );
 
 require_once SULTANA_ADMIN_PATH . 'src/Core/Capabilities.php';
+require_once SULTANA_ADMIN_PATH . 'src/Core/Assets.php';
+require_once SULTANA_ADMIN_PATH . 'src/Core/Auth.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Router.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Bootstrap.php';
 
