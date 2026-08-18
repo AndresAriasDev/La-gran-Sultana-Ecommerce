@@ -2,6 +2,8 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\Admin\Products\ProductController;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -105,6 +107,7 @@ class Router
         $active_route = $route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
+        $screen_data  = 'products' === $route ? ProductController::prepare_list_screen() : [];
 
         require SULTANA_ADMIN_PATH . 'templates/layout.php';
     }
