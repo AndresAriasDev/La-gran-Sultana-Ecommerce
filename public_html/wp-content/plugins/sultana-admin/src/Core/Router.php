@@ -15,6 +15,8 @@ class Router
         add_rewrite_rule( '^gestion/?$', 'index.php?' . self::QUERY_VAR . '=dashboard', 'top' );
         add_rewrite_rule( '^gestion/login/?$', 'index.php?' . self::QUERY_VAR . '=login', 'top' );
         add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
+        add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
+        add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
     }
 
     public static function register_query_vars( array $vars ): array
@@ -28,7 +30,7 @@ class Router
     {
         $route = self::current_route();
 
-        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout' ], true ) ) {
+        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'orders' ], true ) ) {
             return;
         }
 
@@ -56,7 +58,7 @@ class Router
             exit;
         }
 
-        self::render_dashboard();
+        self::render_admin_screen( $route );
         exit;
     }
 
@@ -75,6 +77,16 @@ class Router
         return home_url( '/gestion/logout/' );
     }
 
+    public static function products_url(): string
+    {
+        return home_url( '/gestion/productos/' );
+    }
+
+    public static function orders_url(): string
+    {
+        return home_url( '/gestion/pedidos/' );
+    }
+
     private static function current_route(): string
     {
         $route = get_query_var( self::QUERY_VAR );
@@ -82,7 +94,7 @@ class Router
         return is_string( $route ) ? sanitize_key( $route ) : '';
     }
 
-    private static function render_dashboard(): void
+    private static function render_admin_screen( string $route ): void
     {
         status_header( 200 );
         nocache_headers();
@@ -90,8 +102,49 @@ class Router
 
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
+        $active_route = $route;
+        $nav_items    = self::admin_nav_items();
+        $screen       = self::screen_config( $route );
 
-        require SULTANA_ADMIN_PATH . 'templates/dashboard.php';
+        require SULTANA_ADMIN_PATH . 'templates/layout.php';
+    }
+
+    private static function admin_nav_items(): array
+    {
+        return [
+            'dashboard' => [
+                'label' => __( 'Inicio', 'sultana-admin' ),
+                'url'   => self::dashboard_url(),
+            ],
+            'products'  => [
+                'label' => __( 'Productos', 'sultana-admin' ),
+                'url'   => self::products_url(),
+            ],
+            'orders'    => [
+                'label' => __( 'Pedidos', 'sultana-admin' ),
+                'url'   => self::orders_url(),
+            ],
+        ];
+    }
+
+    private static function screen_config( string $route ): array
+    {
+        $screens = [
+            'dashboard' => [
+                'title'    => __( 'Inicio', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/dashboard.php',
+            ],
+            'products'  => [
+                'title'    => __( 'Productos', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/products.php',
+            ],
+            'orders'    => [
+                'title'    => __( 'Pedidos', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/orders.php',
+            ],
+        ];
+
+        return $screens[ $route ] ?? $screens['dashboard'];
     }
 
     private static function handle_login_request(): void
