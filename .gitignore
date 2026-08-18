@@ -1,0 +1,10 @@
+# VS Code / credenciales locales
+.vscode/
+
+# Copias locales defectuosas
+public_html/wp-content/themes/sultana-storefront-vacio/
+public_html/wp-content/plugins/sultana-commerce-core-vacio/
+
+# Sistema
+.DS_Store
+Thumbs.db

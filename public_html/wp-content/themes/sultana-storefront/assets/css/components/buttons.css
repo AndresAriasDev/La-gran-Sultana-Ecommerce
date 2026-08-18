@@ -1,0 +1,54 @@
+button,
+input[type="submit"],
+.button,
+.wp-element-button,
+.woocommerce a.button,
+.woocommerce button.button,
+.woocommerce input.button {
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.72rem 1rem;
+  font-weight: 600;
+  line-height: 1.1;
+  text-decoration: none;
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+button:hover,
+input[type="submit"]:hover,
+.button:hover,
+.wp-element-button:hover,
+.woocommerce a.button:hover,
+.woocommerce button.button:hover,
+.woocommerce input.button:hover {
+  background: #9f3452;
+  color: var(--color-on-brand);
+}
+
+.button--secondary {
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-brand);
+}
+
+.button--secondary:hover {
+  background: var(--color-sky);
+  color: var(--color-ink);
+}
+
+.button--light {
+  background: var(--color-surface);
+  color: var(--color-brand);
+}
+
+.button--light:hover {
+  background: var(--color-sky);
+  color: var(--color-ink);
+}

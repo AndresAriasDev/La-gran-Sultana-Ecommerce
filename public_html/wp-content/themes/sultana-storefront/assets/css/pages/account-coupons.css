@@ -1,0 +1,251 @@
+.ve-account-coupons {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.ve-account-coupons__title {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.ve-account-coupons__title h1 {
+  margin-bottom: 0;
+}
+
+.ve-account-coupons__empty {
+  margin-top: 0;
+}
+
+.ve-account-coupons__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.ve-account-coupon-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  min-height: 100%;
+  margin-top: 0;
+  padding: 0;
+  overflow: visible;
+  border-color: var(--color-brand-soft);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 14px 34px rgba(35, 33, 41, 0.06);
+}
+
+.ve-account-coupon-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  width: 100%;
+  min-width: 0;
+  padding: clamp(0.95rem, 2vw, 1.15rem);
+}
+
+.ve-account-coupon-card__header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.ve-account-coupon-card__discount {
+  min-width: 0;
+  color: var(--color-brand);
+  font-size: clamp(1.35rem, 1.4vw, 1.4rem);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 0.98;
+}
+
+.ve-account-coupon-card__info {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+}
+
+.ve-account-coupon-card__info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid rgba(74, 134, 160, 0.22);
+  border-radius: 999px;
+  background: rgba(222, 242, 247, 0.9);
+  color: var(--color-info);
+  cursor: pointer;
+}
+
+.ve-account-coupon-card__info-button:hover,
+.ve-account-coupon-card__info-button:focus-visible,
+.ve-account-coupon-card__info-button[aria-expanded="true"] {
+  border-color: rgba(74, 134, 160, 0.34);
+  background: rgba(202, 235, 242, 0.95);
+  color: #2f6d85;
+  outline: 0;
+}
+
+.ve-account-coupon-card__info-icon {
+  width: 17px;
+  height: 17px;
+  pointer-events: none;
+}
+
+.ve-account-coupon-card__popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  z-index: 20;
+  width: min(270px, calc(100vw - 2rem));
+  padding: 0.85rem;
+  border: 1px solid rgba(74, 134, 160, 0.16);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 38px rgba(35, 33, 41, 0.14);
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  line-height: 1.42;
+}
+
+.ve-account-coupon-card__popover[hidden] {
+  display: none;
+}
+
+.ve-account-coupon-card__popover::after {
+  content: "";
+  position: absolute;
+  right: var(--ve-coupon-popover-arrow-right, 13px);
+  bottom: -7px;
+  left: var(--ve-coupon-popover-arrow-left, auto);
+  width: 13px;
+  height: 13px;
+  border-right: 1px solid rgba(74, 134, 160, 0.16);
+  border-bottom: 1px solid rgba(74, 134, 160, 0.16);
+  background: var(--color-surface);
+  transform: rotate(45deg);
+}
+
+.ve-account-coupon-card__popover p {
+  margin: 0;
+}
+
+.ve-account-coupon-card__popover p + p {
+  margin-top: 0.7rem;
+}
+
+.ve-account-coupon-card__popover span,
+.ve-account-coupon-card__popover strong {
+  display: block;
+}
+
+.ve-account-coupon-card__popover span {
+  color: var(--color-info);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ve-account-coupon-card__popover strong {
+  margin-top: 0.14rem;
+  color: var(--color-ink);
+  font-size: 0.88rem;
+}
+
+.ve-account-coupon-card__copy {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0;
+  padding: 0.65rem 0.72rem;
+  border: 1px dashed rgba(116, 105, 151, 0.26);
+  border-radius: 8px;
+  background: rgba(245, 243, 250, 0.95);
+  color: #5f567c;
+  cursor: copy;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.ve-account-coupon-card__copy:hover,
+.ve-account-coupon-card__copy:focus-visible,
+.ve-account-coupon-card__copy.is-copied {
+  border-color: rgba(116, 105, 151, 0.42);
+  background: rgba(237, 234, 247, 0.98);
+  color: #4f466d;
+}
+
+.ve-account-coupon-card__code {
+  min-width: 0;
+  color: currentColor;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ve-account-coupon-card__copy-icon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+}
+
+@media (max-width: 1120px) {
+  .ve-account-coupons__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .ve-account-coupons {
+    gap: 1rem;
+  }
+
+  .ve-account-coupons__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .ve-account-coupon-card__content {
+    gap: 0.78rem;
+    padding: 0.82rem;
+  }
+
+  .ve-account-coupon-card__header {
+    align-items: center;
+  }
+
+  .ve-account-coupon-card__info-button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .ve-account-coupon-card__popover {
+    right: -0.2rem;
+    width: min(260px, calc(100vw - 2rem));
+  }
+
+  .ve-account-coupon-card__copy {
+    min-height: 42px;
+    padding: 0.62rem 0.65rem;
+  }
+}

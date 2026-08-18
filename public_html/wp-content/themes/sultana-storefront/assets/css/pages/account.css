@@ -1,0 +1,883 @@
+.ve-account {
+  --ve-account-gap: clamp(1.4rem, 4vw, 2.6rem);
+  padding: var(--ve-account-gap) 0;
+}
+
+.woocommerce-account .page-content {
+  width: 100%;
+  padding-block: 0;
+}
+
+.woocommerce-account .entry-title,
+.woocommerce-account .page-title,
+.woocommerce-account main > h1:first-child {
+  display: none;
+}
+
+.woocommerce-account .woocommerce-error li:not(:first-child) {
+  display: none;
+}
+
+.woocommerce-account .woocommerce-message.ve-account-error-queue,
+.woocommerce-account .woocommerce-error.ve-account-error-queue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.ve-account-error-queue__message {
+  min-width: 0;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.ve-account-error-queue__message a {
+  color: inherit;
+  font-weight: 800;
+}
+
+.woocommerce-account .woocommerce-message.ve-account-error-queue::before {
+  content: "✓";
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  mask: none;
+  -webkit-mask: none;
+}
+
+.woocommerce-account .woocommerce-message.ve-account-error-queue.is-clickable,
+.woocommerce-account .woocommerce-message.ve-account-error-queue.is-clickable::before,
+.woocommerce-account .woocommerce-message.ve-account-error-queue.is-clickable .ve-account-error-queue__message {
+  cursor: pointer;
+}
+
+.ve-account-error-queue__close {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.ve-account-error-queue__close:hover,
+.ve-account-error-queue__close:focus-visible {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.ve-account__container {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) minmax(0, 1fr);
+  gap: var(--ve-account-gap);
+  width: min(100% - 32px, var(--container));
+  margin-inline: auto;
+  align-items: start;
+}
+
+.ve-account-nav,
+.ve-account-panel,
+.ve-account-card {
+  border: 1px solid rgba(194, 67, 102, 0.12);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-soft);
+}
+
+.ve-account-nav {
+  position: sticky;
+  top: 1rem;
+  overflow: hidden;
+}
+
+.ve-account-nav__toggle {
+  display: flex;
+  width: 100%;
+  gap: 0.85rem;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--color-line);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.ve-account-nav__toggle:hover {
+  background: transparent;
+  color: inherit;
+}
+
+.ve-account-nav__avatar {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(255, 105, 180, 0.14);
+  color: var(--color-brand);
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.ve-account-nav__avatar-wrap {
+  position: relative;
+  width: 48px;
+  min-width: 48px;
+  height: 48px;
+}
+
+.ve-account-nav__avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+.ve-account-nav__avatar-input {
+  display: none;
+}
+
+.ve-account-nav__avatar-button {
+  position: absolute;
+  right: -5px;
+  bottom: -5px;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 1px solid rgba(194, 67, 102, 0.16);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-brand);
+  box-shadow: 0 8px 18px rgba(35, 33, 41, 0.12);
+  cursor: pointer;
+}
+
+.ve-account-nav__avatar-button:hover,
+.ve-account-nav__avatar-button:focus-visible {
+  border-color: rgba(194, 67, 102, 0.28);
+  background: #fff0f7;
+  color: var(--color-brand);
+  outline: 0;
+}
+
+.ve-account-nav__avatar-button:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.18), 0 8px 18px rgba(35, 33, 41, 0.12);
+}
+
+.ve-account-nav__avatar-button-icon {
+  width: 13px;
+  height: 13px;
+  pointer-events: none;
+}
+
+.ve-account-nav__avatar-wrap.is-loading .ve-account-nav__avatar {
+  opacity: 0.68;
+}
+
+.ve-account-nav__avatar-wrap.is-loading .ve-account-nav__avatar-button {
+  cursor: wait;
+}
+
+.ve-account-nav__avatar-wrap.is-loading .ve-account-nav__avatar-button-icon {
+  opacity: 0;
+}
+
+.ve-account-nav__avatar-wrap.is-loading .ve-account-nav__avatar-button::after {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(194, 67, 102, 0.22);
+  border-top-color: var(--color-brand);
+  border-radius: 999px;
+  animation: ve-account-avatar-spin 700ms linear infinite;
+}
+
+@keyframes ve-account-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ve-account-nav__profile-text {
+  min-width: 0;
+}
+
+.ve-account-nav__profile-text span {
+  display: block;
+  color: var(--color-brand);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ve-account-nav__profile-text strong,
+.ve-account-nav__profile-text small {
+  display: block;
+}
+
+.ve-account-nav__profile-text strong {
+  color: var(--color-ink);
+  font-size: 0.95rem;
+}
+
+.ve-account-nav__profile-text small {
+  max-width: 180px;
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ve-account-nav__chevron {
+  display: none;
+  width: 11px;
+  height: 11px;
+  margin-left: auto;
+  margin-right: 0.35rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  color: var(--color-muted);
+  transform: rotate(45deg);
+}
+
+.ve-account-nav__list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.75rem;
+  list-style: none;
+}
+
+.ve-account-nav__list a {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.62rem 0.75rem;
+  border-radius: 8px;
+  color: var(--color-muted);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ve-account-nav__list .is-active a,
+.ve-account-nav__list a:hover {
+  background: var(--color-accent-soft);
+  color: var(--color-brand);
+}
+
+.ve-account-nav__list .woocommerce-MyAccount-navigation-link--customer-logout a {
+  color: var(--color-brand);
+}
+
+.ve-account-nav__icon {
+  width: 20px;
+  height: 20px;
+  color: currentColor;
+}
+
+.ve-account-panel {
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.ve-account-panel--address-overview {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ve-account-hero,
+.ve-account-section-title {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 1.25rem;
+  border: 1px solid rgba(168, 209, 231, 0.4);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.64);
+}
+
+.ve-account-hero__icon,
+.ve-account-section-title > span {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  min-width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--color-accent-soft);
+  color: var(--color-brand);
+}
+
+.ve-account-hero__svg,
+.ve-account-section-title__icon,
+.ve-account-actions__icon {
+  width: 24px;
+  height: 24px;
+  color: currentColor;
+}
+
+.ve-account-hero span,
+.ve-account-section-title span {
+  color: var(--color-brand);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.ve-account-hero h1,
+.ve-account-section-title h1 {
+  margin: 0.15rem 0;
+  color: var(--color-ink);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.ve-account-hero p,
+.ve-account-section-title p,
+.ve-account-card__hint {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.ve-account-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ve-account-actions a {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: var(--color-surface);
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.ve-account-actions a:hover {
+  border-color: rgba(255, 105, 180, 0.35);
+  color: var(--color-brand);
+}
+
+.ve-account-actions strong {
+  color: var(--color-ink);
+}
+
+.ve-account-card {
+  margin-top: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid var(--color-brand-soft);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.ve-account-card h2 {
+  margin: 0 0 0.85rem;
+  color: var(--color-ink);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.ve-account-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2.5rem;
+  row-gap: 1.05rem;
+  align-items: start;
+}
+
+.ve-account-form__grid--spaced {
+  margin-top: 1.05rem;
+}
+
+.ve-account-form label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.ve-account-form input.input-text {
+  width: 100% !important;
+  max-width: none;
+  height: 48px;
+  min-height: 48px;
+  padding: 0.65rem 0.85rem !important;
+  border: 1px solid var(--color-line) !important;
+  border-radius: 7px !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  color: var(--color-ink);
+  line-height: 1.2;
+  outline: 0;
+}
+
+.ve-account-form input.input-text:-webkit-autofill,
+.ve-account-form input.input-text:-webkit-autofill:hover,
+.ve-account-form input.input-text:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+  caret-color: var(--color-ink);
+  transition: background-color 9999s ease-out;
+}
+
+.ve-account-form input.input-text:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14) !important;
+}
+
+.ve-account-form .woocommerce-password-hint {
+  display: none !important;
+}
+
+.ve-account-form .form-row,
+.ve-account-form .form-row-first,
+.ve-account-form .form-row-last,
+.ve-account-form .form-row-wide {
+  float: none !important;
+  width: 100% !important;
+  max-width: none;
+  margin: 0;
+}
+
+.ve-account-form em {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.82rem;
+}
+
+.ve-account-form > .ve-account-panel > p {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1.35rem 0 0;
+}
+
+.ve-account-form__submit {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 0.72rem 1.25rem;
+  border: 0;
+  border-radius: 7px;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ve-account-form__submit.is-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.ve-account-form__submit.is-loading::before {
+  opacity: 0;
+}
+
+.ve-account-form__submit.is-loading span {
+  opacity: 0;
+}
+
+.ve-account-form__submit.is-loading::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: var(--color-on-brand);
+  border-radius: 999px;
+  animation: ve-button-spin 700ms linear infinite;
+}
+
+.ve-account-form__submit::before {
+  content: "";
+  display: block;
+  width: 17px;
+  height: 17px;
+  background: currentColor;
+  mask: url("../../icons/save.svg") center / contain no-repeat;
+  -webkit-mask: url("../../icons/save.svg") center / contain no-repeat;
+}
+
+.ve-account-address-card address {
+  margin: 0;
+  color: var(--color-muted);
+  font-style: normal;
+  line-height: 1.7;
+}
+
+.ve-account-address-card__contact-line {
+  display: block;
+}
+
+.ve-account-address-card__contact-line--email {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ve-account-address-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.ve-account-address-card__content {
+  min-width: 0;
+}
+
+.ve-account-address-card__button {
+  display: inline-flex;
+  gap: 0.42rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid rgba(194, 67, 102, 0.25);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-brand);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ve-account-address-card__button:hover {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.ve-account-address-card__button-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.ve-address-form__card {
+  padding: clamp(1rem, 3vw, 1.7rem);
+}
+
+.ve-address-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 2.5rem;
+  row-gap: 1.15rem;
+  align-items: start;
+}
+
+.ve-address-form__grid .form-row {
+  float: none;
+  width: 100% !important;
+  max-width: none;
+  margin: 0;
+}
+
+.ve-address-form__grid .form-row-first,
+.ve-address-form__grid .form-row-last {
+  float: none !important;
+  width: 100% !important;
+}
+
+.ve-address-form__grid .form-row-wide,
+.ve-address-form__grid #billing_address_1_field {
+  grid-column: 1 / -1;
+}
+
+.ve-address-form label {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--color-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.ve-address-form .required {
+  color: var(--color-brand);
+  text-decoration: none;
+}
+
+.ve-address-form input.input-text,
+.ve-address-form select {
+  width: 100%;
+  max-width: none;
+  height: 48px;
+  min-height: 48px;
+  padding: 0.65rem 0.85rem !important;
+  border: 1px solid var(--color-line) !important;
+  border-radius: 7px !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+  color: var(--color-ink);
+  font: inherit;
+  outline: 0;
+}
+
+.ve-address-form input.input-text:-webkit-autofill,
+.ve-address-form input.input-text:-webkit-autofill:hover,
+.ve-address-form input.input-text:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--color-ink);
+  box-shadow: 0 0 0 1000px var(--color-surface) inset !important;
+  caret-color: var(--color-ink);
+  transition: background-color 9999s ease-out;
+}
+
+.ve-address-form input.input-text:focus,
+.ve-address-form select:focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14);
+  outline: 0;
+}
+
+.ve-address-form .ve-field-has-error input.input-text,
+.ve-address-form .ve-field-has-error select {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 0 3px rgba(242, 95, 92, 0.14) !important;
+}
+
+.ve-address-form .ve-field-has-error .select2-container .select2-selection--single {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 0 3px rgba(242, 95, 92, 0.14) !important;
+}
+
+.ve-address-form .select2-container .select2-selection--single {
+  height: 48px;
+  border: 1px solid var(--color-line) !important;
+  border-radius: 7px !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+}
+
+.ve-address-form .select2-container--default .select2-selection--single .select2-selection__rendered {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 2.2rem 0 0.85rem;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.ve-address-form .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 48px;
+}
+
+.ve-address-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1.35rem 0 0;
+}
+
+.ve-address-form .ve-address-form__submit {
+  display: inline-flex !important;
+  gap: 0.45rem;
+  align-items: center;
+  font-weight: 600 !important;
+}
+
+.ve-address-form .ve-address-form__submit::before {
+  content: "";
+  display: block;
+  width: 17px;
+  height: 17px;
+  background: currentColor;
+  mask: url("../../icons/save.svg") center / contain no-repeat;
+  -webkit-mask: url("../../icons/save.svg") center / contain no-repeat;
+}
+
+.ve-address-form .ve-address-form__submit-icon,
+.ve-address-form .ve-address-form__submit svg {
+  display: none !important;
+  width: 17px;
+  height: 17px;
+  color: var(--color-on-brand);
+  stroke: currentColor;
+}
+
+.ve-account-order-card,
+.ve-account-empty {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(420px, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.95rem;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.ve-account-order-card h2,
+.ve-account-empty h2 {
+  margin: 0;
+  color: var(--color-ink);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ve-account-order-card p,
+.ve-account-empty p {
+  margin: 0.15rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.86rem;
+}
+
+.ve-account-order-card__button,
+.ve-account-empty__button {
+  display: inline-flex;
+  gap: 0.42rem;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.62rem 0.9rem;
+  border: 1px solid var(--color-brand);
+  border-radius: 8px;
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.ve-account-order-card__button:hover,
+.ve-account-empty__button:hover {
+  background: var(--color-brand);
+  color: var(--color-on-brand);
+}
+
+.ve-account-order-card__button-icon,
+.ve-account-empty__button-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.ve-account-empty {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  margin-top: 1rem;
+}
+
+@media (max-width: 560px) {
+  .ve-account__container {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-block: 0;
+  }
+
+  .ve-account{
+    padding: 1.4rem 0;
+  }
+
+  .ve-account-nav {
+    position: static;
+  }
+
+  .ve-account-nav--endpoint {
+    display: none;
+  }
+
+  .ve-account-panel {
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+    border: 0;
+  }
+
+  .ve-account-nav__toggle {
+    border-bottom: 1px solid var(--color-line);
+  }
+
+  .ve-account-nav__chevron {
+    display: none;
+  }
+
+  .ve-account-nav__list {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .ve-account-nav__list .woocommerce-MyAccount-navigation-link--dashboard {
+    display: none;
+  }
+
+  .ve-account-nav__list a:hover {
+    background: transparent;
+    color: var(--color-muted);
+  }
+
+  .ve-account-nav__list .is-active a {
+    background: var(--color-accent-soft);
+    color: var(--color-brand);
+  }
+
+  .ve-account-hero,
+  .ve-account-section-title {
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .ve-account-section-title h1{
+    font-size: 18px;
+    text-transform: uppercase;
+  }
+
+  .ve-account-actions,
+  .ve-account-form__grid,
+  .ve-address-form__grid,
+  .ve-account-address-card {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-account-order-card,
+  .ve-account-empty {
+    grid-template-columns: 1fr;
+  }
+
+  .ve-account-order-card__status,
+  .ve-account-order-card__button,
+  .ve-account-empty__button {
+    width: 100%;
+  }
+
+  .ve-account-address-card__button {
+    width: 100%;
+  }
+
+  .ve-address-form__actions {
+    justify-content: stretch;
+  }
+
+  .ve-address-form__submit {
+    width: 100%;
+  }
+}

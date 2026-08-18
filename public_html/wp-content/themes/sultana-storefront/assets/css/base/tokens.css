@@ -1,0 +1,34 @@
+@font-face {
+  font-family: "Manrope";
+  src: url("../../fonts/manrope-variable.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --color-brand: #c24366;
+  --color-on-brand: #ffffff;
+  --color-brand-soft: rgba(194, 67, 102, 0.14);
+  --color-accent: #ff69b4;
+  --color-accent-soft: rgba(255, 105, 180, 0.12);
+  --color-sky: #a8d1e7;
+  --color-cream: #fcfaf2;
+  --color-ink: #232129;
+  --color-muted: #6f6872;
+  --color-line: #eadfe4;
+  --color-surface: #ffffff;
+  --color-success: #2f8f66;
+  --color-success-soft: rgba(46, 160, 101, 0.14);
+  --color-success-text: #2e8c5d;
+  --color-info: #3f7f99;
+  --color-info-soft: rgba(168, 209, 231, 0.16);
+  --color-error: #f56565;
+  --color-error-soft: rgba(245, 101, 101, 0.08);
+  --color-warning: #f2b84b;
+  --color-warning-soft: rgba(242, 184, 75, 0.18);
+  --color-focus-ring: rgba(255, 105, 180, 0.38);
+  --shadow-soft: 0 18px 45px rgba(35, 33, 41, 0.08);
+  --container: 1180px;
+  --radius: 8px;
+}

@@ -1,0 +1,10 @@
+{
+    "name": "sultana/commerce-core",
+    "description": "Core para tiendas WooCommerce.",
+    "type": "wordpress-plugin",
+    "autoload": {
+        "psr-4": {
+            "Sultana\\CommerceCore\\": "src/"
+        }
+    }
+}
