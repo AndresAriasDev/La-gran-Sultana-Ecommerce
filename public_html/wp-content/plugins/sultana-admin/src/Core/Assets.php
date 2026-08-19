@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Assets
 {
-    public static function enqueue( string $route = '' ): void
+    public static function enqueue( string $route = '', array $screen_data = [] ): void
     {
         $css_path = SULTANA_ADMIN_PATH . 'assets/css/admin.css';
         $version  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : SULTANA_ADMIN_VERSION;
@@ -23,6 +23,17 @@ class Assets
         );
 
         if ( ! in_array( $route, [ 'product_new', 'product_edit' ], true ) ) {
+            return;
+        }
+
+        $product_type = self::screen_product_type( $route, $screen_data );
+
+        if ( 'combo' === $product_type ) {
+            self::enqueue_combo_editor();
+            return;
+        }
+
+        if ( ! in_array( $product_type, [ 'simple', 'variable' ], true ) ) {
             return;
         }
 
@@ -58,6 +69,10 @@ class Assets
             ]
         );
 
+        if ( 'variable' !== $product_type ) {
+            return;
+        }
+
         $variable_js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-variables.js';
         $variable_js_version = file_exists( $variable_js_path ) ? (string) filemtime( $variable_js_path ) : SULTANA_ADMIN_VERSION;
 
@@ -89,12 +104,10 @@ class Assets
             ]
         );
 
-        $should_enqueue_combo = 'product_edit' === $route || ( 'product_new' === $route && 'combo' === self::requested_product_type() );
+    }
 
-        if ( ! $should_enqueue_combo ) {
-            return;
-        }
-
+    public static function enqueue_combo_editor(): void
+    {
         $combo_js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-combos.js';
         $combo_js_version = file_exists( $combo_js_path ) ? (string) filemtime( $combo_js_path ) : SULTANA_ADMIN_VERSION;
 
@@ -110,11 +123,11 @@ class Assets
             'sultana-admin-product-combos',
             'SultanaAdminProductCombos',
             [
-                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-                'nonce'        => wp_create_nonce( ProductController::COMBO_COMPONENT_SEARCH_NONCE_ACTION ),
-                'searchAction' => ProductController::COMBO_COMPONENT_SEARCH_ACTION,
+                'ajaxUrl'        => admin_url( 'admin-ajax.php' ),
+                'nonce'          => wp_create_nonce( ProductController::COMBO_COMPONENT_SEARCH_NONCE_ACTION ),
+                'searchAction'   => ProductController::COMBO_COMPONENT_SEARCH_ACTION,
                 'currencySymbol' => function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'C$',
-                'strings'      => [
+                'strings'        => [
                     'component'         => __( 'Producto o variacion', 'sultana-admin' ),
                     'searchPlaceholder' => __( 'Buscar producto o variacion', 'sultana-admin' ),
                     'quantity'          => __( 'Cantidad', 'sultana-admin' ),
@@ -124,6 +137,21 @@ class Assets
                 ],
             ]
         );
+    }
+
+    private static function screen_product_type( string $route, array $screen_data ): string
+    {
+        $type = isset( $screen_data['product_type'] ) ? sanitize_key( (string) $screen_data['product_type'] ) : '';
+
+        if ( in_array( $type, [ 'simple', 'variable', 'combo' ], true ) ) {
+            return $type;
+        }
+
+        if ( 'product_new' === $route ) {
+            return self::requested_product_type();
+        }
+
+        return '';
     }
 
     private static function requested_product_type(): string

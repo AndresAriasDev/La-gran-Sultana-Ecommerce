@@ -135,7 +135,6 @@ class Router
     private static function render_admin_screen( string $route ): void
     {
         nocache_headers();
-        Assets::enqueue( $route );
 
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
@@ -144,6 +143,8 @@ class Router
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
+
+        Assets::enqueue( $route, $screen_data );
 
         if ( ! empty( $screen_data['not_found'] ) ) {
             status_header( 404 );

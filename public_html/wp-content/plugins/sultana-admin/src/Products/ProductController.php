@@ -52,12 +52,10 @@ class ProductController
 
     public static function prepare_create_screen(): array
     {
-        $service          = new ProductService();
-        $variable_service = new ProductVariableService();
-        $combo_service    = new ProductComboService();
-        $product_type     = self::requested_product_type();
-        $form             = self::default_form_data( $product_type, $service, $variable_service, $combo_service );
-        $errors           = [];
+        $service      = new ProductService();
+        $product_type = self::requested_product_type();
+        $form         = self::default_form_data( $product_type, $service );
+        $errors       = [];
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
             if ( ! is_user_logged_in() || ! current_user_can( Capabilities::ACCESS_CAPABILITY ) || ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
@@ -67,7 +65,7 @@ class ProductController
             } else {
                 $form         = self::posted_product_data();
                 $product_type = self::normalize_product_type( (string) ( $form['product_type'] ?? 'simple' ) );
-                $result       = self::create_product_for_type( $product_type, $form, $service, $variable_service, $combo_service );
+                $result       = self::create_product_for_type( $product_type, $form, $service );
 
                 if ( $result['success'] ) {
                     wp_safe_redirect( add_query_arg( 'notice', 'product_created', Router::products_url() ) );
@@ -78,23 +76,20 @@ class ProductController
             }
         }
 
-        return [
+        return array_merge(
+            [
             'form'            => $form,
             'errors'          => $errors,
-            'categories'      => $service->get_product_categories(),
-            'brands'          => $service->get_product_brands(),
-            'brand_taxonomy' => $service->get_brand_taxonomy(),
-            'selected_images' => 'combo' === $product_type ? [] : ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
             'product_type'    => $product_type,
-            'available_attributes' => $variable_service->available_attributes(),
-            'combo_components' => $combo_service->components_for_form( $form['combo_components'] ?? [] ),
             'form_action'     => add_query_arg( 'type', $product_type, Router::new_product_url() ),
             'form_nonce_action' => self::CREATE_NONCE_ACTION,
             'form_title'      => self::form_title_for_type( $product_type, false ),
             'form_kicker'     => self::form_kicker_for_type( $product_type ),
             'submit_label'    => __( 'Guardar producto', 'sultana-admin' ),
             'notice'          => '',
-        ];
+            ],
+            self::product_type_screen_data( $product_type, $form, $service )
+        );
     }
 
     public static function prepare_edit_screen( int $product_id ): array
@@ -126,12 +121,12 @@ class ProductController
             ];
         }
 
-        $variable_service = new ProductVariableService();
-        $combo_service    = new ProductComboService();
         $product_type     = $product->get_type();
         if ( 'variable' === $product_type && $product instanceof \WC_Product_Variable ) {
+            $variable_service = new ProductVariableService();
             $form = $variable_service->product_form_data( $product );
         } elseif ( 'combo' === $product_type && $product instanceof \Sultana\CommerceCore\Modules\Combos\ProductCombo ) {
+            $combo_service = new ProductComboService();
             $form = $combo_service->product_form_data( $product );
         } else {
             $form = $service->product_form_data( $product );
@@ -143,8 +138,10 @@ class ProductController
             } else {
                 $form   = self::posted_product_data();
                 if ( 'variable' === $product_type ) {
+                    $variable_service = new ProductVariableService();
                     $result = $variable_service->update_variable_product( $product_id, $form );
                 } elseif ( 'combo' === $product_type ) {
+                    $combo_service = new ProductComboService();
                     $result = $combo_service->update_combo_product( $product_id, $form );
                 } else {
                     $result = $service->update_simple_product( $product_id, $form );
@@ -159,24 +156,21 @@ class ProductController
             }
         }
 
-        return [
+        return array_merge(
+            [
             'form'              => $form,
             'errors'            => $errors,
-            'categories'        => $service->get_product_categories(),
-            'brands'            => $service->get_product_brands(),
-            'brand_taxonomy'    => $service->get_brand_taxonomy(),
-            'selected_images'   => 'combo' === $product_type ? [] : $image_service->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
             'product_type'      => $product_type,
             'product_id'        => $product_id,
-            'available_attributes' => $variable_service->available_attributes(),
-            'combo_components'  => $combo_service->components_for_form( $form['combo_components'] ?? [] ),
             'form_action'       => Router::edit_product_url( $product_id ),
             'form_nonce_action' => self::UPDATE_NONCE_ACTION,
             'form_title'        => self::form_title_for_type( $product_type, true ),
             'form_kicker'       => self::form_kicker_for_type( $product_type ),
             'submit_label'      => __( 'Actualizar producto', 'sultana-admin' ),
             'notice'            => self::edit_notice(),
-        ];
+            ],
+            self::product_type_screen_data( $product_type, $form, $service, $product_id )
+        );
     }
 
     public static function ajax_upload_product_image(): void
@@ -408,30 +402,59 @@ class ProductController
         ];
     }
 
-    private static function default_form_data( string $product_type, ProductService $service, ProductVariableService $variable_service, ProductComboService $combo_service ): array
+    private static function default_form_data( string $product_type, ProductService $service ): array
     {
         if ( 'variable' === $product_type ) {
-            return $variable_service->default_product_data();
+            return ( new ProductVariableService() )->default_product_data();
         }
 
         if ( 'combo' === $product_type ) {
-            return $combo_service->default_product_data();
+            return ( new ProductComboService() )->default_product_data();
         }
 
         return $service->default_simple_product_data();
     }
 
-    private static function create_product_for_type( string $product_type, array $form, ProductService $service, ProductVariableService $variable_service, ProductComboService $combo_service ): array
+    private static function create_product_for_type( string $product_type, array $form, ProductService $service ): array
     {
         if ( 'variable' === $product_type ) {
-            return $variable_service->create_variable_product( $form );
+            return ( new ProductVariableService() )->create_variable_product( $form );
         }
 
         if ( 'combo' === $product_type ) {
-            return $combo_service->create_combo_product( $form );
+            return ( new ProductComboService() )->create_combo_product( $form );
         }
 
         return $service->create_simple_product( $form );
+    }
+
+    private static function product_type_screen_data( string $product_type, array $form, ProductService $service, int $product_id = 0 ): array
+    {
+        if ( 'combo' === $product_type ) {
+            return [
+                'categories'           => [],
+                'brands'               => [],
+                'brand_taxonomy'       => '',
+                'selected_images'      => [],
+                'available_attributes' => [],
+                'combo_components'     => ( new ProductComboService() )->components_for_form( $form['combo_components'] ?? [] ),
+            ];
+        }
+
+        $data = [
+            'categories'           => $service->get_product_categories(),
+            'brands'               => $service->get_product_brands(),
+            'brand_taxonomy'       => $service->get_brand_taxonomy(),
+            'selected_images'      => ( new ProductImageService() )->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
+            'available_attributes' => [],
+            'combo_components'     => [],
+        ];
+
+        if ( 'variable' === $product_type ) {
+            $data['available_attributes'] = ( new ProductVariableService() )->available_attributes();
+        }
+
+        return $data;
     }
 
     private static function normalize_product_type( string $type ): string
