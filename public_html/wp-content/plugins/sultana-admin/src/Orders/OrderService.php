@@ -2,7 +2,6 @@
 
 namespace Sultana\Admin\Orders;
 
-use Sultana\Admin\Core\Capabilities;
 use Sultana\Admin\Core\Router;
 use Throwable;
 use WC_Order;
@@ -16,6 +15,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 class OrderService
 {
     private const COMBO_SNAPSHOT_META = '_scc_combo_components_snapshot';
+    private const ALLOWED_STATUS_TARGETS = [ 'pending', 'on-hold', 'processing', 'completed', 'cancelled' ];
+    private const ALLOWED_SHIPPING_META_LABELS = [ 'origen', 'ruta', 'entrega' ];
 
     public function list_orders( array $args ): array
     {
@@ -93,6 +94,109 @@ class OrderService
             'forbidden'       => false,
             'error'           => '',
             'read_only_notice' => __( 'Vista de solo lectura.', 'sultana-admin' ),
+            'notice'          => $this->notice_from_request(),
+            'status_action'   => $this->status_action_data( $order ),
+        ];
+    }
+
+    public function handle_status_update( int $order_id, array $posted_data ): array
+    {
+        $action = isset( $posted_data['sultana_admin_order_status_action'] )
+            ? sanitize_key( wp_unslash( $posted_data['sultana_admin_order_status_action'] ) )
+            : '';
+
+        if ( 'update_status' !== $action ) {
+            return [];
+        }
+
+        if ( ! function_exists( 'wc_get_order' ) ) {
+            return [
+                'error' => __( 'WooCommerce no esta disponible para cambiar pedidos.', 'sultana-admin' ),
+            ];
+        }
+
+        $posted_order_id = isset( $posted_data['order_id'] ) ? absint( wp_unslash( $posted_data['order_id'] ) ) : 0;
+
+        if ( $order_id <= 0 || $posted_order_id !== $order_id ) {
+            return [
+                'error' => __( 'Pedido invalido.', 'sultana-admin' ),
+            ];
+        }
+
+        try {
+            $order = wc_get_order( $order_id );
+        } catch ( Throwable $exception ) {
+            return [
+                'error' => __( 'No pudimos consultar el pedido en este momento.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( ! $order instanceof WC_Order ) {
+            return [
+                'error' => __( 'Pedido no encontrado.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( ! $this->can_update_order_status( $order ) ) {
+            return [
+                'forbidden' => true,
+                'error'     => __( 'No tienes permisos para cambiar este pedido.', 'sultana-admin' ),
+            ];
+        }
+
+        $nonce = isset( $posted_data[ OrderController::STATUS_NONCE_FIELD ] )
+            ? sanitize_text_field( wp_unslash( $posted_data[ OrderController::STATUS_NONCE_FIELD ] ) )
+            : '';
+
+        if ( ! wp_verify_nonce( $nonce, $this->status_nonce_action( $order_id ) ) ) {
+            return [
+                'error' => __( 'La solicitud no es valida. Actualiza la pagina e intentalo nuevamente.', 'sultana-admin' ),
+            ];
+        }
+
+        $current_status = isset( $posted_data['current_status'] )
+            ? $this->normalize_status_key( (string) wp_unslash( $posted_data['current_status'] ) )
+            : '';
+        $actual_status  = $order->get_status();
+
+        if ( $actual_status !== $current_status ) {
+            return [
+                'error' => __( 'El estado del pedido cambio mientras lo estabas revisando. Actualiza la pagina e intentalo nuevamente.', 'sultana-admin' ),
+            ];
+        }
+
+        $new_status = isset( $posted_data['new_status'] )
+            ? $this->normalize_status_key( (string) wp_unslash( $posted_data['new_status'] ) )
+            : '';
+
+        if ( '' === $new_status || ! $this->status_is_registered( $new_status ) || ! in_array( $new_status, self::ALLOWED_STATUS_TARGETS, true ) ) {
+            return [
+                'error' => __( 'El estado seleccionado no es valido.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( $new_status === $actual_status ) {
+            return [
+                'error' => __( 'Selecciona un estado diferente al actual.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( ! in_array( $new_status, $this->allowed_next_statuses( $actual_status ), true ) ) {
+            return [
+                'error' => __( 'Esta transicion de estado no esta permitida en Sultana Admin.', 'sultana-admin' ),
+            ];
+        }
+
+        try {
+            $order->update_status( $new_status );
+        } catch ( Throwable $exception ) {
+            return [
+                'error' => __( 'No pudimos actualizar el estado del pedido.', 'sultana-admin' ),
+            ];
+        }
+
+        return [
+            'redirect_url' => add_query_arg( 'notice', 'order_status_updated', Router::order_url( $order_id ) ),
         ];
     }
 
@@ -264,8 +368,72 @@ class OrderService
         $order_id = $order->get_id();
 
         return current_user_can( 'edit_shop_order', $order_id )
-            || current_user_can( 'read_shop_order', $order_id )
-            || current_user_can( Capabilities::READ_ORDERS_CAPABILITY );
+            || current_user_can( 'read_shop_order', $order_id );
+    }
+
+    private function can_update_order_status( WC_Order $order ): bool
+    {
+        $order_id = $order->get_id();
+
+        return current_user_can( 'edit_shop_order', $order_id );
+    }
+
+    private function status_action_data( WC_Order $order ): array
+    {
+        $current_status = $order->get_status();
+        $next_statuses  = $this->allowed_next_statuses( $current_status );
+        $options        = [];
+
+        foreach ( $this->status_options() as $status => $label ) {
+            if ( in_array( $status, $next_statuses, true ) ) {
+                $options[ $status ] = $label;
+            }
+        }
+
+        return [
+            'can_update'     => $this->can_update_order_status( $order ),
+            'current_status' => $current_status,
+            'options'        => $options,
+            'nonce_action'   => $this->status_nonce_action( $order->get_id() ),
+        ];
+    }
+
+    private function allowed_next_statuses( string $current_status ): array
+    {
+        $transitions = [
+            'pending'    => [ 'on-hold', 'processing', 'cancelled' ],
+            'on-hold'    => [ 'processing', 'cancelled' ],
+            'processing' => [ 'completed', 'cancelled' ],
+        ];
+
+        return $transitions[ $current_status ] ?? [];
+    }
+
+    private function status_is_registered( string $status ): bool
+    {
+        return isset( $this->status_options()[ $status ] );
+    }
+
+    private function normalize_status_key( string $status ): string
+    {
+        $status = sanitize_key( $status );
+        $status = preg_replace( '/^wc-/', '', $status );
+
+        return is_string( $status ) ? $status : '';
+    }
+
+    private function status_nonce_action( int $order_id ): string
+    {
+        return 'sultana_admin_update_order_status_' . absint( $order_id );
+    }
+
+    private function notice_from_request(): string
+    {
+        $notice = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
+
+        return 'order_status_updated' === $notice
+            ? __( 'Estado del pedido actualizado correctamente.', 'sultana-admin' )
+            : '';
     }
 
     private function customer_data( WC_Order $order ): array
@@ -376,7 +544,7 @@ class OrderService
             $label = isset( $meta->display_key ) ? wp_strip_all_tags( (string) $meta->display_key ) : '';
             $value = isset( $meta->display_value ) ? wp_strip_all_tags( (string) $meta->display_value ) : '';
 
-            if ( '' === $label || '' === $value || str_starts_with( $key, '_' ) || $this->is_internal_meta_key( $key ) ) {
+            if ( '' === $label || '' === $value || ! $this->shipping_meta_is_allowed( $key, $label ) ) {
                 continue;
             }
 
@@ -553,6 +721,17 @@ class OrderService
                 ],
                 true
             );
+    }
+
+    private function shipping_meta_is_allowed( string $key, string $label ): bool
+    {
+        if ( str_starts_with( $key, '_' ) || $this->is_internal_meta_key( $key ) ) {
+            return false;
+        }
+
+        $normalized_label = strtolower( remove_accents( trim( $label ) ) );
+
+        return in_array( $normalized_label, self::ALLOWED_SHIPPING_META_LABELS, true );
     }
 
     private function format_money( $amount, WC_Order $order ): string

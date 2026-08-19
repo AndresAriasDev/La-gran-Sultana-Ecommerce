@@ -21,6 +21,10 @@ class Capabilities
     public const UPLOAD_FILES_CAPABILITY = 'upload_files';
     public const ASSIGN_PRODUCT_TERMS_CAPABILITY = 'assign_product_terms';
     public const READ_ORDERS_CAPABILITY = 'edit_shop_orders';
+    public const EDIT_OTHERS_ORDERS_CAPABILITY = 'edit_others_shop_orders';
+    public const EDIT_PRIVATE_ORDERS_CAPABILITY = 'edit_private_shop_orders';
+    public const EDIT_PUBLISHED_ORDERS_CAPABILITY = 'edit_published_shop_orders';
+    public const READ_PRIVATE_ORDERS_CAPABILITY = 'read_private_shop_orders';
 
     public static function activate(): void
     {
@@ -43,6 +47,10 @@ class Capabilities
             self::UPLOAD_FILES_CAPABILITY => true,
             self::ASSIGN_PRODUCT_TERMS_CAPABILITY => true,
             self::READ_ORDERS_CAPABILITY => true,
+            self::EDIT_OTHERS_ORDERS_CAPABILITY => true,
+            self::EDIT_PRIVATE_ORDERS_CAPABILITY => true,
+            self::EDIT_PUBLISHED_ORDERS_CAPABILITY => true,
+            self::READ_PRIVATE_ORDERS_CAPABILITY => true,
         ];
 
         $role = get_role( self::ROLE );

@@ -39,6 +39,9 @@ $payment  = $order['payment'] ?? [];
 $shipping = $order['shipping'] ?? [];
 $totals   = $order['totals'] ?? [];
 $gift     = $order['gift'] ?? [ 'is_gift' => false ];
+$status_action = $screen_data['status_action'] ?? [];
+$status_error  = $screen_data['status_error'] ?? '';
+$notice        = $screen_data['notice'] ?? '';
 
 ?>
 <section class="sultana-admin-order-view" aria-labelledby="sultana-admin-order-view-title">
@@ -58,6 +61,54 @@ $gift     = $order['gift'] ?? [ 'is_gift' => false ];
         </div>
         <a class="sultana-admin-muted-action" href="<?php echo esc_url( $back_url ); ?>"><?php esc_html_e( 'Volver a pedidos', 'sultana-admin' ); ?></a>
     </div>
+
+    <?php if ( '' !== $notice ) : ?>
+        <div class="sultana-admin-notice" role="status"><?php echo esc_html( $notice ); ?></div>
+    <?php endif; ?>
+
+    <?php if ( '' !== $status_error ) : ?>
+        <div class="sultana-admin-error-list" role="alert">
+            <strong><?php esc_html_e( 'No se pudo actualizar el estado', 'sultana-admin' ); ?></strong>
+            <ul>
+                <li><?php echo esc_html( $status_error ); ?></li>
+            </ul>
+        </div>
+    <?php endif; ?>
+
+    <article class="sultana-admin-detail-panel sultana-admin-status-manager">
+        <h2><?php esc_html_e( 'Estado del pedido', 'sultana-admin' ); ?></h2>
+        <dl class="sultana-admin-detail-list">
+            <div>
+                <dt><?php esc_html_e( 'Estado actual', 'sultana-admin' ); ?></dt>
+                <dd>
+                    <span class="sultana-admin-status-pill sultana-admin-status-pill--<?php echo esc_attr( sanitize_html_class( $summary['status'] ?? '' ) ); ?>">
+                        <?php echo esc_html( $summary['status_label'] ?? '' ); ?>
+                    </span>
+                </dd>
+            </div>
+        </dl>
+
+        <?php if ( ! empty( $status_action['can_update'] ) && ! empty( $status_action['options'] ) ) : ?>
+            <form class="sultana-admin-status-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::order_url( absint( $order['id'] ?? 0 ) ) ); ?>">
+                <input type="hidden" name="sultana_admin_order_status_action" value="update_status">
+                <input type="hidden" name="order_id" value="<?php echo esc_attr( absint( $order['id'] ?? 0 ) ); ?>">
+                <input type="hidden" name="current_status" value="<?php echo esc_attr( $status_action['current_status'] ?? '' ); ?>">
+                <?php wp_nonce_field( $status_action['nonce_action'] ?? '', \Sultana\Admin\Orders\OrderController::STATUS_NONCE_FIELD ); ?>
+
+                <label for="sultana-admin-new-order-status"><?php esc_html_e( 'Nuevo estado', 'sultana-admin' ); ?></label>
+                <div class="sultana-admin-status-form__controls">
+                    <select id="sultana-admin-new-order-status" name="new_status" required>
+                        <?php foreach ( $status_action['options'] as $status_key => $status_label ) : ?>
+                            <option value="<?php echo esc_attr( $status_key ); ?>"><?php echo esc_html( $status_label ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="submit"><?php esc_html_e( 'Actualizar estado', 'sultana-admin' ); ?></button>
+                </div>
+            </form>
+        <?php else : ?>
+            <p><?php esc_html_e( 'No hay cambios de estado disponibles desde Sultana Admin para este pedido.', 'sultana-admin' ); ?></p>
+        <?php endif; ?>
+    </article>
 
     <div class="sultana-admin-order-detail-grid">
         <article class="sultana-admin-detail-panel">

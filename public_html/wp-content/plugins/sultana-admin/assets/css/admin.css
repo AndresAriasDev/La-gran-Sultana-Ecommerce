@@ -724,6 +724,36 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     font-weight: 700;
 }
 
+.sultana-admin-status-manager {
+    align-items: start;
+}
+
+.sultana-admin-status-form {
+    display: grid;
+    gap: 10px;
+    width: min(100%, 520px);
+}
+
+.sultana-admin-status-form label {
+    font-weight: 800;
+}
+
+.sultana-admin-status-form__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.sultana-admin-status-form select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #b9c2cf;
+    border-radius: 6px;
+    background: #ffffff;
+    padding: 10px 12px;
+    font: inherit;
+}
+
 .sultana-admin-pagination {
     display: flex;
     align-items: center;
@@ -1363,6 +1393,15 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-order-line__main {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .sultana-admin-status-form,
+    .sultana-admin-status-form button {
+        width: 100%;
+    }
+
+    .sultana-admin-status-form__controls {
+        grid-template-columns: 1fr;
     }
 
     .sultana-admin-card {

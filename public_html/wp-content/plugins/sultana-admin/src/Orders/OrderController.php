@@ -10,12 +10,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OrderController
 {
+    public const STATUS_NONCE_FIELD = 'sultana_admin_order_status_nonce';
+
     public static function prepare_list_screen(): array
     {
         $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
         $search = trim( $search );
+        $search = substr( $search, 0, 120 );
         $page   = isset( $_GET['order_page'] ) ? absint( wp_unslash( $_GET['order_page'] ) ) : 1;
-        $page   = max( 1, $page );
+        $page   = max( 1, min( 500, $page ) );
 
         $service        = new OrderService();
         $status_options = $service->status_options();
@@ -55,8 +58,29 @@ class OrderController
         }
 
         $service = new OrderService();
+        $result  = [];
 
-        return $service->order_detail( $order_id );
+        if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
+            $result = $service->handle_status_update( $order_id, $_POST );
+
+            if ( ! empty( $result['redirect_url'] ) ) {
+                wp_safe_redirect( $result['redirect_url'] );
+                exit;
+            }
+        }
+
+        $screen = $service->order_detail( $order_id );
+
+        if ( ! empty( $result['error'] ) ) {
+            $screen['status_error'] = $result['error'];
+        }
+
+        if ( ! empty( $result['forbidden'] ) ) {
+            $screen['forbidden'] = true;
+            $screen['message']   = $result['error'] ?? __( 'No tienes permisos para cambiar este pedido.', 'sultana-admin' );
+        }
+
+        return $screen;
     }
 
     private static function requested_status( array $status_options ): string
