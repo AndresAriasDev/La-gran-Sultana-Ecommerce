@@ -116,8 +116,18 @@ function variedadesexpress_is_cart_experience(): bool
     return has_block( 'woocommerce/cart', $post ) || has_shortcode( $post->post_content, 'woocommerce_cart' );
 }
 
+function variedadesexpress_is_sultana_admin_request(): bool
+{
+    return class_exists( '\Sultana\Admin\Core\Router' )
+        && \Sultana\Admin\Core\Router::is_admin_request();
+}
+
 function variedadesexpress_enqueue_assets(): void
 {
+    if ( variedadesexpress_is_sultana_admin_request() ) {
+        return;
+    }
+
     $is_product_search = is_search() && 'product' === get_query_var( 'post_type' );
     $is_product_listing = is_page( 'tienda' )
         || ( function_exists( 'is_shop' ) && is_shop() )
@@ -247,6 +257,10 @@ add_action( 'wp_enqueue_scripts', 'variedadesexpress_enqueue_assets' );
 
 function variedadesexpress_dequeue_home_wc_blocks_style(): void
 {
+    if ( variedadesexpress_is_sultana_admin_request() ) {
+        return;
+    }
+
     if ( ! is_front_page() ) {
         return;
     }
@@ -278,6 +292,10 @@ function variedadesexpress_is_password_reset_route(): bool
 
 function variedadesexpress_google_tag_manager_head(): void
 {
+    if ( variedadesexpress_is_sultana_admin_request() ) {
+        return;
+    }
+
     if ( variedadesexpress_is_password_reset_route() || ! function_exists( 'sultana_storefront_store_gtm_id' ) ) {
         return;
     }
@@ -303,6 +321,10 @@ add_action( 'wp_head', 'variedadesexpress_google_tag_manager_head', 1 );
 
 function variedadesexpress_google_analytics_head(): void
 {
+    if ( variedadesexpress_is_sultana_admin_request() ) {
+        return;
+    }
+
     if ( variedadesexpress_is_password_reset_route() || ! function_exists( 'sultana_storefront_store_ga4_id' ) ) {
         return;
     }
@@ -330,6 +352,10 @@ add_action( 'wp_head', 'variedadesexpress_google_analytics_head', 2 );
 
 function variedadesexpress_google_tag_manager_body(): void
 {
+    if ( variedadesexpress_is_sultana_admin_request() ) {
+        return;
+    }
+
     if ( variedadesexpress_is_password_reset_route() || ! function_exists( 'sultana_storefront_store_gtm_id' ) ) {
         return;
     }

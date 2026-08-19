@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -38,7 +39,7 @@ class Router
     {
         $route = self::current_route();
 
-        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view' ], true ) ) {
+        if ( ! self::is_valid_route( $route ) ) {
             return;
         }
 
@@ -125,11 +126,21 @@ class Router
         return home_url( '/gestion/pedidos/' . absint( $order_id ) . '/' );
     }
 
+    public static function is_admin_request(): bool
+    {
+        return self::is_valid_route( self::current_route() );
+    }
+
     private static function current_route(): string
     {
         $route = get_query_var( self::QUERY_VAR );
 
         return is_string( $route ) ? sanitize_key( $route ) : '';
+    }
+
+    private static function is_valid_route( string $route ): bool
+    {
+        return in_array( $route, self::ROUTES, true );
     }
 
     private static function render_admin_screen( string $route ): void

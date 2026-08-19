@@ -10,6 +10,52 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Assets
 {
+    private const FRONTEND_STYLE_HANDLES = [
+        'sultana-storefront-tokens',
+        'sultana-storefront-reset',
+        'sultana-storefront-global',
+        'sultana-storefront-forms',
+        'sultana-storefront-buttons',
+        'sultana-storefront-header',
+        'sultana-storefront-footer',
+        'sultana-storefront-cards',
+        'sultana-storefront-woocommerce',
+        'sultana-storefront-home',
+        'sultana-storefront-responsive',
+        'sultana-storefront-shop',
+        'sultana-storefront-single-product',
+        'sultana-storefront-cart',
+        'sultana-storefront-checkout',
+        'sultana-storefront-account',
+        'sultana-storefront-account-dashboard',
+        'sultana-storefront-account-orders',
+        'sultana-storefront-account-coupons',
+        'sultana-storefront-wishlist',
+        'woocommerce-layout',
+        'woocommerce-smallscreen',
+        'woocommerce-general',
+        'wc-blocks-style',
+    ];
+
+    private const FRONTEND_SCRIPT_HANDLES = [
+        'sultana-storefront-header',
+        'sultana-storefront-toast',
+        'sultana-storefront-account-modal',
+        'sultana-storefront-home',
+        'sultana-storefront-shop',
+        'sultana-storefront-single-product',
+        'sultana-storefront-cart',
+        'sultana-storefront-checkout',
+        'sultana-storefront-account',
+        'wc-add-to-cart',
+        'woocommerce',
+        'jquery-blockui',
+        'js-cookie',
+        'wc-cart-fragments',
+        'sourcebuster-js',
+        'wc-order-attribution',
+    ];
+
     public static function enqueue( string $route = '', array $screen_data = [] ): void
     {
         $css_path = SULTANA_ADMIN_PATH . 'assets/css/admin.css';
@@ -137,6 +183,21 @@ class Assets
                 ],
             ]
         );
+    }
+
+    public static function dequeue_frontend_assets(): void
+    {
+        if ( ! Router::is_admin_request() ) {
+            return;
+        }
+
+        foreach ( self::FRONTEND_STYLE_HANDLES as $handle ) {
+            wp_dequeue_style( $handle );
+        }
+
+        foreach ( self::FRONTEND_SCRIPT_HANDLES as $handle ) {
+            wp_dequeue_script( $handle );
+        }
     }
 
     private static function screen_product_type( string $route, array $screen_data ): string
