@@ -124,7 +124,7 @@ class ProductController
                 $result = $service->update_simple_product( $product_id, $form );
 
                 if ( $result['success'] ) {
-                    wp_safe_redirect( add_query_arg( 'notice', 'product_updated', Router::edit_product_url( $product_id ) ) );
+                    wp_safe_redirect( add_query_arg( 'notice', 'product_updated', Router::products_url() ) );
                     exit;
                 }
 
@@ -229,6 +229,10 @@ class ProductController
 
         if ( 'product_created' === $notice ) {
             return __( 'Producto creado correctamente.', 'sultana-admin' );
+        }
+
+        if ( 'product_updated' === $notice ) {
+            return __( 'Producto actualizado correctamente.', 'sultana-admin' );
         }
 
         return '';
