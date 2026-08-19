@@ -68,7 +68,8 @@
         return {
             id: parseInt(image.id, 10) || 0,
             url: image.url || '',
-            name: image.name || ''
+            name: image.name || '',
+            temporary: Boolean(image.temporary)
         };
     }
 
@@ -118,13 +119,20 @@
     }
 
     function removeImage(imageId) {
+        const removed = images.find(function (image) {
+            return image.id === imageId;
+        });
+
         images = images.filter(function (image) {
             return image.id !== imageId;
         });
 
         render();
         syncIds();
-        deleteTemporaryImage(imageId);
+
+        if (removed && removed.temporary) {
+            deleteTemporaryImage(imageId);
+        }
     }
 
     function deleteTemporaryImage(imageId) {

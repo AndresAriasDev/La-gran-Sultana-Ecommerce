@@ -192,6 +192,105 @@ class ProductService
         ];
     }
 
+    public function get_product( int $product_id )
+    {
+        if ( $product_id <= 0 ) {
+            return null;
+        }
+
+        $product = wc_get_product( $product_id );
+
+        return $product instanceof WC_Product ? $product : null;
+    }
+
+    public function product_form_data( WC_Product $product ): array
+    {
+        $image_service = new ProductImageService();
+        $image_ids     = $image_service->product_image_ids( $product->get_id() );
+        $status        = $product->get_status();
+
+        return [
+            'name'              => $product->get_name( 'edit' ),
+            'regular_price'     => $product->get_regular_price( 'edit' ),
+            'sale_price'        => $product->get_sale_price( 'edit' ),
+            'sku'               => $product->get_sku( 'edit' ),
+            'short_description' => $product->get_short_description( 'edit' ),
+            'category_ids'      => array_map( 'absint', $product->get_category_ids( 'edit' ) ),
+            'brand_id'          => $this->product_brand_id( $product->get_id() ),
+            'stock_quantity'    => null !== $product->get_stock_quantity( 'edit' ) ? (string) $product->get_stock_quantity( 'edit' ) : '0',
+            'product_image_ids' => implode( ',', $image_ids ),
+            'status'            => in_array( $status, [ 'draft', 'publish' ], true ) ? $status : 'draft',
+        ];
+    }
+
+    public function update_simple_product( int $product_id, array $data ): array
+    {
+        $product = $this->get_product( $product_id );
+
+        if ( ! $product ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'El producto no existe.', 'sultana-admin' ) ],
+            ];
+        }
+
+        if ( 'simple' !== $product->get_type() || ! ( $product instanceof WC_Product_Simple ) ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'Ese tipo de producto todavia no puede editarse desde Sultana Admin.', 'sultana-admin' ) ],
+            ];
+        }
+
+        if ( ! current_user_can( 'edit_product', $product_id ) ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'No tienes permisos para editar este producto.', 'sultana-admin' ) ],
+            ];
+        }
+
+        $validated = $this->validate_simple_product_data( $data, $product_id );
+
+        if ( ! empty( $validated['errors'] ) ) {
+            return [
+                'success' => false,
+                'errors'  => $validated['errors'],
+            ];
+        }
+
+        try {
+            $this->apply_simple_product_data( $product, $validated['data'] );
+            $product->save();
+
+            if ( ! empty( $validated['data']['brand_taxonomy'] ) ) {
+                $brand_result = wp_set_object_terms(
+                    $product_id,
+                    ! empty( $validated['data']['brand_id'] ) ? [ $validated['data']['brand_id'] ] : [],
+                    $validated['data']['brand_taxonomy'],
+                    false
+                );
+
+                if ( is_wp_error( $brand_result ) ) {
+                    throw new \RuntimeException( 'brand_assignment_failed' );
+                }
+            }
+
+            if ( ! empty( $validated['data']['product_image_ids'] ) ) {
+                ( new ProductImageService() )->release_temporary_images( $validated['data']['product_image_ids'] );
+            }
+        } catch ( Throwable $exception ) {
+            return [
+                'success' => false,
+                'errors'  => [ $this->friendly_product_error( $exception ) ],
+            ];
+        }
+
+        return [
+            'success'    => true,
+            'errors'     => [],
+            'product_id' => $product_id,
+        ];
+    }
+
     public function list_products( array $args ): array
     {
         $search   = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
@@ -265,7 +364,51 @@ class ProductService
         return [ $products, $total + 1 ];
     }
 
-    private function validate_simple_product_data( array $data ): array
+    private function apply_simple_product_data( WC_Product_Simple $product, array $data ): void
+    {
+        $image_ids   = $data['product_image_ids'];
+        $image_id    = $image_ids[0] ?? 0;
+        $gallery_ids = array_slice( $image_ids, 1 );
+
+        $product->set_name( $data['name'] );
+        $product->set_regular_price( $data['regular_price'] );
+        $product->set_sale_price( $data['sale_price'] );
+        $product->set_sku( $data['sku'] );
+        $product->set_short_description( $data['short_description'] );
+        $product->set_description( '' );
+        $product->set_category_ids( $data['category_ids'] );
+        $product->set_manage_stock( true );
+        $product->set_stock_quantity( $data['stock_quantity'] );
+        $product->set_stock_status( $data['stock_quantity'] > 0 ? 'instock' : 'outofstock' );
+        $product->set_status( $data['status'] );
+        $product->set_image_id( $image_id );
+        $product->set_gallery_image_ids( $gallery_ids );
+    }
+
+    private function product_brand_id( int $product_id ): int
+    {
+        $taxonomy = $this->get_brand_taxonomy();
+
+        if ( '' === $taxonomy ) {
+            return 0;
+        }
+
+        $terms = wp_get_object_terms(
+            $product_id,
+            $taxonomy,
+            [
+                'fields' => 'ids',
+            ]
+        );
+
+        if ( is_wp_error( $terms ) || empty( $terms ) ) {
+            return 0;
+        }
+
+        return absint( $terms[0] );
+    }
+
+    private function validate_simple_product_data( array $data, int $existing_product_id = 0 ): array
     {
         $errors = [];
         $clean  = $this->default_simple_product_data();
@@ -300,14 +443,16 @@ class ProductService
 
         $clean['sku'] = trim( wc_clean( (string) ( $data['sku'] ?? '' ) ) );
 
-        if ( '' !== $clean['sku'] && wc_get_product_id_by_sku( $clean['sku'] ) ) {
+        $sku_product_id = '' !== $clean['sku'] ? absint( wc_get_product_id_by_sku( $clean['sku'] ) ) : 0;
+
+        if ( $sku_product_id && $sku_product_id !== $existing_product_id ) {
             $errors[] = __( 'Ese SKU ya esta siendo utilizado.', 'sultana-admin' );
         }
 
         $clean['short_description'] = wp_kses_post( (string) ( $data['short_description'] ?? '' ) );
         $clean['category_ids']      = $this->validate_category_ids( $data['category_ids'] ?? [], $errors );
         $clean['brand_id']          = absint( $data['brand_id'] ?? 0 );
-        $clean['brand_taxonomy']    = '';
+        $clean['brand_taxonomy']    = $this->get_brand_taxonomy();
         $clean['status']            = sanitize_key( (string) ( $data['status'] ?? 'draft' ) );
 
         if ( ! in_array( $clean['status'], [ 'draft', 'publish' ], true ) ) {
@@ -328,7 +473,7 @@ class ProductService
             $clean['stock_quantity'] = $stock_quantity;
         }
 
-        $image_ids = ( new ProductImageService() )->validate_temporary_image_ids( $data['product_image_ids'] ?? '' );
+        $image_ids = ( new ProductImageService() )->validate_product_image_ids( $data['product_image_ids'] ?? '', $existing_product_id );
 
         if ( is_wp_error( $image_ids ) ) {
             $errors[] = $image_ids->get_error_message();
@@ -345,7 +490,7 @@ class ProductService
                 ];
             }
 
-            $brand_taxonomy = $this->get_brand_taxonomy();
+            $brand_taxonomy = $clean['brand_taxonomy'];
 
             if ( '' === $brand_taxonomy ) {
                 $errors[] = __( 'La marca seleccionada no esta disponible.', 'sultana-admin' );
@@ -463,10 +608,12 @@ class ProductService
             'image_url' => is_string( $image_url ) ? $image_url : '',
             'name'      => $product->get_name(),
             'sku'       => $product->get_sku(),
+            'type_key'  => $product->get_type(),
             'type'      => $this->type_label( $product->get_type() ),
             'price'     => $product->get_price_html(),
             'stock'     => $stock_text,
             'status'    => $this->status_label( $product->get_status() ),
+            'can_edit'  => 'simple' === $product->get_type() && current_user_can( 'edit_product', $product->get_id() ),
         ];
     }
 

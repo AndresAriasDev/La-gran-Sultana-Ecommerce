@@ -22,7 +22,7 @@ class Assets
             $version
         );
 
-        if ( 'product_new' !== $route ) {
+        if ( ! in_array( $route, [ 'product_new', 'product_edit' ], true ) ) {
             return;
         }
 

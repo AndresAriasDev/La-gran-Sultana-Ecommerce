@@ -18,6 +18,7 @@ class Router
         add_rewrite_rule( '^gestion/login/?$', 'index.php?' . self::QUERY_VAR . '=login', 'top' );
         add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
+        add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
     }
@@ -25,6 +26,7 @@ class Router
     public static function register_query_vars( array $vars ): array
     {
         $vars[] = self::QUERY_VAR;
+        $vars[] = 'sultana_admin_product_id';
 
         return $vars;
     }
@@ -33,7 +35,7 @@ class Router
     {
         $route = self::current_route();
 
-        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'orders' ], true ) ) {
+        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders' ], true ) ) {
             return;
         }
 
@@ -62,6 +64,11 @@ class Router
         }
 
         if ( 'product_new' === $route && ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( 'product_edit' === $route && ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -95,6 +102,11 @@ class Router
         return home_url( '/gestion/productos/nuevo/' );
     }
 
+    public static function edit_product_url( int $product_id ): string
+    {
+        return home_url( '/gestion/productos/' . absint( $product_id ) . '/' );
+    }
+
     public static function orders_url(): string
     {
         return home_url( '/gestion/pedidos/' );
@@ -109,16 +121,23 @@ class Router
 
     private static function render_admin_screen( string $route ): void
     {
-        status_header( 200 );
         nocache_headers();
         Assets::enqueue( $route );
 
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
-        $active_route = 'product_new' === $route ? 'products' : $route;
+        $active_route = in_array( $route, [ 'product_new', 'product_edit' ], true ) ? 'products' : $route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
+
+        if ( ! empty( $screen_data['not_found'] ) ) {
+            status_header( 404 );
+        } elseif ( ! empty( $screen_data['forbidden'] ) ) {
+            status_header( 403 );
+        } else {
+            status_header( 200 );
+        }
 
         require SULTANA_ADMIN_PATH . 'templates/layout.php';
     }
@@ -156,6 +175,10 @@ class Router
                 'title'    => __( 'Nuevo producto', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/product-new.php',
             ],
+            'product_edit' => [
+                'title'    => __( 'Editar producto', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/product-new.php',
+            ],
             'orders'    => [
                 'title'    => __( 'Pedidos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/orders.php',
@@ -175,7 +198,16 @@ class Router
             return ProductController::prepare_create_screen();
         }
 
+        if ( 'product_edit' === $route ) {
+            return ProductController::prepare_edit_screen( self::current_product_id() );
+        }
+
         return [];
+    }
+
+    private static function current_product_id(): int
+    {
+        return absint( get_query_var( 'sultana_admin_product_id' ) );
     }
 
     private static function handle_login_request(): void

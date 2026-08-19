@@ -12,6 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ProductController
 {
     public const CREATE_NONCE_ACTION = 'sultana_admin_create_simple_product';
+    public const UPDATE_NONCE_ACTION = 'sultana_admin_update_simple_product';
     public const IMAGE_UPLOAD_NONCE_ACTION = 'sultana_admin_product_image_upload';
     public const IMAGE_UPLOAD_ACTION = 'sultana_admin_upload_product_image';
     public const IMAGE_DELETE_ACTION = 'sultana_admin_delete_product_image';
@@ -75,6 +76,75 @@ class ProductController
             'brands'          => $service->get_product_brands(),
             'brand_taxonomy' => $service->get_brand_taxonomy(),
             'selected_images' => ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
+            'form_action'     => Router::new_product_url(),
+            'form_nonce_action' => self::CREATE_NONCE_ACTION,
+            'form_title'      => __( 'Nuevo producto', 'sultana-admin' ),
+            'form_kicker'     => __( 'Producto simple', 'sultana-admin' ),
+            'submit_label'    => __( 'Guardar producto', 'sultana-admin' ),
+            'notice'          => '',
+        ];
+    }
+
+    public static function prepare_edit_screen( int $product_id ): array
+    {
+        $service       = new ProductService();
+        $image_service = new ProductImageService();
+        $product       = $service->get_product( $product_id );
+        $errors        = [];
+
+        if ( ! $product ) {
+            return [
+                'not_found' => true,
+                'message'   => __( 'El producto no existe.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( ! current_user_can( 'edit_product', $product_id ) ) {
+            return [
+                'forbidden' => true,
+                'message'   => __( 'No tienes permisos para editar este producto.', 'sultana-admin' ),
+            ];
+        }
+
+        if ( 'simple' !== $product->get_type() ) {
+            return [
+                'unsupported' => true,
+                'message'     => __( 'Ese tipo de producto todavia no puede editarse desde Sultana Admin.', 'sultana-admin' ),
+                'product'     => $product,
+            ];
+        }
+
+        $form = $service->product_form_data( $product );
+
+        if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
+            if ( ! self::verify_update_nonce() ) {
+                $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
+            } else {
+                $form   = self::posted_simple_product_data();
+                $result = $service->update_simple_product( $product_id, $form );
+
+                if ( $result['success'] ) {
+                    wp_safe_redirect( add_query_arg( 'notice', 'product_updated', Router::edit_product_url( $product_id ) ) );
+                    exit;
+                }
+
+                $errors = $result['errors'];
+            }
+        }
+
+        return [
+            'form'              => $form,
+            'errors'            => $errors,
+            'categories'        => $service->get_product_categories(),
+            'brands'            => $service->get_product_brands(),
+            'brand_taxonomy'    => $service->get_brand_taxonomy(),
+            'selected_images'   => $image_service->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
+            'form_action'       => Router::edit_product_url( $product_id ),
+            'form_nonce_action' => self::UPDATE_NONCE_ACTION,
+            'form_title'        => __( 'Editar producto', 'sultana-admin' ),
+            'form_kicker'       => __( 'Producto simple', 'sultana-admin' ),
+            'submit_label'      => __( 'Actualizar producto', 'sultana-admin' ),
+            'notice'            => self::edit_notice(),
         ];
     }
 
@@ -171,6 +241,26 @@ class ProductController
             : '';
 
         return wp_verify_nonce( $nonce, self::CREATE_NONCE_ACTION );
+    }
+
+    private static function verify_update_nonce(): bool
+    {
+        $nonce = isset( $_POST['sultana_admin_product_nonce'] )
+            ? sanitize_text_field( wp_unslash( $_POST['sultana_admin_product_nonce'] ) )
+            : '';
+
+        return wp_verify_nonce( $nonce, self::UPDATE_NONCE_ACTION );
+    }
+
+    private static function edit_notice(): string
+    {
+        $notice = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
+
+        if ( 'product_updated' === $notice ) {
+            return __( 'Producto actualizado correctamente.', 'sultana-admin' );
+        }
+
+        return '';
     }
 
     private static function posted_simple_product_data(): array

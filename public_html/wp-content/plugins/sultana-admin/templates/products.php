@@ -104,9 +104,15 @@ $notice      = $screen_data['notice'] ?? '';
                             <td><?php echo esc_html( $product['stock'] ); ?></td>
                             <td><?php echo esc_html( $product['status'] ); ?></td>
                             <td>
-                                <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                                    <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                                </button>
+                                <?php if ( ! empty( $product['can_edit'] ) ) : ?>
+                                    <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
+                                        <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
+                                        <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -142,9 +148,15 @@ $notice      = $screen_data['notice'] ?? '';
                             <dd><?php echo esc_html( $product['status'] ); ?></dd>
                         </div>
                     </dl>
-                    <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                        <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                    </button>
+                    <?php if ( ! empty( $product['can_edit'] ) ) : ?>
+                        <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
+                            <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
+                            <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                        </button>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>

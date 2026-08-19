@@ -43,7 +43,7 @@ class ProductImageService
 
         return [
             'success' => true,
-            'image'   => $this->format_image_item( $attachment_id ),
+            'image'   => $this->format_image_item( $attachment_id, true ),
         ];
     }
 
@@ -80,7 +80,13 @@ class ProductImageService
 
     public function validate_temporary_image_ids( $raw_ids )
     {
+        return $this->validate_product_image_ids( $raw_ids, 0 );
+    }
+
+    public function validate_product_image_ids( $raw_ids, int $product_id = 0 )
+    {
         $ids = $this->parse_image_ids( $raw_ids );
+        $existing_ids = $product_id ? $this->product_image_ids( $product_id ) : [];
 
         if ( ! empty( $ids ) && ! $this->can_manage_images() ) {
             return new WP_Error(
@@ -90,6 +96,10 @@ class ProductImageService
         }
 
         foreach ( $ids as $attachment_id ) {
+            if ( in_array( $attachment_id, $existing_ids, true ) && $this->is_valid_image_attachment( $attachment_id ) ) {
+                continue;
+            }
+
             if ( ! $this->is_current_user_temporary_image( $attachment_id ) ) {
                 return new WP_Error(
                     'sultana_admin_invalid_product_image',
@@ -103,16 +113,53 @@ class ProductImageService
 
     public function get_temporary_image_items( $raw_ids ): array
     {
+        return $this->get_product_image_items_for_form( $raw_ids, 0 );
+    }
+
+    public function get_product_image_items_for_form( $raw_ids, int $product_id = 0 ): array
+    {
         $ids   = $this->parse_image_ids( $raw_ids );
         $items = [];
+        $existing_ids = $product_id ? $this->product_image_ids( $product_id ) : [];
 
         foreach ( $ids as $attachment_id ) {
+            if ( in_array( $attachment_id, $existing_ids, true ) && $this->is_valid_image_attachment( $attachment_id ) ) {
+                $items[] = $this->format_image_item( $attachment_id, false );
+                continue;
+            }
+
             if ( $this->is_current_user_temporary_image( $attachment_id ) ) {
-                $items[] = $this->format_image_item( $attachment_id );
+                $items[] = $this->format_image_item( $attachment_id, true );
             }
         }
 
         return $items;
+    }
+
+    public function product_image_ids( int $product_id ): array
+    {
+        $product = wc_get_product( $product_id );
+
+        if ( ! $product ) {
+            return [];
+        }
+
+        $ids      = [];
+        $image_id = absint( $product->get_image_id() );
+
+        if ( $image_id ) {
+            $ids[] = $image_id;
+        }
+
+        foreach ( $product->get_gallery_image_ids() as $gallery_image_id ) {
+            $gallery_image_id = absint( $gallery_image_id );
+
+            if ( $gallery_image_id && ! in_array( $gallery_image_id, $ids, true ) ) {
+                $ids[] = $gallery_image_id;
+            }
+        }
+
+        return $ids;
     }
 
     public function release_temporary_images( array $attachment_ids ): void
@@ -159,9 +206,7 @@ class ProductImageService
 
     private function is_current_user_temporary_image( int $attachment_id ): bool
     {
-        $post = get_post( $attachment_id );
-
-        if ( ! $post || 'attachment' !== $post->post_type || ! wp_attachment_is_image( $attachment_id ) ) {
+        if ( ! $this->is_valid_image_attachment( $attachment_id ) ) {
             return false;
         }
 
@@ -204,7 +249,14 @@ class ProductImageService
         return absint( $attachment_id );
     }
 
-    private function format_image_item( int $attachment_id ): array
+    private function is_valid_image_attachment( int $attachment_id ): bool
+    {
+        $post = get_post( $attachment_id );
+
+        return $post && 'attachment' === $post->post_type && wp_attachment_is_image( $attachment_id );
+    }
+
+    private function format_image_item( int $attachment_id, bool $temporary ): array
     {
         $url = wp_get_attachment_image_url( $attachment_id, 'thumbnail' );
 
@@ -216,6 +268,7 @@ class ProductImageService
             'id'   => $attachment_id,
             'url'  => is_string( $url ) ? $url : '',
             'name' => get_the_title( $attachment_id ),
+            'temporary' => $temporary,
         ];
     }
 }

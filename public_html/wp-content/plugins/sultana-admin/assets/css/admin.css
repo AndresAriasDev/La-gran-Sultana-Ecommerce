@@ -466,8 +466,22 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 }
 
 .sultana-admin-text-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-height: 38px;
+    border: 0;
+    border-radius: 6px;
+    background: var(--sultana-admin-primary);
+    color: #ffffff;
+    font: inherit;
+    font-weight: 800;
     padding: 8px 12px;
+    text-decoration: none;
+}
+
+.sultana-admin-text-action:hover {
+    background: var(--sultana-admin-primary-dark);
 }
 
 .sultana-admin-product-cards {
@@ -884,7 +898,8 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         text-align: right;
     }
 
-    .sultana-admin-product-card button {
+    .sultana-admin-product-card button,
+    .sultana-admin-product-card .sultana-admin-text-action {
         width: 100%;
     }
 

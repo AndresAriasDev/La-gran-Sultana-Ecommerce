@@ -11,6 +11,8 @@ class Capabilities
     public const ROLE = 'gestor_tienda';
     public const ACCESS_CAPABILITY = 'sultana_admin_access';
     public const CREATE_PRODUCTS_CAPABILITY = 'edit_products';
+    public const EDIT_OTHERS_PRODUCTS_CAPABILITY = 'edit_others_products';
+    public const EDIT_PUBLISHED_PRODUCTS_CAPABILITY = 'edit_published_products';
     public const PUBLISH_PRODUCTS_CAPABILITY = 'publish_products';
     public const UPLOAD_FILES_CAPABILITY = 'upload_files';
     public const ASSIGN_PRODUCT_TERMS_CAPABILITY = 'assign_product_terms';
@@ -26,6 +28,8 @@ class Capabilities
             'read' => true,
             self::ACCESS_CAPABILITY => true,
             self::CREATE_PRODUCTS_CAPABILITY => true,
+            self::EDIT_OTHERS_PRODUCTS_CAPABILITY => true,
+            self::EDIT_PUBLISHED_PRODUCTS_CAPABILITY => true,
             self::PUBLISH_PRODUCTS_CAPABILITY => true,
             self::UPLOAD_FILES_CAPABILITY => true,
             self::ASSIGN_PRODUCT_TERMS_CAPABILITY => true,

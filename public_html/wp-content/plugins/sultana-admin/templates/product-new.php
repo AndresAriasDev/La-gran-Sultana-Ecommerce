@@ -6,12 +6,35 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+$message = $screen_data['message'] ?? '';
+
+if ( ! empty( $screen_data['not_found'] ) || ! empty( $screen_data['unsupported'] ) || ! empty( $screen_data['forbidden'] ) ) :
+    ?>
+    <section class="sultana-admin-product-form-screen">
+        <div class="sultana-admin-empty">
+            <h1><?php echo esc_html( $message ); ?></h1>
+            <p><?php esc_html_e( 'Vuelve al listado de productos para continuar.', 'sultana-admin' ); ?></p>
+            <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
+                <?php esc_html_e( 'Volver a productos', 'sultana-admin' ); ?>
+            </a>
+        </div>
+    </section>
+    <?php
+    return;
+endif;
+
 $form       = $screen_data['form'] ?? [];
 $errors     = $screen_data['errors'] ?? [];
 $categories = $screen_data['categories'] ?? [];
 $brands     = $screen_data['brands'] ?? [];
 $brand_taxonomy = $screen_data['brand_taxonomy'] ?? '';
 $selected_images = $screen_data['selected_images'] ?? [];
+$form_action = $screen_data['form_action'] ?? \Sultana\Admin\Core\Router::new_product_url();
+$form_nonce_action = $screen_data['form_nonce_action'] ?? ProductController::CREATE_NONCE_ACTION;
+$form_title = $screen_data['form_title'] ?? __( 'Nuevo producto', 'sultana-admin' );
+$form_kicker = $screen_data['form_kicker'] ?? __( 'Producto simple', 'sultana-admin' );
+$submit_label = $screen_data['submit_label'] ?? __( 'Guardar producto', 'sultana-admin' );
+$notice = $screen_data['notice'] ?? '';
 $selected_categories = array_map( 'absint', $form['category_ids'] ?? [] );
 $selected_brand = absint( $form['brand_id'] ?? 0 );
 $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
@@ -22,13 +45,19 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
 <section class="sultana-admin-product-form-screen" aria-labelledby="sultana-admin-product-new-title">
     <div class="sultana-admin-page-header">
         <div>
-            <p class="sultana-admin-kicker"><?php esc_html_e( 'Producto simple', 'sultana-admin' ); ?></p>
-            <h1 id="sultana-admin-product-new-title"><?php esc_html_e( 'Nuevo producto', 'sultana-admin' ); ?></h1>
+            <p class="sultana-admin-kicker"><?php echo esc_html( $form_kicker ); ?></p>
+            <h1 id="sultana-admin-product-new-title"><?php echo esc_html( $form_title ); ?></h1>
         </div>
         <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
             <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
         </a>
     </div>
+
+    <?php if ( '' !== $notice ) : ?>
+        <div class="sultana-admin-notice" role="status">
+            <?php echo esc_html( $notice ); ?>
+        </div>
+    <?php endif; ?>
 
     <?php if ( ! empty( $errors ) ) : ?>
         <div class="sultana-admin-error-list" role="alert">
@@ -41,8 +70,8 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
         </div>
     <?php endif; ?>
 
-    <form class="sultana-admin-product-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>" enctype="multipart/form-data">
-        <?php wp_nonce_field( ProductController::CREATE_NONCE_ACTION, 'sultana_admin_product_nonce' ); ?>
+    <form class="sultana-admin-product-form" method="post" action="<?php echo esc_url( $form_action ); ?>" enctype="multipart/form-data">
+        <?php wp_nonce_field( $form_nonce_action, 'sultana_admin_product_nonce' ); ?>
 
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-main">
             <h2 id="sultana-admin-product-main"><?php esc_html_e( 'Información principal', 'sultana-admin' ); ?></h2>
@@ -156,7 +185,7 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
             <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
                 <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
             </a>
-            <button type="submit"><?php esc_html_e( 'Guardar producto', 'sultana-admin' ); ?></button>
+            <button type="submit"><?php echo esc_html( $submit_label ); ?></button>
         </div>
     </form>
 </section>
