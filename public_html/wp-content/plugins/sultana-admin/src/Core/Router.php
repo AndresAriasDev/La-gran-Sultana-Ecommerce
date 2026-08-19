@@ -2,6 +2,7 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -69,6 +70,11 @@ class Router
         }
 
         if ( 'product_edit' === $route && ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( 'orders' === $route && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -200,6 +206,10 @@ class Router
 
         if ( 'product_edit' === $route ) {
             return ProductController::prepare_edit_screen( self::current_product_id() );
+        }
+
+        if ( 'orders' === $route ) {
+            return OrderController::prepare_list_screen();
         }
 
         return [];

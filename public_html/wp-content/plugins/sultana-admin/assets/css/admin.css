@@ -343,6 +343,7 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 .sultana-admin-search,
 .sultana-admin-notice,
 .sultana-admin-product-table-wrap,
+.sultana-admin-order-table-wrap,
 .sultana-admin-empty,
 .sultana-admin-pagination {
     background: var(--sultana-admin-surface);
@@ -384,6 +385,20 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     font: inherit;
 }
 
+.sultana-admin-order-filters__controls {
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 240px) auto;
+}
+
+.sultana-admin-order-filters select {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid #b9c2cf;
+    border-radius: 6px;
+    background: #ffffff;
+    padding: 10px 12px;
+    font: inherit;
+}
+
 .sultana-admin-list-summary {
     color: var(--sultana-admin-muted);
     font-weight: 700;
@@ -393,14 +408,21 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     overflow: hidden;
 }
 
-.sultana-admin-product-table {
+.sultana-admin-order-table-wrap {
+    overflow: hidden;
+}
+
+.sultana-admin-product-table,
+.sultana-admin-order-table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
 }
 
 .sultana-admin-product-table th,
-.sultana-admin-product-table td {
+.sultana-admin-product-table td,
+.sultana-admin-order-table th,
+.sultana-admin-order-table td {
     border-bottom: 1px solid var(--sultana-admin-border);
     padding: 12px;
     text-align: left;
@@ -408,7 +430,8 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     overflow-wrap: anywhere;
 }
 
-.sultana-admin-product-table th {
+.sultana-admin-product-table th,
+.sultana-admin-order-table th {
     background: var(--sultana-admin-surface-soft);
     color: var(--sultana-admin-muted);
     font-size: 13px;
@@ -431,6 +454,25 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 }
 
 .sultana-admin-product-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.sultana-admin-order-table th:nth-child(1),
+.sultana-admin-order-table td:nth-child(1) {
+    width: 96px;
+}
+
+.sultana-admin-order-table th:nth-child(2),
+.sultana-admin-order-table td:nth-child(2) {
+    width: 18%;
+}
+
+.sultana-admin-order-table th:nth-child(8),
+.sultana-admin-order-table td:nth-child(8) {
+    width: 122px;
+}
+
+.sultana-admin-order-table tbody tr:last-child td {
     border-bottom: 0;
 }
 
@@ -484,6 +526,25 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     background: var(--sultana-admin-primary-dark);
 }
 
+.sultana-admin-text-action[disabled],
+.sultana-admin-text-action[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.sultana-admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 999px;
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-text);
+    font-size: 13px;
+    font-weight: 900;
+    padding: 4px 10px;
+}
+
 .sultana-admin-row-actions,
 .sultana-admin-card-actions {
     display: flex;
@@ -509,6 +570,10 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 }
 
 .sultana-admin-product-cards {
+    display: none;
+}
+
+.sultana-admin-order-cards {
     display: none;
 }
 
@@ -997,7 +1062,8 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         grid-template-columns: 1fr;
     }
 
-    .sultana-admin-product-table-wrap {
+    .sultana-admin-product-table-wrap,
+    .sultana-admin-order-table-wrap {
         display: none;
     }
 
@@ -1066,6 +1132,67 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-product-card button,
     .sultana-admin-product-card .sultana-admin-text-action,
     .sultana-admin-card-actions form {
+        width: 100%;
+    }
+
+    .sultana-admin-order-cards {
+        display: grid;
+        gap: 12px;
+    }
+
+    .sultana-admin-order-card {
+        display: grid;
+        gap: 14px;
+        background: var(--sultana-admin-surface);
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: 8px;
+        box-shadow: var(--sultana-admin-shadow);
+        padding: 14px;
+    }
+
+    .sultana-admin-order-card__header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+    }
+
+    .sultana-admin-order-card h2 {
+        margin: 0;
+        font-size: 18px;
+        line-height: 1.25;
+    }
+
+    .sultana-admin-order-card p {
+        margin-top: 3px;
+        overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-order-card dl {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .sultana-admin-order-card dl div {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--sultana-admin-border);
+        padding-top: 8px;
+    }
+
+    .sultana-admin-order-card dt {
+        color: var(--sultana-admin-muted);
+        font-weight: 800;
+    }
+
+    .sultana-admin-order-card dd {
+        margin: 0;
+        text-align: right;
+    }
+
+    .sultana-admin-order-card .sultana-admin-text-action {
         width: 100%;
     }
 

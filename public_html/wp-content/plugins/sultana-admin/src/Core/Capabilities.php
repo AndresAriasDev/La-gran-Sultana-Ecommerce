@@ -20,6 +20,7 @@ class Capabilities
     public const PUBLISH_PRODUCTS_CAPABILITY = 'publish_products';
     public const UPLOAD_FILES_CAPABILITY = 'upload_files';
     public const ASSIGN_PRODUCT_TERMS_CAPABILITY = 'assign_product_terms';
+    public const READ_ORDERS_CAPABILITY = 'edit_shop_orders';
 
     public static function activate(): void
     {
@@ -41,6 +42,7 @@ class Capabilities
             self::PUBLISH_PRODUCTS_CAPABILITY => true,
             self::UPLOAD_FILES_CAPABILITY => true,
             self::ASSIGN_PRODUCT_TERMS_CAPABILITY => true,
+            self::READ_ORDERS_CAPABILITY => true,
         ];
 
         $role = get_role( self::ROLE );
