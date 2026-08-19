@@ -21,6 +21,7 @@ class Router
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
+        add_rewrite_rule( '^gestion/pedidos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=order_view&sultana_admin_order_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
     }
 
@@ -28,6 +29,7 @@ class Router
     {
         $vars[] = self::QUERY_VAR;
         $vars[] = 'sultana_admin_product_id';
+        $vars[] = 'sultana_admin_order_id';
 
         return $vars;
     }
@@ -36,7 +38,7 @@ class Router
     {
         $route = self::current_route();
 
-        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders' ], true ) ) {
+        if ( ! in_array( $route, [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view' ], true ) ) {
             return;
         }
 
@@ -74,7 +76,7 @@ class Router
             exit;
         }
 
-        if ( 'orders' === $route && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
+        if ( in_array( $route, [ 'orders', 'order_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -118,6 +120,11 @@ class Router
         return home_url( '/gestion/pedidos/' );
     }
 
+    public static function order_url( int $order_id ): string
+    {
+        return home_url( '/gestion/pedidos/' . absint( $order_id ) . '/' );
+    }
+
     private static function current_route(): string
     {
         $route = get_query_var( self::QUERY_VAR );
@@ -133,6 +140,7 @@ class Router
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
         $active_route = in_array( $route, [ 'product_new', 'product_edit' ], true ) ? 'products' : $route;
+        $active_route = 'order_view' === $active_route ? 'orders' : $active_route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
@@ -189,6 +197,10 @@ class Router
                 'title'    => __( 'Pedidos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/orders.php',
             ],
+            'order_view' => [
+                'title'    => __( 'Ver pedido', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/order-view.php',
+            ],
         ];
 
         return $screens[ $route ] ?? $screens['dashboard'];
@@ -212,12 +224,21 @@ class Router
             return OrderController::prepare_list_screen();
         }
 
+        if ( 'order_view' === $route ) {
+            return OrderController::prepare_view_screen( self::current_order_id() );
+        }
+
         return [];
     }
 
     private static function current_product_id(): int
     {
         return absint( get_query_var( 'sultana_admin_product_id' ) );
+    }
+
+    private static function current_order_id(): int
+    {
+        return absint( get_query_var( 'sultana_admin_order_id' ) );
     }
 
     private static function handle_login_request(): void

@@ -45,6 +45,20 @@ class OrderController
         ];
     }
 
+    public static function prepare_view_screen( int $order_id ): array
+    {
+        if ( $order_id <= 0 ) {
+            return [
+                'not_found' => true,
+                'message'   => __( 'Pedido no encontrado.', 'sultana-admin' ),
+            ];
+        }
+
+        $service = new OrderService();
+
+        return $service->order_detail( $order_id );
+    }
+
     private static function requested_status( array $status_options ): string
     {
         $status = isset( $_GET['status'] ) ? sanitize_key( wp_unslash( $_GET['status'] ) ) : '';

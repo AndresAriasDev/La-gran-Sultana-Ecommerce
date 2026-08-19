@@ -102,9 +102,15 @@ $has_filters    = ! empty( $screen_data['has_filters'] );
                             <td><?php echo esc_html( $order['payment_method'] ); ?></td>
                             <td><?php echo esc_html( $order['shipping_method'] ); ?></td>
                             <td>
-                                <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                                    <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
-                                </button>
+                                <?php if ( ! empty( $order['can_view'] ) ) : ?>
+                                    <a class="sultana-admin-text-action" href="<?php echo esc_url( $order['view_url'] ); ?>">
+                                        <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
+                                    </a>
+                                <?php else : ?>
+                                    <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
+                                        <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -142,9 +148,15 @@ $has_filters    = ! empty( $screen_data['has_filters'] );
                             <dd><?php echo esc_html( $order['shipping_method'] ); ?></dd>
                         </div>
                     </dl>
-                    <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                        <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
-                    </button>
+                    <?php if ( ! empty( $order['can_view'] ) ) : ?>
+                        <a class="sultana-admin-text-action" href="<?php echo esc_url( $order['view_url'] ); ?>">
+                            <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
+                        </a>
+                    <?php else : ?>
+                        <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
+                            <?php esc_html_e( 'Ver pedido', 'sultana-admin' ); ?>
+                        </button>
+                    <?php endif; ?>
                 </article>
             <?php endforeach; ?>
         </div>

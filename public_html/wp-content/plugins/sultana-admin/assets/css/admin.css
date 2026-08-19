@@ -586,6 +586,144 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     font-size: 20px;
 }
 
+.sultana-admin-order-view {
+    display: grid;
+    gap: 18px;
+}
+
+.sultana-admin-order-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.sultana-admin-detail-panel {
+    display: grid;
+    gap: 14px;
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    box-shadow: var(--sultana-admin-shadow);
+    padding: 18px;
+}
+
+.sultana-admin-detail-panel h2,
+.sultana-admin-order-line h3 {
+    margin: 0;
+    line-height: 1.25;
+}
+
+.sultana-admin-detail-panel h2 {
+    font-size: 20px;
+}
+
+.sultana-admin-order-line h3 {
+    font-size: 18px;
+}
+
+.sultana-admin-detail-panel--notice {
+    border-color: #b7e4c7;
+    background: #f0fff4;
+}
+
+.sultana-admin-detail-panel--totals {
+    justify-self: end;
+    width: min(100%, 430px);
+}
+
+.sultana-admin-detail-list,
+.sultana-admin-mini-list,
+.sultana-admin-line-totals {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.sultana-admin-detail-list div,
+.sultana-admin-mini-list div,
+.sultana-admin-line-totals div {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.sultana-admin-detail-list dt,
+.sultana-admin-mini-list dt,
+.sultana-admin-line-totals dt {
+    color: var(--sultana-admin-muted);
+    font-weight: 800;
+}
+
+.sultana-admin-detail-list dd,
+.sultana-admin-mini-list dd,
+.sultana-admin-line-totals dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-total-row {
+    border-top: 1px solid var(--sultana-admin-border);
+    padding-top: 10px;
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.sultana-admin-shipping-items,
+.sultana-admin-order-items {
+    display: grid;
+    gap: 12px;
+}
+
+.sultana-admin-shipping-item,
+.sultana-admin-order-line {
+    display: grid;
+    gap: 12px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    background: var(--sultana-admin-surface-soft);
+    padding: 14px;
+}
+
+.sultana-admin-shipping-item > strong,
+.sultana-admin-shipping-item > span {
+    display: block;
+}
+
+.sultana-admin-order-line__main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+    gap: 18px;
+}
+
+.sultana-admin-combo-snapshot {
+    display: grid;
+    gap: 8px;
+    border-top: 1px solid var(--sultana-admin-border);
+    padding-top: 12px;
+}
+
+.sultana-admin-combo-snapshot ul {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sultana-admin-combo-snapshot li {
+    display: grid;
+    gap: 3px;
+    border-radius: 6px;
+    background: #ffffff;
+    padding: 10px;
+}
+
+.sultana-admin-combo-snapshot small {
+    color: var(--sultana-admin-muted);
+    font-weight: 700;
+}
+
 .sultana-admin-pagination {
     display: flex;
     align-items: center;
@@ -1194,6 +1332,37 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
 
     .sultana-admin-order-card .sultana-admin-text-action {
         width: 100%;
+    }
+
+    .sultana-admin-order-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sultana-admin-detail-panel {
+        padding: 14px;
+    }
+
+    .sultana-admin-detail-panel--totals {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .sultana-admin-detail-list div,
+    .sultana-admin-mini-list div,
+    .sultana-admin-line-totals div {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .sultana-admin-detail-list dd,
+    .sultana-admin-mini-list dd,
+    .sultana-admin-line-totals dd {
+        text-align: left;
+    }
+
+    .sultana-admin-order-line__main {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .sultana-admin-card {
