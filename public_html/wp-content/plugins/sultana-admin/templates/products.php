@@ -27,6 +27,7 @@ $total       = absint( $screen_data['total'] ?? 0 );
 $total_pages = absint( $screen_data['total_pages'] ?? 1 );
 $pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
 $notice      = $screen_data['notice'] ?? '';
+$errors      = $screen_data['errors'] ?? [];
 
 ?>
 <section class="sultana-admin-products" aria-labelledby="sultana-admin-products-title">
@@ -43,6 +44,17 @@ $notice      = $screen_data['notice'] ?? '';
     <?php if ( '' !== $notice ) : ?>
         <div class="sultana-admin-notice" role="status">
             <?php echo esc_html( $notice ); ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ( ! empty( $errors ) ) : ?>
+        <div class="sultana-admin-error-list" role="alert">
+            <strong><?php esc_html_e( 'No se pudo eliminar el producto', 'sultana-admin' ); ?></strong>
+            <ul>
+                <?php foreach ( $errors as $error ) : ?>
+                    <li><?php echo esc_html( $error ); ?></li>
+                <?php endforeach; ?>
+            </ul>
         </div>
     <?php endif; ?>
 
@@ -104,6 +116,7 @@ $notice      = $screen_data['notice'] ?? '';
                             <td><?php echo esc_html( $product['stock'] ); ?></td>
                             <td><?php echo esc_html( $product['status'] ); ?></td>
                             <td>
+                                <div class="sultana-admin-row-actions">
                                 <?php if ( ! empty( $product['can_edit'] ) ) : ?>
                                     <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
                                         <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
@@ -113,6 +126,22 @@ $notice      = $screen_data['notice'] ?? '';
                                         <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
                                     </button>
                                 <?php endif; ?>
+
+                                <?php if ( ! empty( $product['can_delete'] ) ) : ?>
+                                    <form method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                                        <input type="hidden" name="sultana_admin_action" value="trash_product">
+                                        <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
+                                        <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
+                                        <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="submit">
+                                            <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                        </button>
+                                    </form>
+                                <?php else : ?>
+                                    <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="button" disabled aria-disabled="true">
+                                        <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                    </button>
+                                <?php endif; ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -148,15 +177,32 @@ $notice      = $screen_data['notice'] ?? '';
                             <dd><?php echo esc_html( $product['status'] ); ?></dd>
                         </div>
                     </dl>
-                    <?php if ( ! empty( $product['can_edit'] ) ) : ?>
-                        <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
-                            <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                        </a>
-                    <?php else : ?>
-                        <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                            <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                        </button>
-                    <?php endif; ?>
+                    <div class="sultana-admin-card-actions">
+                        <?php if ( ! empty( $product['can_edit'] ) ) : ?>
+                            <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
+                                <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                            </a>
+                        <?php else : ?>
+                            <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
+                                <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
+                            </button>
+                        <?php endif; ?>
+
+                        <?php if ( ! empty( $product['can_delete'] ) ) : ?>
+                            <form method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                                <input type="hidden" name="sultana_admin_action" value="trash_product">
+                                <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
+                                <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
+                                <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="submit">
+                                    <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                </button>
+                            </form>
+                        <?php else : ?>
+                            <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="button" disabled aria-disabled="true">
+                                <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                            </button>
+                        <?php endif; ?>
+                    </div>
                 </article>
             <?php endforeach; ?>
         </div>

@@ -291,6 +291,54 @@ class ProductService
         ];
     }
 
+    public function trash_simple_product( int $product_id ): array
+    {
+        $product = $this->get_product( $product_id );
+
+        if ( ! $product ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'El producto no existe o ya fue enviado a la papelera.', 'sultana-admin' ) ],
+            ];
+        }
+
+        if ( 'trash' === $product->get_status() ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'El producto ya fue enviado a la papelera.', 'sultana-admin' ) ],
+            ];
+        }
+
+        if ( 'simple' !== $product->get_type() ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'Solo los productos simples pueden enviarse a la papelera desde Sultana Admin.', 'sultana-admin' ) ],
+            ];
+        }
+
+        if ( ! current_user_can( 'delete_product', $product_id ) ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'No tienes permisos para eliminar este producto.', 'sultana-admin' ) ],
+            ];
+        }
+
+        $trashed = wp_trash_post( $product_id );
+
+        if ( ! $trashed ) {
+            return [
+                'success' => false,
+                'errors'  => [ __( 'No se pudo enviar el producto a la papelera.', 'sultana-admin' ) ],
+            ];
+        }
+
+        return [
+            'success'    => true,
+            'errors'     => [],
+            'product_id' => $product_id,
+        ];
+    }
+
     public function list_products( array $args ): array
     {
         $search   = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
@@ -614,6 +662,7 @@ class ProductService
             'stock'     => $stock_text,
             'status'    => $this->status_label( $product->get_status() ),
             'can_edit'  => 'simple' === $product->get_type() && current_user_can( 'edit_product', $product->get_id() ),
+            'can_delete' => 'simple' === $product->get_type() && current_user_can( 'delete_product', $product->get_id() ),
         ];
     }
 

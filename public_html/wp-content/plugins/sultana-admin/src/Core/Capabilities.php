@@ -13,6 +13,10 @@ class Capabilities
     public const CREATE_PRODUCTS_CAPABILITY = 'edit_products';
     public const EDIT_OTHERS_PRODUCTS_CAPABILITY = 'edit_others_products';
     public const EDIT_PUBLISHED_PRODUCTS_CAPABILITY = 'edit_published_products';
+    public const DELETE_PRODUCTS_CAPABILITY = 'delete_products';
+    public const DELETE_OTHERS_PRODUCTS_CAPABILITY = 'delete_others_products';
+    public const DELETE_PUBLISHED_PRODUCTS_CAPABILITY = 'delete_published_products';
+    public const DELETE_PRIVATE_PRODUCTS_CAPABILITY = 'delete_private_products';
     public const PUBLISH_PRODUCTS_CAPABILITY = 'publish_products';
     public const UPLOAD_FILES_CAPABILITY = 'upload_files';
     public const ASSIGN_PRODUCT_TERMS_CAPABILITY = 'assign_product_terms';
@@ -30,6 +34,10 @@ class Capabilities
             self::CREATE_PRODUCTS_CAPABILITY => true,
             self::EDIT_OTHERS_PRODUCTS_CAPABILITY => true,
             self::EDIT_PUBLISHED_PRODUCTS_CAPABILITY => true,
+            self::DELETE_PRODUCTS_CAPABILITY => true,
+            self::DELETE_OTHERS_PRODUCTS_CAPABILITY => true,
+            self::DELETE_PUBLISHED_PRODUCTS_CAPABILITY => true,
+            self::DELETE_PRIVATE_PRODUCTS_CAPABILITY => true,
             self::PUBLISH_PRODUCTS_CAPABILITY => true,
             self::UPLOAD_FILES_CAPABILITY => true,
             self::ASSIGN_PRODUCT_TERMS_CAPABILITY => true,

@@ -13,6 +13,7 @@ class ProductController
 {
     public const CREATE_NONCE_ACTION = 'sultana_admin_create_simple_product';
     public const UPDATE_NONCE_ACTION = 'sultana_admin_update_simple_product';
+    public const TRASH_NONCE_ACTION = 'sultana_admin_trash_simple_product';
     public const IMAGE_UPLOAD_NONCE_ACTION = 'sultana_admin_product_image_upload';
     public const IMAGE_UPLOAD_ACTION = 'sultana_admin_upload_product_image';
     public const IMAGE_DELETE_ACTION = 'sultana_admin_delete_product_image';
@@ -25,6 +26,7 @@ class ProductController
         $page   = max( 1, $page );
 
         $service = new ProductService();
+        $errors  = self::handle_trash_request( $service );
         $listing = $service->list_products(
             [
                 'search'   => $search,
@@ -42,6 +44,7 @@ class ProductController
             'products'   => $listing['products'],
             'pagination' => self::pagination_links( $listing['page'], $listing['total_pages'], $search ),
             'notice'     => self::list_notice(),
+            'errors'     => $errors,
         ];
     }
 
@@ -235,7 +238,46 @@ class ProductController
             return __( 'Producto actualizado correctamente.', 'sultana-admin' );
         }
 
+        if ( 'product_trashed' === $notice ) {
+            return __( 'Producto enviado a la papelera correctamente.', 'sultana-admin' );
+        }
+
         return '';
+    }
+
+    private static function handle_trash_request( ProductService $service ): array
+    {
+        if ( 'POST' !== strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
+            return [];
+        }
+
+        $action = isset( $_POST['sultana_admin_action'] ) ? sanitize_key( wp_unslash( $_POST['sultana_admin_action'] ) ) : '';
+
+        if ( 'trash_product' !== $action ) {
+            return [];
+        }
+
+        if ( ! is_user_logged_in() || ! current_user_can( Capabilities::ACCESS_CAPABILITY ) || ! current_user_can( Capabilities::DELETE_PRODUCTS_CAPABILITY ) ) {
+            return [ __( 'No tienes permisos para eliminar productos.', 'sultana-admin' ) ];
+        }
+
+        $nonce = isset( $_POST['sultana_admin_trash_nonce'] )
+            ? sanitize_text_field( wp_unslash( $_POST['sultana_admin_trash_nonce'] ) )
+            : '';
+
+        if ( ! wp_verify_nonce( $nonce, self::TRASH_NONCE_ACTION ) ) {
+            return [ __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' ) ];
+        }
+
+        $product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
+        $result     = $service->trash_simple_product( $product_id );
+
+        if ( empty( $result['success'] ) ) {
+            return $result['errors'];
+        }
+
+        wp_safe_redirect( add_query_arg( 'notice', 'product_trashed', Router::products_url() ) );
+        exit;
     }
 
     private static function verify_create_nonce(): bool

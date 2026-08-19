@@ -427,7 +427,7 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 
 .sultana-admin-product-table th:nth-child(7),
 .sultana-admin-product-table td:nth-child(7) {
-    width: 96px;
+    width: 176px;
 }
 
 .sultana-admin-product-table tbody tr:last-child td {
@@ -482,6 +482,30 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 
 .sultana-admin-text-action:hover {
     background: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-row-actions,
+.sultana-admin-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sultana-admin-row-actions {
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sultana-admin-row-actions form,
+.sultana-admin-card-actions form {
+    margin: 0;
+}
+
+.sultana-admin-text-action--danger {
+    background: #b42318;
+}
+
+.sultana-admin-text-action--danger:hover {
+    background: #8f1d14;
 }
 
 .sultana-admin-product-cards {
@@ -898,8 +922,14 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         text-align: right;
     }
 
+    .sultana-admin-card-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
     .sultana-admin-product-card button,
-    .sultana-admin-product-card .sultana-admin-text-action {
+    .sultana-admin-product-card .sultana-admin-text-action,
+    .sultana-admin-card-actions form {
         width: 100%;
     }
 
