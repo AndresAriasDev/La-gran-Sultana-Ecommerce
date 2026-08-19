@@ -11,7 +11,9 @@
     const addAttributeButton = editor.querySelector('[data-sultana-add-attribute]');
     const generateButton = editor.querySelector('[data-sultana-generate-variations]');
     const status = editor.querySelector('[data-sultana-variable-status]');
+    const countStatus = editor.querySelector('[data-sultana-variation-count]');
     const strings = config.strings || {};
+    const maxGeneratedVariations = parseInt(editor.getAttribute('data-max-generated-variations'), 10) || 100;
     const availableAttributes = readJson(editor.getAttribute('data-available-attributes'), []);
     const initialState = readJson(editor.getAttribute('data-initial-state'), {});
     let selectedAttributes = Array.isArray(initialState.attributes) ? normalizeAttributes(initialState.attributes) : [];
@@ -25,12 +27,14 @@
 
     renderAttributes();
     renderVariations();
+    updateCombinationCount();
     updateSubmitState();
 
     if (addAttributeButton) {
         addAttributeButton.addEventListener('click', function () {
             selectedAttributes.push({ taxonomy: '', term_ids: [] });
             renderAttributes();
+            updateCombinationCount();
         });
     }
 
@@ -99,6 +103,7 @@
             select.addEventListener('change', function () {
                 selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
                 renderAttributes();
+                updateCombinationCount();
             });
 
             const terms = document.createElement('div');
@@ -125,6 +130,8 @@
                                 return current !== termId;
                             });
                         }
+
+                        updateCombinationCount();
                     });
 
                     label.appendChild(checkbox);
@@ -140,6 +147,7 @@
             remove.addEventListener('click', function () {
                 selectedAttributes.splice(index, 1);
                 renderAttributes();
+                updateCombinationCount();
             });
 
             block.appendChild(select);
@@ -310,6 +318,14 @@
             });
         });
 
+        const total = theoreticalVariationCount(groups);
+
+        if (total > maxGeneratedVariations) {
+            setStatus('La seleccion generaria ' + total + ' variaciones. Reduce los atributos o valores seleccionados.', true);
+            updateCombinationCount();
+            return;
+        }
+
         const combos = cartesian(groups);
         const existing = {};
 
@@ -339,6 +355,54 @@
 
         setStatus('', false);
         renderVariations();
+        updateCombinationCount();
+    }
+
+    function updateCombinationCount() {
+        if (!countStatus) {
+            return;
+        }
+
+        const groups = selectedAttributes
+            .filter(function (attribute) {
+                return attribute.taxonomy && attribute.term_ids.length;
+            })
+            .map(function (attribute) {
+                return attribute.term_ids;
+            });
+
+        const total = theoreticalVariationCount(groups);
+
+        if (!total) {
+            countStatus.textContent = '';
+            countStatus.classList.remove('is-error');
+            return;
+        }
+
+        if (total > maxGeneratedVariations) {
+            countStatus.textContent = 'La seleccion generaria ' + total + ' variaciones. Reduce los atributos o valores seleccionados.';
+            countStatus.classList.add('is-error');
+            return;
+        }
+
+        countStatus.textContent = 'Se generaran ' + total + ' variaciones.';
+        countStatus.classList.remove('is-error');
+    }
+
+    function theoreticalVariationCount(groups) {
+        if (!groups.length) {
+            return 0;
+        }
+
+        return groups.reduce(function (total, group) {
+            const count = Array.isArray(group) ? group.length : 0;
+
+            if (!count || total > maxGeneratedVariations) {
+                return total;
+            }
+
+            return total * count;
+        }, 1);
     }
 
     function cartesian(groups) {

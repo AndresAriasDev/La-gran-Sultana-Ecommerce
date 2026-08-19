@@ -97,6 +97,8 @@ class ProductController
         $service       = new ProductService();
         $image_service = new ProductImageService();
         $product       = $service->get_product( $product_id );
+        $variation_page = isset( $_GET['variation_page'] ) ? absint( wp_unslash( $_GET['variation_page'] ) ) : 1;
+        $variation_page = max( 1, $variation_page );
         $errors        = [];
 
         if ( ! $product ) {
@@ -124,7 +126,7 @@ class ProductController
         $product_type     = $product->get_type();
         if ( 'variable' === $product_type && $product instanceof \WC_Product_Variable ) {
             $variable_service = new ProductVariableService();
-            $form = $variable_service->product_form_data( $product );
+            $form = $variable_service->product_form_data( $product, $variation_page );
         } elseif ( 'combo' === $product_type && $product instanceof \Sultana\CommerceCore\Modules\Combos\ProductCombo ) {
             $combo_service = new ProductComboService();
             $form = $combo_service->product_form_data( $product );
@@ -162,7 +164,9 @@ class ProductController
             'errors'            => $errors,
             'product_type'      => $product_type,
             'product_id'        => $product_id,
-            'form_action'       => Router::edit_product_url( $product_id ),
+            'form_action'       => 'variable' === $product_type && $variation_page > 1
+                ? add_query_arg( 'variation_page', $variation_page, Router::edit_product_url( $product_id ) )
+                : Router::edit_product_url( $product_id ),
             'form_nonce_action' => self::UPDATE_NONCE_ACTION,
             'form_title'        => self::form_title_for_type( $product_type, true ),
             'form_kicker'       => self::form_kicker_for_type( $product_type ),
@@ -441,20 +445,43 @@ class ProductController
             ];
         }
 
+        $include_variation_images = 'variable' !== $product_type;
+
         $data = [
             'categories'           => $service->get_product_categories(),
             'brands'               => $service->get_product_brands(),
             'brand_taxonomy'       => $service->get_brand_taxonomy(),
-            'selected_images'      => ( new ProductImageService() )->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
+            'selected_images'      => ( new ProductImageService() )->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id, $include_variation_images ),
             'available_attributes' => [],
             'combo_components'     => [],
+            'variation_pagination' => $form['variation_pagination'] ?? [],
         ];
 
         if ( 'variable' === $product_type ) {
             $data['available_attributes'] = ( new ProductVariableService() )->available_attributes();
+            $data['max_generated_variations'] = ProductVariableService::MAX_GENERATED_VARIATIONS;
+
+            if ( $product_id > 0 && ! empty( $data['variation_pagination'] ) ) {
+                $data['variation_pagination']['links'] = self::variation_pagination_links( $product_id, $data['variation_pagination'] );
+            }
         }
 
         return $data;
+    }
+
+    private static function variation_pagination_links( int $product_id, array $pagination ): array
+    {
+        $page        = absint( $pagination['page'] ?? 1 );
+        $total_pages = absint( $pagination['total_pages'] ?? 1 );
+
+        return [
+            'previous' => $page > 1
+                ? add_query_arg( 'variation_page', $page - 1, Router::edit_product_url( $product_id ) )
+                : '',
+            'next'     => $page < $total_pages
+                ? add_query_arg( 'variation_page', $page + 1, Router::edit_product_url( $product_id ) )
+                : '',
+        ];
     }
 
     private static function normalize_product_type( string $type ): string

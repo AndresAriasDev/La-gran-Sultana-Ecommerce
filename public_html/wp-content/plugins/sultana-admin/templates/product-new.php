@@ -32,6 +32,8 @@ $selected_images = $screen_data['selected_images'] ?? [];
 $product_type = $screen_data['product_type'] ?? ( $form['product_type'] ?? 'simple' );
 $available_attributes = $screen_data['available_attributes'] ?? [];
 $combo_components = $screen_data['combo_components'] ?? [];
+$max_generated_variations = absint( $screen_data['max_generated_variations'] ?? 100 );
+$variation_pagination = $screen_data['variation_pagination'] ?? [];
 $form_action = $screen_data['form_action'] ?? \Sultana\Admin\Core\Router::new_product_url();
 $form_nonce_action = $screen_data['form_nonce_action'] ?? ProductController::CREATE_NONCE_ACTION;
 $form_title = $screen_data['form_title'] ?? __( 'Nuevo producto', 'sultana-admin' );
@@ -230,6 +232,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 data-sultana-variable-editor
                 data-available-attributes="<?php echo esc_attr( wp_json_encode( array_values( $available_attributes ) ) ); ?>"
                 data-initial-state="<?php echo esc_attr( wp_json_encode( $variable_state ) ); ?>"
+                data-max-generated-variations="<?php echo esc_attr( (string) $max_generated_variations ); ?>"
             >
                 <h2 id="sultana-admin-variable-title"><?php esc_html_e( 'Atributos y variaciones', 'sultana-admin' ); ?></h2>
                 <p class="sultana-admin-field-help"><?php esc_html_e( 'Selecciona atributos globales existentes y configura cada combinacion.', 'sultana-admin' ); ?></p>
@@ -240,8 +243,42 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 <button class="sultana-admin-secondary-action" type="button" data-sultana-generate-variations>
                     <?php esc_html_e( 'Generar variaciones', 'sultana-admin' ); ?>
                 </button>
+                <div class="sultana-admin-field-help" aria-live="polite" data-sultana-variation-count></div>
                 <div class="sultana-admin-image-status" aria-live="polite" data-sultana-variable-status></div>
                 <div class="sultana-admin-variation-list" data-sultana-variation-list></div>
+                <?php if ( ! empty( $variation_pagination ) && absint( $variation_pagination['total'] ?? 0 ) > absint( $variation_pagination['per_page'] ?? 0 ) ) : ?>
+                    <?php
+                    $variation_links = $variation_pagination['links'] ?? [ 'previous' => '', 'next' => '' ];
+                    $variation_page = absint( $variation_pagination['page'] ?? 1 );
+                    $variation_total_pages = max( 1, absint( $variation_pagination['total_pages'] ?? 1 ) );
+                    $variation_total = absint( $variation_pagination['total'] ?? 0 );
+                    ?>
+                    <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginacion de variaciones', 'sultana-admin' ); ?>">
+                        <?php if ( ! empty( $variation_links['previous'] ) ) : ?>
+                            <a href="<?php echo esc_url( $variation_links['previous'] ); ?>"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></a>
+                        <?php else : ?>
+                            <span aria-disabled="true"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></span>
+                        <?php endif; ?>
+
+                        <strong>
+                            <?php
+                            printf(
+                                /* translators: 1: current page, 2: total pages, 3: total variations. */
+                                esc_html__( 'Variaciones %1$d / %2$d - %3$d en total', 'sultana-admin' ),
+                                $variation_page,
+                                $variation_total_pages,
+                                $variation_total
+                            );
+                            ?>
+                        </strong>
+
+                        <?php if ( ! empty( $variation_links['next'] ) ) : ?>
+                            <a href="<?php echo esc_url( $variation_links['next'] ); ?>"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></a>
+                        <?php else : ?>
+                            <span aria-disabled="true"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></span>
+                        <?php endif; ?>
+                    </nav>
+                <?php endif; ?>
             </section>
         <?php endif; ?>
 

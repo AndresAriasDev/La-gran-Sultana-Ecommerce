@@ -15,6 +15,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class ProductVariableService
 {
+    public const MAX_GENERATED_VARIATIONS = 100;
+    public const VARIATIONS_PER_PAGE = 25;
+
     public function default_product_data(): array
     {
         return [
@@ -78,13 +81,13 @@ class ProductVariableService
         return $attributes;
     }
 
-    public function product_form_data( WC_Product_Variable $product ): array
+    public function product_form_data( WC_Product_Variable $product, int $variation_page = 1 ): array
     {
         $base_service  = new ProductService();
         $image_service = new ProductImageService();
         $image_ids     = $image_service->product_image_ids( $product->get_id() );
         $attributes    = [];
-        $variations    = [];
+        $variation_listing = $this->variation_listing( $product->get_id(), $variation_page, self::VARIATIONS_PER_PAGE );
 
         foreach ( $product->get_attributes() as $attribute ) {
             if ( ! $attribute->get_variation() || ! $attribute->is_taxonomy() ) {
@@ -103,26 +106,6 @@ class ProductVariableService
             ];
         }
 
-        foreach ( $product->get_children() as $variation_id ) {
-            $variation = wc_get_product( $variation_id );
-
-            if ( ! $variation instanceof WC_Product_Variation ) {
-                continue;
-            }
-
-            $variations[] = [
-                'id'            => $variation->get_id(),
-                'attributes'    => $variation->get_attributes( 'edit' ),
-                'sku'           => $variation->get_sku( 'edit' ),
-                'regular_price' => $variation->get_regular_price( 'edit' ),
-                'sale_price'    => $variation->get_sale_price( 'edit' ),
-                'stock_quantity' => null !== $variation->get_stock_quantity( 'edit' ) ? (string) $variation->get_stock_quantity( 'edit' ) : '0',
-                'weight'        => $variation->get_weight( 'edit' ),
-                'image_id'      => absint( $variation->get_image_id() ),
-                'image_url'     => $this->image_url( absint( $variation->get_image_id() ) ),
-            ];
-        }
-
         return [
             'product_type'      => 'variable',
             'name'              => $product->get_name( 'edit' ),
@@ -133,7 +116,8 @@ class ProductVariableService
             'product_image_ids' => implode( ',', $image_ids ),
             'status'            => in_array( $product->get_status(), [ 'draft', 'publish' ], true ) ? $product->get_status() : 'draft',
             'variable_attributes' => $attributes,
-            'variations'        => $variations,
+            'variations'        => $variation_listing['variations'],
+            'variation_pagination' => $variation_listing['pagination'],
         ];
     }
 
@@ -191,8 +175,7 @@ class ProductVariableService
             ];
         }
 
-        $existing_variation_ids = array_map( 'absint', $product->get_children() );
-        $validated              = $this->validate_variable_product_data( $data, $product_id, $existing_variation_ids );
+        $validated = $this->validate_variable_product_data( $data, $product_id, [], true );
 
         if ( ! empty( $validated['errors'] ) ) {
             return [
@@ -203,8 +186,7 @@ class ProductVariableService
 
         try {
             $this->save_parent_product( $product, $validated['data'] );
-            $kept_variation_ids = $this->save_variations( $product_id, $validated['data']['variations'], $existing_variation_ids );
-            $this->trash_unused_variations( $existing_variation_ids, $kept_variation_ids );
+            $this->save_variations( $product_id, $validated['data']['variations'], [] );
             $this->sync_variable_product( $product_id, $validated['data']['all_image_ids'] );
         } catch ( Throwable $exception ) {
             return [
@@ -220,7 +202,7 @@ class ProductVariableService
         ];
     }
 
-    public function validate_variable_product_data( array $data, int $product_id = 0, array $existing_variation_ids = [] ): array
+    public function validate_variable_product_data( array $data, int $product_id = 0, array $existing_variation_ids = [], bool $partial_update = false ): array
     {
         $errors        = [];
         $clean         = $this->default_product_data();
@@ -260,7 +242,7 @@ class ProductVariableService
             $base_service->validate_brand_for_form( $clean, $errors );
         }
 
-        $image_ids = $image_service->validate_product_image_ids( $data['product_image_ids'] ?? '', $product_id );
+        $image_ids = $image_service->validate_product_image_ids( $data['product_image_ids'] ?? '', $product_id, false );
 
         if ( is_wp_error( $image_ids ) ) {
             $errors[] = $image_ids->get_error_message();
@@ -269,6 +251,8 @@ class ProductVariableService
 
         $clean['product_image_ids'] = $image_ids;
         $clean['variable_attributes'] = $this->validate_attributes( $data['variable_attributes'] ?? [], $errors );
+        $this->validate_edit_attribute_structure( $product_id, $partial_update, $clean['variable_attributes'], $errors );
+        $this->validate_generation_size( $clean['variable_attributes'], $data['variations'] ?? [], $product_id, $partial_update, $errors );
         $clean['variations'] = $this->validate_variations( $data['variations'] ?? [], $clean['variable_attributes'], $product_id, $existing_variation_ids, $clean['sku'], $errors );
         $clean['all_image_ids'] = $this->collect_image_ids( $clean['product_image_ids'], $clean['variations'] );
 
@@ -327,9 +311,11 @@ class ProductVariableService
 
         foreach ( $variations as $variation_data ) {
             $variation_id = absint( $variation_data['id'] ?? 0 );
-            $variation    = $variation_id && in_array( $variation_id, $existing_variation_ids, true )
-                ? wc_get_product( $variation_id )
-                : new WC_Product_Variation();
+            $variation    = $variation_id ? wc_get_product( $variation_id ) : new WC_Product_Variation();
+
+            if ( $variation_id && ( ! $variation instanceof WC_Product_Variation || absint( $variation->get_parent_id() ) !== $product_id ) ) {
+                continue;
+            }
 
             if ( ! $variation instanceof WC_Product_Variation ) {
                 $variation = new WC_Product_Variation();
@@ -351,13 +337,6 @@ class ProductVariableService
         }
 
         return $kept_ids;
-    }
-
-    private function trash_unused_variations( array $existing_variation_ids, array $kept_variation_ids ): void
-    {
-        foreach ( array_diff( $existing_variation_ids, $kept_variation_ids ) as $variation_id ) {
-            wp_trash_post( absint( $variation_id ) );
-        }
     }
 
     private function trash_variable_tree( int $product_id ): void
@@ -531,14 +510,18 @@ class ProductVariableService
             }
 
             if ( $variation_id && ! in_array( $variation_id, $existing_variation_ids, true ) ) {
-                $errors[] = __( 'Una variacion enviada no pertenece a este producto.', 'sultana-admin' );
-                continue;
+                $existing_variation = wc_get_product( $variation_id );
+
+                if ( ! $existing_variation instanceof WC_Product_Variation || absint( $existing_variation->get_parent_id() ) !== $product_id ) {
+                    $errors[] = __( 'Una variacion enviada no pertenece a este producto.', 'sultana-admin' );
+                    continue;
+                }
             }
 
             $image_id = absint( $raw_variation['image_id'] ?? 0 );
 
             if ( $image_id ) {
-                $image_id = $image_service->validate_single_product_image_id( $image_id, $product_id );
+                $image_id = $image_service->validate_variation_image_id( $image_id, $product_id, $variation_id );
 
                 if ( is_wp_error( $image_id ) ) {
                     $errors[] = $image_id->get_error_message();
@@ -560,6 +543,189 @@ class ProductVariableService
         }
 
         return $valid;
+    }
+
+    private function variation_listing( int $product_id, int $page, int $per_page ): array
+    {
+        $page     = max( 1, $page );
+        $per_page = max( 1, min( 50, $per_page ) );
+
+        $result = wc_get_products(
+            [
+                'type'     => 'variation',
+                'parent'   => $product_id,
+                'limit'    => $per_page,
+                'page'     => $page,
+                'paginate' => true,
+                'orderby'  => 'ID',
+                'order'    => 'ASC',
+                'return'   => 'objects',
+                'status'   => [ 'publish', 'private' ],
+            ]
+        );
+
+        $variations  = is_object( $result ) && isset( $result->products ) && is_array( $result->products ) ? $result->products : [];
+        $total       = is_object( $result ) && isset( $result->total ) ? absint( $result->total ) : count( $variations );
+        $total_pages = is_object( $result ) && isset( $result->max_num_pages ) ? max( 1, absint( $result->max_num_pages ) ) : 1;
+
+        if ( $total > 0 && $page > $total_pages ) {
+            return $this->variation_listing( $product_id, $total_pages, $per_page );
+        }
+
+        return [
+            'variations' => array_values(
+                array_filter(
+                    array_map( [ $this, 'format_variation_for_form' ], $variations )
+                )
+            ),
+            'pagination' => [
+                'page'        => min( $page, $total_pages ),
+                'per_page'    => $per_page,
+                'total'       => $total,
+                'total_pages' => $total_pages,
+            ],
+        ];
+    }
+
+    private function format_variation_for_form( $variation ): array
+    {
+        if ( ! $variation instanceof WC_Product_Variation ) {
+            return [];
+        }
+
+        return [
+            'id'             => $variation->get_id(),
+            'attributes'     => $variation->get_attributes( 'edit' ),
+            'sku'            => $variation->get_sku( 'edit' ),
+            'regular_price'  => $variation->get_regular_price( 'edit' ),
+            'sale_price'     => $variation->get_sale_price( 'edit' ),
+            'stock_quantity' => null !== $variation->get_stock_quantity( 'edit' ) ? (string) $variation->get_stock_quantity( 'edit' ) : '0',
+            'weight'         => $variation->get_weight( 'edit' ),
+            'image_id'       => absint( $variation->get_image_id() ),
+            'image_url'      => $this->image_url( absint( $variation->get_image_id() ) ),
+        ];
+    }
+
+    private function validate_generation_size( array $attributes, $raw_variations, int $product_id, bool $partial_update, array &$errors ): void
+    {
+        $raw_variations = is_array( $raw_variations ) ? $raw_variations : [];
+
+        if ( count( $raw_variations ) > self::MAX_GENERATED_VARIATIONS ) {
+            $errors[] = sprintf(
+                /* translators: %d: maximum variation count. */
+                __( 'Sultana Admin puede guardar hasta %d variaciones a la vez.', 'sultana-admin' ),
+                self::MAX_GENERATED_VARIATIONS
+            );
+            return;
+        }
+
+        $has_new_variations = 0 === $product_id;
+
+        if ( ! $has_new_variations && $partial_update ) {
+            foreach ( $raw_variations as $raw_variation ) {
+                if ( is_array( $raw_variation ) && empty( $raw_variation['id'] ) ) {
+                    $has_new_variations = true;
+                    break;
+                }
+            }
+        }
+
+        if ( $partial_update && ! $has_new_variations ) {
+            return;
+        }
+
+        $total = $this->theoretical_variation_count( $attributes, self::MAX_GENERATED_VARIATIONS );
+
+        if ( $total > self::MAX_GENERATED_VARIATIONS ) {
+            $errors[] = sprintf(
+                /* translators: 1: variation count, 2: maximum variation count. */
+                __( 'La seleccion generaria %1$d variaciones. Reduce los atributos o valores seleccionados a un maximo de %2$d.', 'sultana-admin' ),
+                $total,
+                self::MAX_GENERATED_VARIATIONS
+            );
+        }
+    }
+
+    private function validate_edit_attribute_structure( int $product_id, bool $partial_update, array $posted_attributes, array &$errors ): void
+    {
+        if ( ! $partial_update || $product_id <= 0 ) {
+            return;
+        }
+
+        $product = wc_get_product( $product_id );
+
+        if ( ! $product instanceof WC_Product_Variable ) {
+            return;
+        }
+
+        if ( $this->attribute_structure_key( $posted_attributes ) !== $this->attribute_structure_key( $this->product_variation_attributes( $product ) ) ) {
+            $errors[] = __( 'Para cambiar atributos o valores de un producto variable se necesita una regeneracion controlada. En esta version puedes editar las variaciones existentes.', 'sultana-admin' );
+        }
+    }
+
+    private function product_variation_attributes( WC_Product_Variable $product ): array
+    {
+        $attributes = [];
+
+        foreach ( $product->get_attributes() as $attribute ) {
+            if ( ! $attribute->get_variation() || ! $attribute->is_taxonomy() ) {
+                continue;
+            }
+
+            $attributes[] = [
+                'taxonomy' => $attribute->get_name(),
+                'term_ids' => array_map( 'absint', $attribute->get_options() ),
+            ];
+        }
+
+        return $attributes;
+    }
+
+    private function attribute_structure_key( array $attributes ): string
+    {
+        $normalized = [];
+
+        foreach ( $attributes as $attribute ) {
+            $taxonomy = sanitize_key( (string) ( $attribute['taxonomy'] ?? '' ) );
+            $term_ids = isset( $attribute['term_ids'] ) && is_array( $attribute['term_ids'] )
+                ? array_values( array_unique( array_map( 'absint', $attribute['term_ids'] ) ) )
+                : [];
+
+            sort( $term_ids );
+
+            if ( '' !== $taxonomy && ! empty( $term_ids ) ) {
+                $normalized[ $taxonomy ] = $term_ids;
+            }
+        }
+
+        ksort( $normalized );
+
+        return wp_json_encode( $normalized ) ?: '';
+    }
+
+    private function theoretical_variation_count( array $attributes, int $stop_after ): int
+    {
+        if ( empty( $attributes ) ) {
+            return 0;
+        }
+
+        $total = 1;
+
+        foreach ( $attributes as $attribute ) {
+            $count = isset( $attribute['term_ids'] ) && is_array( $attribute['term_ids'] ) ? count( $attribute['term_ids'] ) : 0;
+
+            if ( $count <= 0 ) {
+                return 0;
+            }
+
+            $total *= $count;
+
+            if ( $total > $stop_after ) {
+                return $total;
+            }
+        }
+
+        return $total;
     }
 
     private function allowed_attribute_terms( array $attributes ): array
