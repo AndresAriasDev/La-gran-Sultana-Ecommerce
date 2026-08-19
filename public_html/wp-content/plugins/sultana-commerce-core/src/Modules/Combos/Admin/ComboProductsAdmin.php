@@ -37,7 +37,11 @@ class ComboProductsAdmin
         foreach ( [ 'general', 'inventory', 'shipping', 'linked_product', 'advanced' ] as $tab_key ) {
             if ( isset( $tabs[ $tab_key ] ) ) {
                 $classes = self::normalize_tab_classes( $tabs[ $tab_key ]['class'] ?? [] );
-                $classes[] = 'show_if_combo';
+
+                if ( self::has_product_type_visibility_class( $classes ) ) {
+                    $classes[] = 'show_if_combo';
+                }
+
                 $tabs[ $tab_key ]['class'] = array_values( array_unique( $classes ) );
             }
         }
@@ -73,6 +77,20 @@ class ComboProductsAdmin
         }
 
         return [];
+    }
+
+    /**
+     * @param array<int,string> $classes
+     */
+    private static function has_product_type_visibility_class( array $classes ): bool
+    {
+        foreach ( $classes as $class ) {
+            if ( 0 === strpos( $class, 'show_if_' ) ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function render_product_data_panel(): void

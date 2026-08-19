@@ -66,6 +66,7 @@
                 regular_price: variation.regular_price || '',
                 sale_price: variation.sale_price || '',
                 stock_quantity: variation.stock_quantity || '',
+                weight: variation.weight || '',
                 image_id: toInt(variation.image_id),
                 image_url: variation.image_url || ''
             };
@@ -182,6 +183,7 @@
             card.appendChild(field('Precio regular', 'variations[' + index + '][regular_price]', variation.regular_price, 'number', true, '0.01'));
             card.appendChild(field('Precio de oferta', 'variations[' + index + '][sale_price]', variation.sale_price, 'number', false, '0.01'));
             card.appendChild(field('Stock', 'variations[' + index + '][stock_quantity]', variation.stock_quantity, 'number', true, '1'));
+            card.appendChild(field('Peso (kg)', 'variations[' + index + '][weight]', variation.weight, 'number', true, '0.01', '0.01'));
             card.appendChild(variationImageField(variation, index));
             variationsRoot.appendChild(card);
         });
@@ -329,6 +331,7 @@
                 regular_price: '',
                 sale_price: '',
                 stock_quantity: '',
+                weight: '',
                 image_id: 0,
                 image_url: ''
             };
@@ -352,7 +355,7 @@
         }, [[]]);
     }
 
-    function field(labelText, name, value, type, required, step) {
+    function field(labelText, name, value, type, required, step, min) {
         const label = document.createElement('label');
         const span = document.createElement('span');
         const input = document.createElement('input');
@@ -364,7 +367,7 @@
         input.required = Boolean(required);
 
         if ('number' === type) {
-            input.min = '0';
+            input.min = min || '0';
             input.step = step || '1';
             input.inputMode = 'decimal';
         }

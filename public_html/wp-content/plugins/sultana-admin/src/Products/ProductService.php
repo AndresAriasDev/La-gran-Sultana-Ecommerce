@@ -27,6 +27,7 @@ class ProductService
             'category_ids'      => [],
             'brand_id'          => 0,
             'stock_quantity'    => '',
+            'weight'            => '',
             'product_image_ids' => '',
             'status'            => 'draft',
         ];
@@ -138,6 +139,7 @@ class ProductService
             $product->set_manage_stock( true );
             $product->set_stock_quantity( $validated['data']['stock_quantity'] );
             $product->set_stock_status( $validated['data']['stock_quantity'] > 0 ? 'instock' : 'outofstock' );
+            $product->set_weight( $validated['data']['weight'] );
 
             $product->set_status( $validated['data']['status'] );
 
@@ -218,6 +220,7 @@ class ProductService
             'category_ids'      => array_map( 'absint', $product->get_category_ids( 'edit' ) ),
             'brand_id'          => $this->product_brand_id_for_form( $product->get_id() ),
             'stock_quantity'    => null !== $product->get_stock_quantity( 'edit' ) ? (string) $product->get_stock_quantity( 'edit' ) : '0',
+            'weight'            => $product->get_weight( 'edit' ),
             'product_image_ids' => implode( ',', $image_ids ),
             'status'            => in_array( $status, [ 'draft', 'publish' ], true ) ? $status : 'draft',
         ];
@@ -428,6 +431,7 @@ class ProductService
         $product->set_manage_stock( true );
         $product->set_stock_quantity( $data['stock_quantity'] );
         $product->set_stock_status( $data['stock_quantity'] > 0 ? 'instock' : 'outofstock' );
+        $product->set_weight( $data['weight'] );
         $product->set_status( $data['status'] );
         $product->set_image_id( $image_id );
         $product->set_gallery_image_ids( $gallery_ids );
@@ -521,6 +525,14 @@ class ProductService
             $clean['stock_quantity'] = $stock_quantity;
         }
 
+        $weight = $this->validate_positive_decimal( (string) ( $data['weight'] ?? '' ) );
+
+        if ( null === $weight ) {
+            $errors[] = __( 'Ingresa un peso valido para el producto.', 'sultana-admin' );
+        } else {
+            $clean['weight'] = $weight;
+        }
+
         $image_ids = ( new ProductImageService() )->validate_product_image_ids( $data['product_image_ids'] ?? '', $existing_product_id );
 
         if ( is_wp_error( $image_ids ) ) {
@@ -550,6 +562,17 @@ class ProductService
         $decimal = wc_format_decimal( $value );
 
         if ( '' === $decimal || ! is_numeric( $decimal ) || (float) $decimal < 0 ) {
+            return null;
+        }
+
+        return $decimal;
+    }
+
+    private function validate_positive_decimal( string $value ): ?string
+    {
+        $decimal = $this->validate_decimal( $value );
+
+        if ( null === $decimal || (float) $decimal <= 0 ) {
             return null;
         }
 

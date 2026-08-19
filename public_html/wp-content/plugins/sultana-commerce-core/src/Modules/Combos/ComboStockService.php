@@ -353,13 +353,7 @@ class ComboStockService
         $weight = 0.0;
 
         foreach ( self::get_components( $combo_id ) as $component ) {
-            $component_product = self::get_component_stock_product( $component );
-
-            if ( ! $component_product instanceof WC_Product ) {
-                continue;
-            }
-
-            $component_weight = (float) $component_product->get_weight();
+            $component_weight = self::get_component_weight( $component );
 
             if ( $component_weight <= 0 ) {
                 continue;
@@ -369,6 +363,36 @@ class ComboStockService
         }
 
         return $weight > 0 ? wc_format_decimal( $weight, false, true ) : '';
+    }
+
+    private static function get_component_weight( array $component ): float
+    {
+        $component_product = self::get_component_stock_product( $component );
+
+        if ( ! $component_product instanceof WC_Product ) {
+            return 0.0;
+        }
+
+        $component_weight = (float) $component_product->get_weight();
+
+        if ( $component_weight > 0 ) {
+            return $component_weight;
+        }
+
+        if ( ! $component_product instanceof WC_Product_Variation ) {
+            return 0.0;
+        }
+
+        $parent_id = absint( $component_product->get_parent_id() );
+        $parent    = $parent_id ? wc_get_product( $parent_id ) : null;
+
+        if ( ! $parent instanceof WC_Product ) {
+            return 0.0;
+        }
+
+        $parent_weight = (float) $parent->get_weight();
+
+        return $parent_weight > 0 ? $parent_weight : 0.0;
     }
 
     /**

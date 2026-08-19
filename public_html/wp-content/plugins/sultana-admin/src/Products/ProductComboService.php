@@ -283,8 +283,13 @@ class ProductComboService
 
         $decimal = wc_format_decimal( $value );
 
-        if ( '' === $decimal || ! is_numeric( $decimal ) || (float) $decimal < 0 ) {
+        if ( '' === $decimal || ! is_numeric( $decimal ) ) {
             $errors[] = __( 'Ingresa un precio de oferta valido.', 'sultana-admin' );
+            return '';
+        }
+
+        if ( (float) $decimal <= 0 ) {
+            $errors[] = __( 'El precio de oferta debe ser mayor que cero.', 'sultana-admin' );
             return '';
         }
 

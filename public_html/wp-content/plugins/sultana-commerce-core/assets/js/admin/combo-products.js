@@ -13,19 +13,23 @@
   const updateComboFieldVisibility = function () {
     const productType = $("#product-type").val();
     const isCombo = productType === "combo";
+    const $comboVisibleFields = $(
+      ".product_data_tabs .general_tab, .product_data_tabs li a[href='#general_product_data'], #general_product_data, #general_product_data .options_group.pricing, #general_product_data ._regular_price_field, #general_product_data ._sale_price_field, ._sku_field"
+    );
+    const $comboHiddenFields = $("._manage_stock_field, ._stock_field, ._backorders_field, ._low_stock_amount_field, ._weight_field");
 
-    $(".product_data_tabs .general_tab, .product_data_tabs li a[href='#general_product_data']").closest("li").addClass("show_if_combo");
-    $("#general_product_data").addClass("show_if_combo");
-    $("#general_product_data .options_group.pricing, #general_product_data ._regular_price_field, #general_product_data ._sale_price_field, ._sku_field").addClass("show_if_combo");
-    $("._manage_stock_field, ._stock_field, ._backorders_field, ._low_stock_amount_field, ._weight_field").addClass("hide_if_combo");
+    $comboHiddenFields.addClass("hide_if_combo");
 
     if (isCombo) {
+      $comboVisibleFields.addClass("show_if_combo");
       $(".product_data_tabs .general_tab, .product_data_tabs li a[href='#general_product_data']").closest("li").show();
       $("#general_product_data .options_group.pricing, #general_product_data ._regular_price_field, #general_product_data ._sale_price_field, ._sku_field").show();
       $("#_regular_price").prop("readonly", true).attr("aria-readonly", "true");
-      $("._manage_stock_field, ._stock_field, ._backorders_field, ._low_stock_amount_field, ._weight_field").hide();
+      $comboHiddenFields.hide();
     } else {
+      $comboVisibleFields.removeClass("show_if_combo");
       $("#_regular_price").prop("readonly", false).removeAttr("aria-readonly");
+      $comboHiddenFields.css("display", "");
     }
   };
 

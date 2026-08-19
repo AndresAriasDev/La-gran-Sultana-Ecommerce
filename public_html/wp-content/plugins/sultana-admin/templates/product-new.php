@@ -141,7 +141,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                     </div>
                     <div>
                         <label for="sultana-admin-product-sale-price"><?php esc_html_e( 'Precio de oferta', 'sultana-admin' ); ?></label>
-                        <input id="sultana-admin-product-sale-price" type="number" name="sale_price" value="<?php echo esc_attr( $form['sale_price'] ?? '' ); ?>" min="0" step="0.01" inputmode="decimal">
+                        <input id="sultana-admin-product-sale-price" type="number" name="sale_price" value="<?php echo esc_attr( $form['sale_price'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal">
                     </div>
                 </div>
             </section>
@@ -169,6 +169,9 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
 
             <label for="sultana-admin-product-stock"><?php esc_html_e( 'Cantidad en stock', 'sultana-admin' ); ?></label>
             <input id="sultana-admin-product-stock" type="number" name="stock_quantity" value="<?php echo esc_attr( $form['stock_quantity'] ?? '' ); ?>" min="0" step="1" inputmode="numeric" required>
+
+            <label for="sultana-admin-product-weight"><?php esc_html_e( 'Peso (kg)', 'sultana-admin' ); ?></label>
+            <input id="sultana-admin-product-weight" type="number" name="weight" value="<?php echo esc_attr( $form['weight'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal" required>
         </section>
         <?php endif; ?>
 

@@ -117,6 +117,7 @@ class ProductVariableService
                 'regular_price' => $variation->get_regular_price( 'edit' ),
                 'sale_price'    => $variation->get_sale_price( 'edit' ),
                 'stock_quantity' => null !== $variation->get_stock_quantity( 'edit' ) ? (string) $variation->get_stock_quantity( 'edit' ) : '0',
+                'weight'        => $variation->get_weight( 'edit' ),
                 'image_id'      => absint( $variation->get_image_id() ),
                 'image_url'     => $this->image_url( absint( $variation->get_image_id() ) ),
             ];
@@ -342,6 +343,7 @@ class ProductVariableService
             $variation->set_manage_stock( true );
             $variation->set_stock_quantity( $variation_data['stock_quantity'] );
             $variation->set_stock_status( $variation_data['stock_quantity'] > 0 ? 'instock' : 'outofstock' );
+            $variation->set_weight( $variation_data['weight'] );
             $variation->set_status( 'publish' );
             $variation->set_image_id( absint( $variation_data['image_id'] ) );
 
@@ -508,6 +510,13 @@ class ProductVariableService
                 continue;
             }
 
+            $weight = $this->validate_positive_decimal( (string) ( $raw_variation['weight'] ?? '' ) );
+
+            if ( null === $weight ) {
+                $errors[] = __( 'Cada variacion necesita un peso valido.', 'sultana-admin' );
+                continue;
+            }
+
             $sku = trim( wc_clean( (string) ( $raw_variation['sku'] ?? '' ) ) );
 
             if ( '' !== $sku ) {
@@ -544,6 +553,7 @@ class ProductVariableService
                 'regular_price' => $regular_price,
                 'sale_price'    => is_string( $sale_price ) ? $sale_price : '',
                 'stock_quantity' => $stock_quantity,
+                'weight'        => $weight,
                 'image_id'      => absint( $image_id ),
             ];
             $seen_keys[ $key ] = true;
@@ -598,6 +608,17 @@ class ProductVariableService
         $decimal = wc_format_decimal( $value );
 
         if ( '' === $decimal || ! is_numeric( $decimal ) || (float) $decimal < 0 ) {
+            return null;
+        }
+
+        return $decimal;
+    }
+
+    private function validate_positive_decimal( string $value ): ?string
+    {
+        $decimal = $this->validate_decimal( $value );
+
+        if ( null === $decimal || (float) $decimal <= 0 ) {
             return null;
         }
 
