@@ -86,7 +86,7 @@ class ProductImageService
     public function validate_product_image_ids( $raw_ids, int $product_id = 0 )
     {
         $ids = $this->parse_image_ids( $raw_ids );
-        $existing_ids = $product_id ? $this->product_image_ids( $product_id ) : [];
+        $existing_ids = $product_id ? $this->product_and_variation_image_ids( $product_id ) : [];
 
         if ( ! empty( $ids ) && ! $this->can_manage_images() ) {
             return new WP_Error(
@@ -111,6 +111,21 @@ class ProductImageService
         return $ids;
     }
 
+    public function validate_single_product_image_id( int $attachment_id, int $product_id = 0 )
+    {
+        if ( ! $attachment_id ) {
+            return 0;
+        }
+
+        $validated = $this->validate_product_image_ids( [ $attachment_id ], $product_id );
+
+        if ( is_wp_error( $validated ) ) {
+            return $validated;
+        }
+
+        return $validated[0] ?? 0;
+    }
+
     public function get_temporary_image_items( $raw_ids ): array
     {
         return $this->get_product_image_items_for_form( $raw_ids, 0 );
@@ -120,7 +135,7 @@ class ProductImageService
     {
         $ids   = $this->parse_image_ids( $raw_ids );
         $items = [];
-        $existing_ids = $product_id ? $this->product_image_ids( $product_id ) : [];
+        $existing_ids = $product_id ? $this->product_and_variation_image_ids( $product_id ) : [];
 
         foreach ( $ids as $attachment_id ) {
             if ( in_array( $attachment_id, $existing_ids, true ) && $this->is_valid_image_attachment( $attachment_id ) ) {
@@ -156,6 +171,32 @@ class ProductImageService
 
             if ( $gallery_image_id && ! in_array( $gallery_image_id, $ids, true ) ) {
                 $ids[] = $gallery_image_id;
+            }
+        }
+
+        return $ids;
+    }
+
+    public function product_and_variation_image_ids( int $product_id ): array
+    {
+        $ids     = $this->product_image_ids( $product_id );
+        $product = wc_get_product( $product_id );
+
+        if ( ! $product || ! method_exists( $product, 'get_children' ) ) {
+            return $ids;
+        }
+
+        foreach ( $product->get_children() as $variation_id ) {
+            $variation = wc_get_product( $variation_id );
+
+            if ( ! $variation ) {
+                continue;
+            }
+
+            $image_id = absint( $variation->get_image_id() );
+
+            if ( $image_id && ! in_array( $image_id, $ids, true ) ) {
+                $ids[] = $image_id;
             }
         }
 

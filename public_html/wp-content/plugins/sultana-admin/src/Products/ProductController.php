@@ -50,9 +50,11 @@ class ProductController
 
     public static function prepare_create_screen(): array
     {
-        $service = new ProductService();
-        $form    = $service->default_simple_product_data();
-        $errors  = [];
+        $service          = new ProductService();
+        $variable_service = new ProductVariableService();
+        $product_type     = self::requested_product_type();
+        $form             = 'variable' === $product_type ? $variable_service->default_product_data() : $service->default_simple_product_data();
+        $errors           = [];
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
             if ( ! is_user_logged_in() || ! current_user_can( Capabilities::ACCESS_CAPABILITY ) || ! current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY ) ) {
@@ -60,8 +62,11 @@ class ProductController
             } elseif ( ! self::verify_create_nonce() ) {
                 $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
             } else {
-                $form   = self::posted_simple_product_data();
-                $result = $service->create_simple_product( $form );
+                $form         = self::posted_product_data();
+                $product_type = 'variable' === ( $form['product_type'] ?? 'simple' ) ? 'variable' : 'simple';
+                $result       = 'variable' === $product_type
+                    ? $variable_service->create_variable_product( $form )
+                    : $service->create_simple_product( $form );
 
                 if ( $result['success'] ) {
                     wp_safe_redirect( add_query_arg( 'notice', 'product_created', Router::products_url() ) );
@@ -79,10 +84,12 @@ class ProductController
             'brands'          => $service->get_product_brands(),
             'brand_taxonomy' => $service->get_brand_taxonomy(),
             'selected_images' => ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
-            'form_action'     => Router::new_product_url(),
+            'product_type'    => $product_type,
+            'available_attributes' => $variable_service->available_attributes(),
+            'form_action'     => add_query_arg( 'type', $product_type, Router::new_product_url() ),
             'form_nonce_action' => self::CREATE_NONCE_ACTION,
-            'form_title'      => __( 'Nuevo producto', 'sultana-admin' ),
-            'form_kicker'     => __( 'Producto simple', 'sultana-admin' ),
+            'form_title'      => 'variable' === $product_type ? __( 'Nuevo producto variable', 'sultana-admin' ) : __( 'Nuevo producto', 'sultana-admin' ),
+            'form_kicker'     => 'variable' === $product_type ? __( 'Producto variable', 'sultana-admin' ) : __( 'Producto simple', 'sultana-admin' ),
             'submit_label'    => __( 'Guardar producto', 'sultana-admin' ),
             'notice'          => '',
         ];
@@ -109,7 +116,7 @@ class ProductController
             ];
         }
 
-        if ( 'simple' !== $product->get_type() ) {
+        if ( ! in_array( $product->get_type(), [ 'simple', 'variable' ], true ) ) {
             return [
                 'unsupported' => true,
                 'message'     => __( 'Ese tipo de producto todavia no puede editarse desde Sultana Admin.', 'sultana-admin' ),
@@ -117,14 +124,20 @@ class ProductController
             ];
         }
 
-        $form = $service->product_form_data( $product );
+        $variable_service = new ProductVariableService();
+        $product_type     = $product->get_type();
+        $form             = 'variable' === $product_type && $product instanceof \WC_Product_Variable
+            ? $variable_service->product_form_data( $product )
+            : $service->product_form_data( $product );
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
             if ( ! self::verify_update_nonce() ) {
                 $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
             } else {
-                $form   = self::posted_simple_product_data();
-                $result = $service->update_simple_product( $product_id, $form );
+                $form   = self::posted_product_data();
+                $result = 'variable' === $product_type
+                    ? $variable_service->update_variable_product( $product_id, $form )
+                    : $service->update_simple_product( $product_id, $form );
 
                 if ( $result['success'] ) {
                     wp_safe_redirect( add_query_arg( 'notice', 'product_updated', Router::products_url() ) );
@@ -142,10 +155,13 @@ class ProductController
             'brands'            => $service->get_product_brands(),
             'brand_taxonomy'    => $service->get_brand_taxonomy(),
             'selected_images'   => $image_service->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
+            'product_type'      => $product_type,
+            'product_id'        => $product_id,
+            'available_attributes' => $variable_service->available_attributes(),
             'form_action'       => Router::edit_product_url( $product_id ),
             'form_nonce_action' => self::UPDATE_NONCE_ACTION,
-            'form_title'        => __( 'Editar producto', 'sultana-admin' ),
-            'form_kicker'       => __( 'Producto simple', 'sultana-admin' ),
+            'form_title'        => 'variable' === $product_type ? __( 'Editar producto variable', 'sultana-admin' ) : __( 'Editar producto', 'sultana-admin' ),
+            'form_kicker'       => 'variable' === $product_type ? __( 'Producto variable', 'sultana-admin' ) : __( 'Producto simple', 'sultana-admin' ),
             'submit_label'      => __( 'Actualizar producto', 'sultana-admin' ),
             'notice'            => self::edit_notice(),
         ];
@@ -309,13 +325,23 @@ class ProductController
         return '';
     }
 
-    private static function posted_simple_product_data(): array
+    private static function requested_product_type(): string
+    {
+        $type = isset( $_POST['product_type'] )
+            ? sanitize_key( wp_unslash( $_POST['product_type'] ) )
+            : ( isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : 'simple' );
+
+        return 'variable' === $type ? 'variable' : 'simple';
+    }
+
+    private static function posted_product_data(): array
     {
         $category_ids = isset( $_POST['category_ids'] ) && is_array( $_POST['category_ids'] )
             ? array_map( 'absint', wp_unslash( $_POST['category_ids'] ) )
             : [];
 
         return [
+            'product_type'      => isset( $_POST['product_type'] ) ? sanitize_key( wp_unslash( $_POST['product_type'] ) ) : 'simple',
             'name'              => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
             'regular_price'     => isset( $_POST['regular_price'] ) ? wc_clean( wp_unslash( $_POST['regular_price'] ) ) : '',
             'sale_price'        => isset( $_POST['sale_price'] ) ? wc_clean( wp_unslash( $_POST['sale_price'] ) ) : '',
@@ -325,6 +351,8 @@ class ProductController
             'brand_id'          => isset( $_POST['brand_id'] ) ? absint( wp_unslash( $_POST['brand_id'] ) ) : 0,
             'stock_quantity'    => isset( $_POST['stock_quantity'] ) ? wc_clean( wp_unslash( $_POST['stock_quantity'] ) ) : '',
             'product_image_ids' => isset( $_POST['product_image_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['product_image_ids'] ) ) : '',
+            'variable_attributes' => isset( $_POST['variable_attributes'] ) && is_array( $_POST['variable_attributes'] ) ? wp_unslash( $_POST['variable_attributes'] ) : [],
+            'variations'        => isset( $_POST['variations'] ) && is_array( $_POST['variations'] ) ? wp_unslash( $_POST['variations'] ) : [],
             'status'            => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'draft',
         ];
     }

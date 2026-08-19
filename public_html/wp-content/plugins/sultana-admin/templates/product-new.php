@@ -29,6 +29,8 @@ $categories = $screen_data['categories'] ?? [];
 $brands     = $screen_data['brands'] ?? [];
 $brand_taxonomy = $screen_data['brand_taxonomy'] ?? '';
 $selected_images = $screen_data['selected_images'] ?? [];
+$product_type = $screen_data['product_type'] ?? ( $form['product_type'] ?? 'simple' );
+$available_attributes = $screen_data['available_attributes'] ?? [];
 $form_action = $screen_data['form_action'] ?? \Sultana\Admin\Core\Router::new_product_url();
 $form_nonce_action = $screen_data['form_nonce_action'] ?? ProductController::CREATE_NONCE_ACTION;
 $form_title = $screen_data['form_title'] ?? __( 'Nuevo producto', 'sultana-admin' );
@@ -40,6 +42,10 @@ $selected_brand = absint( $form['brand_id'] ?? 0 );
 $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
     ? implode( ',', array_map( 'absint', $form['product_image_ids'] ) )
     : (string) ( $form['product_image_ids'] ?? '' );
+$variable_state = [
+    'attributes' => $form['variable_attributes'] ?? [],
+    'variations' => $form['variations'] ?? [],
+];
 
 ?>
 <section class="sultana-admin-product-form-screen" aria-labelledby="sultana-admin-product-new-title">
@@ -72,6 +78,21 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
 
     <form class="sultana-admin-product-form" method="post" action="<?php echo esc_url( $form_action ); ?>" enctype="multipart/form-data">
         <?php wp_nonce_field( $form_nonce_action, 'sultana_admin_product_nonce' ); ?>
+        <input type="hidden" name="product_type" value="<?php echo esc_attr( $product_type ); ?>">
+
+        <?php if ( empty( $screen_data['product_id'] ) ) : ?>
+            <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-type">
+                <h2 id="sultana-admin-product-type"><?php esc_html_e( 'Tipo de producto', 'sultana-admin' ); ?></h2>
+                <div class="sultana-admin-type-switch">
+                    <a class="<?php echo esc_attr( 'sultana-admin-muted-action' . ( 'simple' === $product_type ? ' is-active' : '' ) ); ?>" href="<?php echo esc_url( add_query_arg( 'type', 'simple', \Sultana\Admin\Core\Router::new_product_url() ) ); ?>">
+                        <?php esc_html_e( 'Producto simple', 'sultana-admin' ); ?>
+                    </a>
+                    <a class="<?php echo esc_attr( 'sultana-admin-muted-action' . ( 'variable' === $product_type ? ' is-active' : '' ) ); ?>" href="<?php echo esc_url( add_query_arg( 'type', 'variable', \Sultana\Admin\Core\Router::new_product_url() ) ); ?>">
+                        <?php esc_html_e( 'Producto variable', 'sultana-admin' ); ?>
+                    </a>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-main">
             <h2 id="sultana-admin-product-main"><?php esc_html_e( 'Información principal', 'sultana-admin' ); ?></h2>
@@ -83,6 +104,7 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
 
         </section>
 
+        <?php if ( 'simple' === $product_type ) : ?>
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-pricing">
             <h2 id="sultana-admin-product-pricing"><?php esc_html_e( 'Precio', 'sultana-admin' ); ?></h2>
             <div class="sultana-admin-form-grid">
@@ -105,6 +127,13 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
             <label for="sultana-admin-product-stock"><?php esc_html_e( 'Cantidad en stock', 'sultana-admin' ); ?></label>
             <input id="sultana-admin-product-stock" type="number" name="stock_quantity" value="<?php echo esc_attr( $form['stock_quantity'] ?? '' ); ?>" min="0" step="1" inputmode="numeric" required>
         </section>
+        <?php else : ?>
+        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-parent-sku">
+            <h2 id="sultana-admin-product-parent-sku"><?php esc_html_e( 'Identificacion', 'sultana-admin' ); ?></h2>
+            <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
+            <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
+        </section>
+        <?php endif; ?>
 
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-organization">
             <h2 id="sultana-admin-product-organization"><?php esc_html_e( 'Organización', 'sultana-admin' ); ?></h2>
@@ -143,6 +172,28 @@ $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
                 </select>
             <?php endif; ?>
         </section>
+
+        <?php if ( 'variable' === $product_type ) : ?>
+            <section
+                class="sultana-admin-form-section sultana-admin-variable-editor"
+                aria-labelledby="sultana-admin-variable-title"
+                data-sultana-variable-editor
+                data-available-attributes="<?php echo esc_attr( wp_json_encode( array_values( $available_attributes ) ) ); ?>"
+                data-initial-state="<?php echo esc_attr( wp_json_encode( $variable_state ) ); ?>"
+            >
+                <h2 id="sultana-admin-variable-title"><?php esc_html_e( 'Atributos y variaciones', 'sultana-admin' ); ?></h2>
+                <p class="sultana-admin-field-help"><?php esc_html_e( 'Selecciona atributos globales existentes y configura cada combinacion.', 'sultana-admin' ); ?></p>
+                <div class="sultana-admin-variable-attributes" data-sultana-variable-attributes></div>
+                <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
+                    <?php esc_html_e( 'Agregar atributo', 'sultana-admin' ); ?>
+                </button>
+                <button class="sultana-admin-secondary-action" type="button" data-sultana-generate-variations>
+                    <?php esc_html_e( 'Generar variaciones', 'sultana-admin' ); ?>
+                </button>
+                <div class="sultana-admin-image-status" aria-live="polite" data-sultana-variable-status></div>
+                <div class="sultana-admin-variation-list" data-sultana-variation-list></div>
+            </section>
+        <?php endif; ?>
 
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-images-title">
             <h2 id="sultana-admin-product-images-title"><?php esc_html_e( 'Imagenes del producto', 'sultana-admin' ); ?></h2>

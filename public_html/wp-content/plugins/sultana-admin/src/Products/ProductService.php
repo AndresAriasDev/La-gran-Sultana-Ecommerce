@@ -216,7 +216,7 @@ class ProductService
             'sku'               => $product->get_sku( 'edit' ),
             'short_description' => $product->get_short_description( 'edit' ),
             'category_ids'      => array_map( 'absint', $product->get_category_ids( 'edit' ) ),
-            'brand_id'          => $this->product_brand_id( $product->get_id() ),
+            'brand_id'          => $this->product_brand_id_for_form( $product->get_id() ),
             'stock_quantity'    => null !== $product->get_stock_quantity( 'edit' ) ? (string) $product->get_stock_quantity( 'edit' ) : '0',
             'product_image_ids' => implode( ',', $image_ids ),
             'status'            => in_array( $status, [ 'draft', 'publish' ], true ) ? $status : 'draft',
@@ -433,7 +433,7 @@ class ProductService
         $product->set_gallery_image_ids( $gallery_ids );
     }
 
-    private function product_brand_id( int $product_id ): int
+    public function product_brand_id_for_form( int $product_id ): int
     {
         $taxonomy = $this->get_brand_taxonomy();
 
@@ -498,7 +498,7 @@ class ProductService
         }
 
         $clean['short_description'] = wp_kses_post( (string) ( $data['short_description'] ?? '' ) );
-        $clean['category_ids']      = $this->validate_category_ids( $data['category_ids'] ?? [], $errors );
+        $clean['category_ids']      = $this->validate_category_ids_for_form( $data['category_ids'] ?? [], $errors );
         $clean['brand_id']          = absint( $data['brand_id'] ?? 0 );
         $clean['brand_taxonomy']    = $this->get_brand_taxonomy();
         $clean['status']            = sanitize_key( (string) ( $data['status'] ?? 'draft' ) );
@@ -530,27 +530,7 @@ class ProductService
         }
 
         if ( $clean['brand_id'] ) {
-            if ( ! current_user_can( Capabilities::ASSIGN_PRODUCT_TERMS_CAPABILITY ) ) {
-                $errors[] = __( 'No tienes permisos para asignar marcas.', 'sultana-admin' );
-                return [
-                    'data'   => $clean,
-                    'errors' => $errors,
-                ];
-            }
-
-            $brand_taxonomy = $clean['brand_taxonomy'];
-
-            if ( '' === $brand_taxonomy ) {
-                $errors[] = __( 'La marca seleccionada no esta disponible.', 'sultana-admin' );
-            } else {
-                $term = get_term( $clean['brand_id'], $brand_taxonomy );
-
-                if ( ! $term || is_wp_error( $term ) ) {
-                    $errors[] = __( 'Selecciona una marca valida.', 'sultana-admin' );
-                } else {
-                    $clean['brand_taxonomy'] = $brand_taxonomy;
-                }
-            }
+            $this->validate_brand_for_form( $clean, $errors );
         }
 
         return [
@@ -587,7 +567,7 @@ class ProductService
         return absint( $value );
     }
 
-    private function validate_category_ids( $category_ids, array &$errors ): array
+    public function validate_category_ids_for_form( $category_ids, array &$errors ): array
     {
         if ( ! is_array( $category_ids ) || empty( $category_ids ) ) {
             return [];
@@ -616,6 +596,30 @@ class ProductService
         }
 
         return $valid;
+    }
+
+    public function validate_brand_for_form( array &$clean, array &$errors ): void
+    {
+        if ( ! current_user_can( Capabilities::ASSIGN_PRODUCT_TERMS_CAPABILITY ) ) {
+            $errors[] = __( 'No tienes permisos para asignar marcas.', 'sultana-admin' );
+            return;
+        }
+
+        $brand_taxonomy = (string) ( $clean['brand_taxonomy'] ?? $this->get_brand_taxonomy() );
+
+        if ( '' === $brand_taxonomy ) {
+            $errors[] = __( 'La marca seleccionada no esta disponible.', 'sultana-admin' );
+            return;
+        }
+
+        $term = get_term( absint( $clean['brand_id'] ?? 0 ), $brand_taxonomy );
+
+        if ( ! $term || is_wp_error( $term ) ) {
+            $errors[] = __( 'Selecciona una marca valida.', 'sultana-admin' );
+            return;
+        }
+
+        $clean['brand_taxonomy'] = $brand_taxonomy;
     }
 
     private function friendly_product_error( Throwable $exception ): string
@@ -661,7 +665,7 @@ class ProductService
             'price'     => $product->get_price_html(),
             'stock'     => $stock_text,
             'status'    => $this->status_label( $product->get_status() ),
-            'can_edit'  => 'simple' === $product->get_type() && current_user_can( 'edit_product', $product->get_id() ),
+            'can_edit'  => in_array( $product->get_type(), [ 'simple', 'variable' ], true ) && current_user_can( 'edit_product', $product->get_id() ),
             'can_delete' => 'simple' === $product->get_type() && current_user_can( 'delete_product', $product->get_id() ),
         ];
     }

@@ -57,5 +57,36 @@ class Assets
                 ],
             ]
         );
+
+        $variable_js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-variables.js';
+        $variable_js_version = file_exists( $variable_js_path ) ? (string) filemtime( $variable_js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-product-variables',
+            SULTANA_ADMIN_URL . 'assets/js/product-variables.js',
+            [],
+            $variable_js_version,
+            true
+        );
+
+        wp_localize_script(
+            'sultana-admin-product-variables',
+            'SultanaAdminProductVariables',
+            [
+                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+                'nonce'        => wp_create_nonce( ProductController::IMAGE_UPLOAD_NONCE_ACTION ),
+                'uploadAction' => ProductController::IMAGE_UPLOAD_ACTION,
+                'strings'      => [
+                    'selectAttribute' => __( 'Selecciona atributo', 'sultana-admin' ),
+                    'chooseValues'    => __( 'Selecciona valores', 'sultana-admin' ),
+                    'removeAttribute' => __( 'Quitar atributo', 'sultana-admin' ),
+                    'uploadImage'     => __( 'Imagen', 'sultana-admin' ),
+                    'removeImage'     => __( 'Quitar imagen', 'sultana-admin' ),
+                    'uploading'       => __( 'Subiendo imagen...', 'sultana-admin' ),
+                    'uploadError'     => __( 'No se pudo subir la imagen.', 'sultana-admin' ),
+                    'generateFirst'   => __( 'Genera variaciones para completar sus datos.', 'sultana-admin' ),
+                ],
+            ]
+        );
     }
 }

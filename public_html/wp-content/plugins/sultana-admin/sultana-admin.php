@@ -24,6 +24,7 @@ require_once SULTANA_ADMIN_PATH . 'src/Core/Assets.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Auth.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductImageService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductService.php';
+require_once SULTANA_ADMIN_PATH . 'src/Products/ProductVariableService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Router.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Bootstrap.php';
