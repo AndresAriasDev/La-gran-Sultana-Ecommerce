@@ -39,6 +39,7 @@ class Bootstrap
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/ProfileAvatar.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Checkout/CheckoutAccounts.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ComboStockService.php';
+        require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ComboComponentService.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ProductCombo.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ComboOrderService.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/Admin/ComboProductsAdmin.php';

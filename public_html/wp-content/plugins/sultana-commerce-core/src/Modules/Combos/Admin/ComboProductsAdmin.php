@@ -2,9 +2,9 @@
 
 namespace Sultana\CommerceCore\Modules\Combos\Admin;
 
+use Sultana\CommerceCore\Modules\Combos\ComboComponentService;
 use Sultana\CommerceCore\Modules\Combos\ComboStockService;
 use WC_Product;
-use WC_Product_Variation;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -160,7 +160,7 @@ class ComboProductsAdmin
         $quantity     = max( 1, absint( $component['quantity'] ?? 1 ) );
         $selected_id  = $variation_id ?: $product_id;
         $selected     = $selected_id && function_exists( 'wc_get_product' ) ? wc_get_product( $selected_id ) : null;
-        $label        = $selected instanceof WC_Product ? self::format_component_option_label( $selected ) : '';
+        $label        = $selected instanceof WC_Product ? ComboComponentService::format_component_option_label( $selected ) : '';
         ?>
         <tr data-scc-combo-component-row>
             <td>
@@ -218,128 +218,25 @@ class ComboProductsAdmin
             wp_send_json( [] );
         }
 
-        $ids = self::search_product_and_variation_ids( $term, $limit * 3, $exclude );
+        $components = ComboComponentService::search_components( $term, $limit, $exclude );
 
-        if ( empty( $ids ) ) {
+        if ( empty( $components ) ) {
             wp_send_json( [] );
         }
 
         $results = [];
 
-        foreach ( $ids as $id ) {
-            if ( count( $results ) >= $limit ) {
-                break;
-            }
+        foreach ( $components as $component ) {
+            $selected_id = absint( $component['selected_id'] ?? 0 );
 
-            $product = wc_get_product( $id );
-
-            if ( ! $product instanceof WC_Product || self::should_exclude_component_option( $product, $exclude ) ) {
+            if ( ! $selected_id ) {
                 continue;
             }
 
-            $results[ $product->get_id() ] = self::format_component_option_label( $product );
+            $results[ $selected_id ] = (string) ( $component['label'] ?? '' );
         }
 
         wp_send_json( $results );
-    }
-
-    /**
-     * @return array<int>
-     */
-    private static function search_product_and_variation_ids( string $term, int $limit, array $exclude ): array
-    {
-        if ( class_exists( 'WC_Data_Store' ) ) {
-            $data_store = \WC_Data_Store::load( 'product' );
-
-            if ( is_object( $data_store ) && method_exists( $data_store, 'search_products' ) ) {
-                $method     = new \ReflectionMethod( $data_store, 'search_products' );
-                $parameters = $method->getNumberOfParameters();
-                $arguments  = [ $term, '', true, false, $limit, [], $exclude ];
-                $ids        = $data_store->search_products( ...array_slice( $arguments, 0, $parameters ) );
-
-                return array_values( array_unique( array_map( 'absint', is_array( $ids ) ? $ids : [] ) ) );
-            }
-        }
-
-        $query = new \WP_Query(
-            [
-                'fields'         => 'ids',
-                'post_type'      => [ 'product', 'product_variation' ],
-                'post_status'    => [ 'publish', 'private' ],
-                'posts_per_page' => $limit,
-                'post__not_in'   => $exclude,
-                's'              => $term,
-                'no_found_rows'  => true,
-            ]
-        );
-
-        return array_values( array_unique( array_map( 'absint', $query->posts ) ) );
-    }
-
-    private static function should_exclude_component_option( WC_Product $product, array $exclude ): bool
-    {
-        if ( in_array( $product->get_id(), $exclude, true ) || ComboStockService::is_combo_product( $product ) ) {
-            return true;
-        }
-
-        if ( $product instanceof WC_Product_Variation || 'variation' === $product->get_type() ) {
-            $parent_id = absint( $product->get_parent_id() );
-            $parent    = $parent_id ? wc_get_product( $parent_id ) : null;
-
-            return ! $parent instanceof WC_Product || ! $parent->is_type( 'variable' ) || ComboStockService::is_combo_product( $parent );
-        }
-
-        return ! $product->is_type( 'simple' );
-    }
-
-    private static function format_component_option_label( WC_Product $product ): string
-    {
-        if ( $product instanceof WC_Product_Variation || 'variation' === $product->get_type() ) {
-            $parent_id = absint( $product->get_parent_id() );
-            $parent    = $parent_id ? wc_get_product( $parent_id ) : null;
-            $name      = $parent instanceof WC_Product ? $parent->get_name() : $product->get_name();
-            $variation = self::format_variation_attributes_label( $product, $parent );
-
-            $label = $variation ? $name . ' — ' . $variation : $product->get_formatted_name();
-
-            $label = str_replace( 'â€”', '-', $label );
-
-            $label = $variation ? sprintf( '%s - %s', $name, $variation ) : $product->get_formatted_name();
-
-            return rawurldecode( wp_strip_all_tags( $label ) );
-        }
-
-        return rawurldecode( wp_strip_all_tags( $product->get_formatted_name() ) );
-    }
-
-    private static function format_variation_attributes_label( WC_Product $variation, ?WC_Product $parent ): string
-    {
-        $details = [];
-
-        foreach ( $variation->get_attributes() as $attribute_name => $attribute_value ) {
-            $attribute_value = (string) $attribute_value;
-
-            if ( '' === $attribute_value ) {
-                continue;
-            }
-
-            $attribute_label = function_exists( 'wc_attribute_label' )
-                ? wc_attribute_label( $attribute_name, $parent )
-                : str_replace( [ 'attribute_', 'pa_', '-' ], [ '', '', ' ' ], $attribute_name );
-            $attribute_display_value = $attribute_value;
-
-            if ( taxonomy_exists( $attribute_name ) ) {
-                $term = get_term_by( 'slug', $attribute_value, $attribute_name );
-
-                if ( $term && ! is_wp_error( $term ) ) {
-                    $attribute_display_value = $term->name;
-                }
-            }
-
-            $details[] = wp_strip_all_tags( $attribute_label ) . ': ' . wp_strip_all_tags( $attribute_display_value );
-        }
-
-        return implode( ' · ', $details );
     }
 
     public static function save_product_components( WC_Product $product ): void
@@ -373,9 +270,19 @@ class ComboProductsAdmin
         $posted_components = isset( $_POST['scc_combo_components'] ) && is_array( $_POST['scc_combo_components'] )
             ? wp_unslash( $_POST['scc_combo_components'] )
             : [];
-        $components = ComboStockService::sanitize_components( $posted_components, $product_id );
+        $components = ComboComponentService::validate_components( $posted_components, $product_id );
 
-        ComboStockService::save_components( $product_id, $components );
+        if ( is_wp_error( $components ) ) {
+            if ( class_exists( '\WC_Admin_Meta_Boxes' ) ) {
+                foreach ( $components->get_error_messages() as $message ) {
+                    \WC_Admin_Meta_Boxes::add_error( $message );
+                }
+            }
+
+            return;
+        }
+
+        ComboComponentService::save_components( $product_id, $components );
         ComboStockService::sync_combo_prices( $product_id, $product, false );
     }
 
