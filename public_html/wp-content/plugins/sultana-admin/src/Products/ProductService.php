@@ -360,7 +360,7 @@ class ProductService
         ];
 
         if ( '' !== $search ) {
-            $query_args['search'] = '*' . $search . '*';
+            $query_args['s'] = $search;
         }
 
         $result      = wc_get_products( $query_args );
@@ -661,36 +661,63 @@ class ProductService
 
     private function format_product( WC_Product $product ): array
     {
-        $image_id     = $product->get_image_id();
-        $availability = $product->get_availability();
-        $stock_text   = ! empty( $availability['availability'] )
-            ? wp_strip_all_tags( (string) $availability['availability'] )
-            : $this->stock_status_label( $product->get_stock_status() );
+        $product_id = $product->get_id();
+        $type       = $product->get_type();
+        $image_id   = $product->get_image_id();
+        $stock_text = $this->stock_label_for_list( $product, $type );
 
-        if ( $product->managing_stock() && null !== $product->get_stock_quantity() ) {
-            $stock_text = sprintf(
-                /* translators: 1: stock availability label, 2: stock quantity. */
-                __( '%1$s (%2$d)', 'sultana-admin' ),
-                $stock_text,
-                (int) $product->get_stock_quantity()
-            );
+        if ( 'variable' !== $type && $product->managing_stock() && null !== $product->get_stock_quantity() ) {
+            $stock_text = $this->append_stock_quantity( $stock_text, (int) $product->get_stock_quantity() );
         }
 
         $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
+        $can_manage = in_array( $type, self::ALLOWED_TYPES, true );
 
         return [
-            'id'        => $product->get_id(),
-            'image_url' => is_string( $image_url ) ? $image_url : '',
-            'name'      => $product->get_name(),
-            'sku'       => $product->get_sku(),
-            'type_key'  => $product->get_type(),
-            'type'      => $this->type_label( $product->get_type() ),
-            'price'     => $product->get_price_html(),
-            'stock'     => $stock_text,
-            'status'    => $this->status_label( $product->get_status() ),
-            'can_edit'  => in_array( $product->get_type(), [ 'simple', 'variable', 'combo' ], true ) && current_user_can( 'edit_product', $product->get_id() ),
-            'can_delete' => in_array( $product->get_type(), [ 'simple', 'variable', 'combo' ], true ) && current_user_can( 'delete_product', $product->get_id() ),
+            'id'         => $product_id,
+            'image_url'  => is_string( $image_url ) ? $image_url : '',
+            'name'       => $product->get_name(),
+            'sku'        => $product->get_sku(),
+            'type_key'   => $type,
+            'type'       => $this->type_label( $type ),
+            'price'      => $this->price_label_for_list( $product, $type ),
+            'stock'      => $stock_text,
+            'status'     => $this->status_label( $product->get_status() ),
+            'can_edit'   => $can_manage && current_user_can( 'edit_product', $product_id ),
+            'can_delete' => $can_manage && current_user_can( 'delete_product', $product_id ),
         ];
+    }
+
+    private function price_label_for_list( WC_Product $product, string $type ): string
+    {
+        if ( 'variable' === $type ) {
+            return __( 'Segun variacion', 'sultana-admin' );
+        }
+
+        return $product->get_price_html();
+    }
+
+    private function stock_label_for_list( WC_Product $product, string $type ): string
+    {
+        if ( 'variable' === $type ) {
+            return $this->stock_status_label( $product->get_stock_status() );
+        }
+
+        $availability = $product->get_availability();
+
+        return ! empty( $availability['availability'] )
+            ? wp_strip_all_tags( (string) $availability['availability'] )
+            : $this->stock_status_label( $product->get_stock_status() );
+    }
+
+    private function append_stock_quantity( string $stock_text, int $stock_quantity ): string
+    {
+        return sprintf(
+            /* translators: 1: stock availability label, 2: stock quantity. */
+            __( '%1$s (%2$d)', 'sultana-admin' ),
+            $stock_text,
+            $stock_quantity
+        );
     }
 
     private function type_label( string $type ): string

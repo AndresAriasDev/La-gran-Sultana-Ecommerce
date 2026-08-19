@@ -23,9 +23,9 @@ class ProductController
     public static function prepare_list_screen(): array
     {
         $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
-        $search = trim( $search );
+        $search = substr( trim( $search ), 0, 120 );
         $page   = isset( $_GET['product_page'] ) ? absint( wp_unslash( $_GET['product_page'] ) ) : 1;
-        $page   = max( 1, $page );
+        $page   = max( 1, min( 500, $page ) );
 
         $service = new ProductService();
         $errors  = self::handle_trash_request( $service );
