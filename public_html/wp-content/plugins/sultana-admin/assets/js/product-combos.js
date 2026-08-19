@@ -259,6 +259,10 @@
         params.set('term', term);
         params.set('limit', '20');
 
+        selectedIds().forEach(function (id) {
+            params.append('exclude[]', String(id));
+        });
+
         return window.fetch((config.ajaxUrl || '') + '?' + params.toString(), {
             credentials: 'same-origin'
         })
@@ -270,8 +274,24 @@
                     throw new Error('combo_search_failed');
                 }
 
-                return Array.isArray(payload.data.components) ? payload.data.components : [];
+                return Array.isArray(payload.data.components)
+                    ? payload.data.components.filter(function (component) {
+                        return selectedIds().indexOf(toInt(component.selected_id)) === -1;
+                    })
+                    : [];
             });
+    }
+
+    function selectedIds() {
+        return components.reduce(function (ids, component) {
+            const selectedId = toInt(component.selected_id);
+
+            if (selectedId && ids.indexOf(selectedId) === -1) {
+                ids.push(selectedId);
+            }
+
+            return ids;
+        }, []);
     }
 
     function setStatus(message) {

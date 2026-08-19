@@ -259,8 +259,12 @@ class ProductController
         $term  = isset( $_GET['term'] ) ? wc_clean( wp_unslash( $_GET['term'] ) ) : '';
         $limit = isset( $_GET['limit'] ) ? absint( wp_unslash( $_GET['limit'] ) ) : 20;
         $limit = $limit > 0 ? min( $limit, 30 ) : 20;
+        $exclude = isset( $_GET['exclude'] ) && is_array( $_GET['exclude'] )
+            ? array_slice( array_map( 'absint', wp_unslash( $_GET['exclude'] ) ), 0, 100 )
+            : [];
+        $exclude = array_values( array_filter( array_unique( $exclude ) ) );
 
-        $components = \Sultana\CommerceCore\Modules\Combos\ComboComponentService::search_components( (string) $term, $limit );
+        $components = \Sultana\CommerceCore\Modules\Combos\ComboComponentService::search_components( (string) $term, $limit, $exclude );
 
         wp_send_json_success(
             [
