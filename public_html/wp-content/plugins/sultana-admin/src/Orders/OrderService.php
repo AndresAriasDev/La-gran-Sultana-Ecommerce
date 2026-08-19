@@ -18,6 +18,8 @@ class OrderService
     private const ALLOWED_STATUS_TARGETS = [ 'pending', 'on-hold', 'processing', 'completed', 'cancelled' ];
     private const ALLOWED_SHIPPING_META_LABELS = [ 'origen', 'ruta', 'entrega' ];
 
+    private ?array $status_options_cache = null;
+
     public function list_orders( array $args ): array
     {
         $search   = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
@@ -38,7 +40,12 @@ class OrderService
 
     public function status_options(): array
     {
+        if ( null !== $this->status_options_cache ) {
+            return $this->status_options_cache;
+        }
+
         if ( ! function_exists( 'wc_get_order_statuses' ) ) {
+            $this->status_options_cache = [];
             return [];
         }
 
@@ -52,7 +59,9 @@ class OrderService
             }
         }
 
-        return $statuses;
+        $this->status_options_cache = $statuses;
+
+        return $this->status_options_cache;
     }
 
     public function order_detail( int $order_id ): array
@@ -309,6 +318,8 @@ class OrderService
     private function format_order( WC_Order $order ): array
     {
         $date_created = $order->get_date_created();
+        $order_id     = $order->get_id();
+        $status       = $order->get_status();
         $customer     = trim( $order->get_billing_first_name() . ' ' . $order->get_billing_last_name() );
 
         if ( '' === $customer ) {
@@ -316,16 +327,16 @@ class OrderService
         }
 
         return [
-            'id'              => $order->get_id(),
+            'id'              => $order_id,
             'number'          => $order->get_order_number(),
             'customer'        => '' !== $customer ? $customer : __( 'Cliente', 'sultana-admin' ),
             'date'            => $date_created ? wc_format_datetime( $date_created ) : __( 'Sin fecha', 'sultana-admin' ),
-            'status'          => $order->get_status(),
-            'status_label'    => function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $order->get_status() ) : $order->get_status(),
+            'status'          => $status,
+            'status_label'    => function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $status ) : $status,
             'total'           => wc_price( (float) $order->get_total(), [ 'currency' => $order->get_currency() ] ),
             'payment_method'  => $this->payment_method_label( $order ),
             'shipping_method' => $this->shipping_method_label( $order ),
-            'view_url'         => Router::order_url( $order->get_id() ),
+            'view_url'         => Router::order_url( $order_id ),
             'can_view'         => $this->can_view_order( $order ),
         ];
     }
@@ -335,6 +346,9 @@ class OrderService
         $date_created  = $order->get_date_created();
         $date_paid     = $order->get_date_paid();
         $date_completed = $order->get_date_completed();
+        $items_subtotal = 0.0;
+        $items          = $this->line_items( $order, $items_subtotal );
+        $shipping       = $this->shipping_data( $order );
 
         return [
             'id'          => $order->get_id(),
@@ -348,8 +362,8 @@ class OrderService
                 'date_completed' => $date_completed ? wc_format_datetime( $date_completed ) : '',
             ],
             'customer'    => $this->customer_data( $order ),
-            'address'     => $this->delivery_address( $order ),
-            'items'       => $this->line_items( $order ),
+            'address'     => $this->delivery_address( $order, $shipping ),
+            'items'       => $items,
             'payment'     => [
                 'method'         => $this->payment_method_label( $order ),
                 'method_id'      => (string) $order->get_payment_method(),
@@ -357,8 +371,8 @@ class OrderService
                 'date_paid'      => $date_paid ? wc_format_datetime( $date_paid ) : '',
                 'transaction_id' => trim( (string) $order->get_transaction_id() ),
             ],
-            'shipping'    => $this->shipping_data( $order ),
-            'totals'      => $this->totals_data( $order ),
+            'shipping'    => $shipping,
+            'totals'      => $this->totals_data( $order, $items_subtotal ),
             'gift'        => $this->gift_data( $order ),
         ];
     }
@@ -447,9 +461,9 @@ class OrderService
         ];
     }
 
-    private function delivery_address( WC_Order $order ): array
+    private function delivery_address( WC_Order $order, array $shipping ): array
     {
-        if ( $this->is_store_pickup_order( $order ) ) {
+        if ( $this->shipping_data_indicates_store_pickup( $shipping ) ) {
             return [
                 'type'         => 'pickup',
                 'type_label'   => __( 'Retiro en tienda', 'sultana-admin' ),
@@ -479,14 +493,10 @@ class OrderService
         return '' !== trim( $order->get_shipping_state() . $order->get_shipping_city() . $order->get_shipping_address_1() );
     }
 
-    private function is_store_pickup_order( WC_Order $order ): bool
+    private function shipping_data_indicates_store_pickup( array $shipping ): bool
     {
-        foreach ( $order->get_shipping_methods() as $shipping_item ) {
-            if ( ! $shipping_item instanceof WC_Order_Item_Shipping ) {
-                continue;
-            }
-
-            if ( 'scc_store_pickup' === (string) $shipping_item->get_method_id() ) {
+        foreach ( $shipping as $shipping_item ) {
+            if ( 'scc_store_pickup' === (string) ( $shipping_item['method_id'] ?? '' ) ) {
                 return true;
             }
         }
@@ -513,19 +523,23 @@ class OrderService
         return $state;
     }
 
-    private function line_items( WC_Order $order ): array
+    private function line_items( WC_Order $order, float &$items_subtotal = 0.0 ): array
     {
-        $items = [];
+        $items          = [];
+        $items_subtotal = 0.0;
 
         foreach ( $order->get_items( 'line_item' ) as $item ) {
             if ( ! $item instanceof WC_Order_Item_Product ) {
                 continue;
             }
 
+            $subtotal = (float) $item->get_subtotal();
+            $items_subtotal += $subtotal;
+
             $items[] = [
                 'name'       => $item->get_name(),
                 'quantity'   => (float) $item->get_quantity(),
-                'subtotal'   => $this->format_money( $item->get_subtotal(), $order ),
+                'subtotal'   => $this->format_money( $subtotal, $order ),
                 'total'      => $this->format_money( $item->get_total(), $order ),
                 'attributes' => $this->presentable_item_meta( $item ),
                 'components' => $this->combo_components_snapshot( $item, max( 1, (float) $item->get_quantity() ) ),
@@ -686,18 +700,10 @@ class OrderService
         return $metadata;
     }
 
-    private function totals_data( WC_Order $order ): array
+    private function totals_data( WC_Order $order, float $items_subtotal ): array
     {
-        $subtotal = 0.0;
-
-        foreach ( $order->get_items( 'line_item' ) as $item ) {
-            if ( $item instanceof WC_Order_Item_Product ) {
-                $subtotal += (float) $item->get_subtotal();
-            }
-        }
-
         return [
-            'subtotal' => $this->format_money( $subtotal, $order ),
+            'subtotal' => $this->format_money( $items_subtotal, $order ),
             'discount' => $this->format_money( $order->get_discount_total(), $order ),
             'shipping' => $this->format_money( $order->get_shipping_total(), $order ),
             'tax'      => $this->format_money( $order->get_total_tax(), $order ),
