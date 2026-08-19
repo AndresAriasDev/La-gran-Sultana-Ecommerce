@@ -286,7 +286,7 @@ class ProductController
         }
 
         $product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
-        $result     = $service->trash_simple_product( $product_id );
+        $result     = $service->trash_product( $product_id );
 
         if ( empty( $result['success'] ) ) {
             return $result['errors'];

@@ -291,7 +291,7 @@ class ProductService
         ];
     }
 
-    public function trash_simple_product( int $product_id ): array
+    public function trash_product( int $product_id ): array
     {
         $product = $this->get_product( $product_id );
 
@@ -309,10 +309,10 @@ class ProductService
             ];
         }
 
-        if ( 'simple' !== $product->get_type() ) {
+        if ( ! in_array( $product->get_type(), [ 'simple', 'variable' ], true ) ) {
             return [
                 'success' => false,
-                'errors'  => [ __( 'Solo los productos simples pueden enviarse a la papelera desde Sultana Admin.', 'sultana-admin' ) ],
+                'errors'  => [ __( 'Solo los productos simples y variables pueden enviarse a la papelera desde Sultana Admin.', 'sultana-admin' ) ],
             ];
         }
 
@@ -666,7 +666,7 @@ class ProductService
             'stock'     => $stock_text,
             'status'    => $this->status_label( $product->get_status() ),
             'can_edit'  => in_array( $product->get_type(), [ 'simple', 'variable' ], true ) && current_user_can( 'edit_product', $product->get_id() ),
-            'can_delete' => 'simple' === $product->get_type() && current_user_can( 'delete_product', $product->get_id() ),
+            'can_delete' => in_array( $product->get_type(), [ 'simple', 'variable' ], true ) && current_user_can( 'delete_product', $product->get_id() ),
         ];
     }
 
