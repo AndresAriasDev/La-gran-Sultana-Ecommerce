@@ -17,6 +17,8 @@ class ProductController
     public const IMAGE_UPLOAD_NONCE_ACTION = 'sultana_admin_product_image_upload';
     public const IMAGE_UPLOAD_ACTION = 'sultana_admin_upload_product_image';
     public const IMAGE_DELETE_ACTION = 'sultana_admin_delete_product_image';
+    public const COMBO_COMPONENT_SEARCH_NONCE_ACTION = 'sultana_admin_combo_component_search';
+    public const COMBO_COMPONENT_SEARCH_ACTION = 'sultana_admin_search_combo_components';
 
     public static function prepare_list_screen(): array
     {
@@ -52,8 +54,9 @@ class ProductController
     {
         $service          = new ProductService();
         $variable_service = new ProductVariableService();
+        $combo_service    = new ProductComboService();
         $product_type     = self::requested_product_type();
-        $form             = 'variable' === $product_type ? $variable_service->default_product_data() : $service->default_simple_product_data();
+        $form             = self::default_form_data( $product_type, $service, $variable_service, $combo_service );
         $errors           = [];
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
@@ -63,10 +66,8 @@ class ProductController
                 $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
             } else {
                 $form         = self::posted_product_data();
-                $product_type = 'variable' === ( $form['product_type'] ?? 'simple' ) ? 'variable' : 'simple';
-                $result       = 'variable' === $product_type
-                    ? $variable_service->create_variable_product( $form )
-                    : $service->create_simple_product( $form );
+                $product_type = self::normalize_product_type( (string) ( $form['product_type'] ?? 'simple' ) );
+                $result       = self::create_product_for_type( $product_type, $form, $service, $variable_service, $combo_service );
 
                 if ( $result['success'] ) {
                     wp_safe_redirect( add_query_arg( 'notice', 'product_created', Router::products_url() ) );
@@ -83,13 +84,14 @@ class ProductController
             'categories'      => $service->get_product_categories(),
             'brands'          => $service->get_product_brands(),
             'brand_taxonomy' => $service->get_brand_taxonomy(),
-            'selected_images' => ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
+            'selected_images' => 'combo' === $product_type ? [] : ( new ProductImageService() )->get_temporary_image_items( $form['product_image_ids'] ?? '' ),
             'product_type'    => $product_type,
             'available_attributes' => $variable_service->available_attributes(),
+            'combo_components' => $combo_service->components_for_form( $form['combo_components'] ?? [] ),
             'form_action'     => add_query_arg( 'type', $product_type, Router::new_product_url() ),
             'form_nonce_action' => self::CREATE_NONCE_ACTION,
-            'form_title'      => 'variable' === $product_type ? __( 'Nuevo producto variable', 'sultana-admin' ) : __( 'Nuevo producto', 'sultana-admin' ),
-            'form_kicker'     => 'variable' === $product_type ? __( 'Producto variable', 'sultana-admin' ) : __( 'Producto simple', 'sultana-admin' ),
+            'form_title'      => self::form_title_for_type( $product_type, false ),
+            'form_kicker'     => self::form_kicker_for_type( $product_type ),
             'submit_label'    => __( 'Guardar producto', 'sultana-admin' ),
             'notice'          => '',
         ];
@@ -116,7 +118,7 @@ class ProductController
             ];
         }
 
-        if ( ! in_array( $product->get_type(), [ 'simple', 'variable' ], true ) ) {
+        if ( ! in_array( $product->get_type(), [ 'simple', 'variable', 'combo' ], true ) ) {
             return [
                 'unsupported' => true,
                 'message'     => __( 'Ese tipo de producto todavia no puede editarse desde Sultana Admin.', 'sultana-admin' ),
@@ -125,19 +127,28 @@ class ProductController
         }
 
         $variable_service = new ProductVariableService();
+        $combo_service    = new ProductComboService();
         $product_type     = $product->get_type();
-        $form             = 'variable' === $product_type && $product instanceof \WC_Product_Variable
-            ? $variable_service->product_form_data( $product )
-            : $service->product_form_data( $product );
+        if ( 'variable' === $product_type && $product instanceof \WC_Product_Variable ) {
+            $form = $variable_service->product_form_data( $product );
+        } elseif ( 'combo' === $product_type && $product instanceof \Sultana\CommerceCore\Modules\Combos\ProductCombo ) {
+            $form = $combo_service->product_form_data( $product );
+        } else {
+            $form = $service->product_form_data( $product );
+        }
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
             if ( ! self::verify_update_nonce() ) {
                 $errors[] = __( 'No se pudo validar la solicitud. Intenta nuevamente.', 'sultana-admin' );
             } else {
                 $form   = self::posted_product_data();
-                $result = 'variable' === $product_type
-                    ? $variable_service->update_variable_product( $product_id, $form )
-                    : $service->update_simple_product( $product_id, $form );
+                if ( 'variable' === $product_type ) {
+                    $result = $variable_service->update_variable_product( $product_id, $form );
+                } elseif ( 'combo' === $product_type ) {
+                    $result = $combo_service->update_combo_product( $product_id, $form );
+                } else {
+                    $result = $service->update_simple_product( $product_id, $form );
+                }
 
                 if ( $result['success'] ) {
                     wp_safe_redirect( add_query_arg( 'notice', 'product_updated', Router::products_url() ) );
@@ -154,14 +165,15 @@ class ProductController
             'categories'        => $service->get_product_categories(),
             'brands'            => $service->get_product_brands(),
             'brand_taxonomy'    => $service->get_brand_taxonomy(),
-            'selected_images'   => $image_service->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
+            'selected_images'   => 'combo' === $product_type ? [] : $image_service->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id ),
             'product_type'      => $product_type,
             'product_id'        => $product_id,
             'available_attributes' => $variable_service->available_attributes(),
+            'combo_components'  => $combo_service->components_for_form( $form['combo_components'] ?? [] ),
             'form_action'       => Router::edit_product_url( $product_id ),
             'form_nonce_action' => self::UPDATE_NONCE_ACTION,
-            'form_title'        => 'variable' === $product_type ? __( 'Editar producto variable', 'sultana-admin' ) : __( 'Editar producto', 'sultana-admin' ),
-            'form_kicker'       => 'variable' === $product_type ? __( 'Producto variable', 'sultana-admin' ) : __( 'Producto simple', 'sultana-admin' ),
+            'form_title'        => self::form_title_for_type( $product_type, true ),
+            'form_kicker'       => self::form_kicker_for_type( $product_type ),
             'submit_label'      => __( 'Actualizar producto', 'sultana-admin' ),
             'notice'            => self::edit_notice(),
         ];
@@ -222,6 +234,39 @@ class ProductController
         }
 
         wp_send_json_success();
+    }
+
+    public static function ajax_search_combo_components(): void
+    {
+        if ( ! self::can_search_combo_components() ) {
+            wp_send_json_error(
+                [
+                    'message' => __( 'No tienes permisos para buscar componentes.', 'sultana-admin' ),
+                ],
+                403
+            );
+        }
+
+        if ( ! class_exists( '\Sultana\CommerceCore\Modules\Combos\ComboComponentService' ) ) {
+            wp_send_json_error(
+                [
+                    'message' => __( 'Commerce Core no esta listo para buscar componentes.', 'sultana-admin' ),
+                ],
+                400
+            );
+        }
+
+        $term  = isset( $_GET['term'] ) ? wc_clean( wp_unslash( $_GET['term'] ) ) : '';
+        $limit = isset( $_GET['limit'] ) ? absint( wp_unslash( $_GET['limit'] ) ) : 20;
+        $limit = $limit > 0 ? min( $limit, 30 ) : 20;
+
+        $components = \Sultana\CommerceCore\Modules\Combos\ComboComponentService::search_components( (string) $term, $limit );
+
+        wp_send_json_success(
+            [
+                'components' => $components,
+            ]
+        );
     }
 
     private static function pagination_links( int $page, int $total_pages, string $search ): array
@@ -331,7 +376,7 @@ class ProductController
             ? sanitize_key( wp_unslash( $_POST['product_type'] ) )
             : ( isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : 'simple' );
 
-        return 'variable' === $type ? 'variable' : 'simple';
+        return self::normalize_product_type( $type );
     }
 
     private static function posted_product_data(): array
@@ -353,8 +398,66 @@ class ProductController
             'product_image_ids' => isset( $_POST['product_image_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['product_image_ids'] ) ) : '',
             'variable_attributes' => isset( $_POST['variable_attributes'] ) && is_array( $_POST['variable_attributes'] ) ? wp_unslash( $_POST['variable_attributes'] ) : [],
             'variations'        => isset( $_POST['variations'] ) && is_array( $_POST['variations'] ) ? wp_unslash( $_POST['variations'] ) : [],
+            'combo_components'  => isset( $_POST['combo_components'] ) && is_array( $_POST['combo_components'] ) ? wp_unslash( $_POST['combo_components'] ) : [],
             'status'            => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'draft',
         ];
+    }
+
+    private static function default_form_data( string $product_type, ProductService $service, ProductVariableService $variable_service, ProductComboService $combo_service ): array
+    {
+        if ( 'variable' === $product_type ) {
+            return $variable_service->default_product_data();
+        }
+
+        if ( 'combo' === $product_type ) {
+            return $combo_service->default_product_data();
+        }
+
+        return $service->default_simple_product_data();
+    }
+
+    private static function create_product_for_type( string $product_type, array $form, ProductService $service, ProductVariableService $variable_service, ProductComboService $combo_service ): array
+    {
+        if ( 'variable' === $product_type ) {
+            return $variable_service->create_variable_product( $form );
+        }
+
+        if ( 'combo' === $product_type ) {
+            return $combo_service->create_combo_product( $form );
+        }
+
+        return $service->create_simple_product( $form );
+    }
+
+    private static function normalize_product_type( string $type ): string
+    {
+        return in_array( $type, [ 'simple', 'variable', 'combo' ], true ) ? $type : 'simple';
+    }
+
+    private static function form_title_for_type( string $product_type, bool $editing ): string
+    {
+        if ( 'variable' === $product_type ) {
+            return $editing ? __( 'Editar producto variable', 'sultana-admin' ) : __( 'Nuevo producto variable', 'sultana-admin' );
+        }
+
+        if ( 'combo' === $product_type ) {
+            return $editing ? __( 'Editar combo', 'sultana-admin' ) : __( 'Nuevo combo', 'sultana-admin' );
+        }
+
+        return $editing ? __( 'Editar producto', 'sultana-admin' ) : __( 'Nuevo producto', 'sultana-admin' );
+    }
+
+    private static function form_kicker_for_type( string $product_type ): string
+    {
+        if ( 'variable' === $product_type ) {
+            return __( 'Producto variable', 'sultana-admin' );
+        }
+
+        if ( 'combo' === $product_type ) {
+            return __( 'Combo', 'sultana-admin' );
+        }
+
+        return __( 'Producto simple', 'sultana-admin' );
     }
 
     private static function can_handle_image_ajax(): bool
@@ -367,5 +470,16 @@ class ProductController
             && current_user_can( Capabilities::ACCESS_CAPABILITY )
             && current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY )
             && current_user_can( Capabilities::UPLOAD_FILES_CAPABILITY );
+    }
+
+    private static function can_search_combo_components(): bool
+    {
+        if ( ! check_ajax_referer( self::COMBO_COMPONENT_SEARCH_NONCE_ACTION, 'nonce', false ) ) {
+            return false;
+        }
+
+        return is_user_logged_in()
+            && current_user_can( Capabilities::ACCESS_CAPABILITY )
+            && current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY );
     }
 }

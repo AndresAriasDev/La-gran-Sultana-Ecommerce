@@ -19,6 +19,7 @@ class Bootstrap
         add_action( 'admin_init', [ self::class, 'redirect_store_managers_from_wp_admin' ] );
         add_action( 'wp_ajax_' . ProductController::IMAGE_UPLOAD_ACTION, [ ProductController::class, 'ajax_upload_product_image' ] );
         add_action( 'wp_ajax_' . ProductController::IMAGE_DELETE_ACTION, [ ProductController::class, 'ajax_delete_product_image' ] );
+        add_action( 'wp_ajax_' . ProductController::COMBO_COMPONENT_SEARCH_ACTION, [ ProductController::class, 'ajax_search_combo_components' ] );
     }
 
     public static function dependencies_status(): array

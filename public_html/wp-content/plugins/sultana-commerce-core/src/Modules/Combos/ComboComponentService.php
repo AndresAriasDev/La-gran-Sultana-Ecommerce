@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class ComboComponentService
 {
     /**
-     * @return array<int, array{product_id:int,variation_id:int,selected_id:int,label:string}>
+     * @return array<int, array{product_id:int,variation_id:int,selected_id:int,label:string,regular_price:string}>
      */
     public static function search_components( string $term, int $limit = 30, array $exclude = [] ): array
     {
@@ -45,6 +45,7 @@ class ComboComponentService
                 'variation_id' => $variation_id,
                 'selected_id'  => $variation_id ?: $product_id,
                 'label'        => self::format_component_option_label( $product ),
+                'regular_price' => self::get_component_regular_price_for_display( $product ),
             ];
         }
 
@@ -118,6 +119,14 @@ class ComboComponentService
         ComboStockService::save_components( $combo_id, $components );
     }
 
+    /**
+     * @return array<int, array{product_id:int,variation_id:int,quantity:int}>
+     */
+    public static function get_components( int $combo_id ): array
+    {
+        return ComboStockService::get_components( $combo_id );
+    }
+
     public static function format_component_option_label( WC_Product $product ): string
     {
         if ( self::is_variation_product( $product ) ) {
@@ -130,6 +139,39 @@ class ComboComponentService
         }
 
         return rawurldecode( wp_strip_all_tags( $product->get_formatted_name() ) );
+    }
+
+    /**
+     * @return array<int>
+     */
+    public static function get_derived_image_ids( int $combo_id ): array
+    {
+        $image_ids = [];
+
+        foreach ( ComboStockService::get_components( $combo_id ) as $component ) {
+            $image_id = self::get_component_image_id( $component );
+
+            if ( $image_id && ! in_array( $image_id, $image_ids, true ) ) {
+                $image_ids[] = $image_id;
+            }
+        }
+
+        return $image_ids;
+    }
+
+    public static function get_primary_derived_image_id( int $combo_id ): int
+    {
+        $image_ids = self::get_derived_image_ids( $combo_id );
+
+        return $image_ids[0] ?? 0;
+    }
+
+    /**
+     * @param array<int, array{product_id:int,variation_id:int,quantity:int}> $components
+     */
+    public static function calculate_regular_price( array $components ): float
+    {
+        return ComboStockService::calculate_components_regular_total( $components );
     }
 
     /**
@@ -180,6 +222,37 @@ class ComboComponentService
         }
 
         return self::validate_simple_component( $product, $combo_id, $errors );
+    }
+
+    private static function get_component_image_id( array $component ): int
+    {
+        $component_product = ComboStockService::get_component_stock_product( $component );
+
+        if ( ! $component_product instanceof WC_Product ) {
+            return 0;
+        }
+
+        $image_id = absint( $component_product->get_image_id() );
+
+        if ( $image_id || ! self::is_variation_product( $component_product ) ) {
+            return $image_id;
+        }
+
+        $parent_id = absint( $component_product->get_parent_id() );
+        $parent    = $parent_id ? wc_get_product( $parent_id ) : null;
+
+        return $parent instanceof WC_Product ? absint( $parent->get_image_id() ) : 0;
+    }
+
+    private static function get_component_regular_price_for_display( WC_Product $product ): string
+    {
+        $price = $product->get_regular_price();
+
+        if ( '' === $price ) {
+            return '';
+        }
+
+        return wc_format_decimal( $price );
     }
 
     /**

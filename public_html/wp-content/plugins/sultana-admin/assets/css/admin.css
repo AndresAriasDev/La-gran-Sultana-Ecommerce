@@ -738,13 +738,14 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 
 .sultana-admin-type-switch,
 .sultana-admin-variable-attributes,
-.sultana-admin-variation-list {
+.sultana-admin-variation-list,
+.sultana-admin-combo-components {
     display: grid;
     gap: 12px;
 }
 
 .sultana-admin-type-switch {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .sultana-admin-type-switch .is-active {
@@ -816,6 +817,59 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     height: 100%;
     border-radius: 8px;
     object-fit: cover;
+}
+
+.sultana-admin-combo-component {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 130px auto;
+    gap: 12px;
+    align-items: end;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    background: var(--sultana-admin-surface-soft);
+    padding: 14px;
+}
+
+.sultana-admin-combo-search {
+    position: relative;
+    min-width: 0;
+}
+
+.sultana-admin-combo-results {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 8px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 16px 36px rgba(72, 42, 42, 0.16);
+}
+
+.sultana-admin-combo-results button {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    border: 0;
+    border-bottom: 1px solid var(--sultana-admin-border);
+    border-radius: 0;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    text-align: left;
+}
+
+.sultana-admin-combo-results button:hover,
+.sultana-admin-combo-results button:focus {
+    background: #fff1f5;
+}
+
+.sultana-admin-combo-component-actions {
+    display: flex;
+    min-height: 42px;
+    align-items: center;
 }
 
 .sultana-admin-checkbox {
@@ -1056,7 +1110,8 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
 
     .sultana-admin-type-switch,
     .sultana-admin-variation-card,
-    .sultana-admin-variation-image {
+    .sultana-admin-variation-image,
+    .sultana-admin-combo-component {
         grid-template-columns: 1fr;
     }
 

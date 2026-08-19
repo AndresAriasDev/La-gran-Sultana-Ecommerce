@@ -16,6 +16,8 @@ class ComboProducts
         ComboProductsAdmin::register();
 
         add_filter( 'woocommerce_product_class', [ self::class, 'map_product_class' ], 10, 4 );
+        add_filter( 'woocommerce_product_get_image_id', [ self::class, 'use_derived_combo_image_id' ], 20, 2 );
+        add_filter( 'woocommerce_product_get_gallery_image_ids', [ self::class, 'use_derived_combo_gallery_image_ids' ], 20, 2 );
         add_filter( 'woocommerce_locate_template', [ self::class, 'use_simple_add_to_cart_template' ], 10, 3 );
         add_action( 'woocommerce_combo_add_to_cart', [ self::class, 'render_combo_add_to_cart' ], 30 );
         add_filter( 'woocommerce_add_to_cart_validation', [ self::class, 'validate_add_to_cart' ], 20, 5 );
@@ -31,6 +33,9 @@ class ComboProducts
         add_action( 'woocommerce_product_set_stock_status', [ self::class, 'sync_combos_for_stock_product' ] );
         add_action( 'woocommerce_variation_set_stock_status', [ self::class, 'sync_combos_for_stock_product' ] );
         add_action( 'woocommerce_product_object_updated_props', [ self::class, 'sync_combos_for_price_product' ], 10, 2 );
+        add_action( 'set_object_terms', [ ComboStockService::class, 'sync_combos_for_component_taxonomy_change' ], 10, 4 );
+        add_action( 'trashed_post', [ self::class, 'remove_trashed_combo_from_component_index' ] );
+        add_action( 'untrashed_post', [ self::class, 'restore_untrashed_combo_component_index' ] );
     }
 
     public static function map_product_class( string $classname, string $product_type, string $post_type, int $product_id ): string
@@ -47,6 +52,28 @@ class ComboProducts
         if ( function_exists( 'woocommerce_simple_add_to_cart' ) ) {
             woocommerce_simple_add_to_cart();
         }
+    }
+
+    public static function use_derived_combo_image_id( $image_id, WC_Product $product )
+    {
+        if ( ! ComboStockService::is_combo_product( $product ) ) {
+            return $image_id;
+        }
+
+        $derived_image_id = ComboComponentService::get_primary_derived_image_id( $product->get_id() );
+
+        return $derived_image_id;
+    }
+
+    public static function use_derived_combo_gallery_image_ids( $image_ids, WC_Product $product ): array
+    {
+        if ( ! ComboStockService::is_combo_product( $product ) ) {
+            return is_array( $image_ids ) ? $image_ids : [];
+        }
+
+        $derived_image_ids = ComboComponentService::get_derived_image_ids( $product->get_id() );
+
+        return array_slice( $derived_image_ids, 1 );
     }
 
     public static function use_simple_add_to_cart_template( string $template, string $template_name, string $template_path ): string
@@ -152,6 +179,27 @@ class ComboProducts
         }
 
         ComboStockService::sync_combo_prices_for_component_product( $product );
+    }
+
+    public static function remove_trashed_combo_from_component_index( int $post_id ): void
+    {
+        $product = function_exists( 'wc_get_product' ) ? wc_get_product( $post_id ) : null;
+
+        if ( ComboStockService::is_combo_product( $product ) ) {
+            ComboStockService::remove_combo_from_component_index( $post_id );
+        }
+    }
+
+    public static function restore_untrashed_combo_component_index( int $post_id ): void
+    {
+        $product = function_exists( 'wc_get_product' ) ? wc_get_product( $post_id ) : null;
+
+        if ( ComboStockService::is_combo_product( $product ) ) {
+            ComboStockService::restore_combo_component_index( $post_id );
+            ComboStockService::sync_combo_stock_status( $post_id );
+            ComboStockService::sync_combo_prices( $post_id );
+            ComboStockService::sync_combo_taxonomies( $post_id );
+        }
     }
 
     private static function cart_contains_combo(): bool

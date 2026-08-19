@@ -13,6 +13,7 @@ class ComboStockService
 {
     public const COMPONENTS_META = '_scc_combo_components';
     public const COMPONENT_INDEX_META = '_scc_combo_parent_ids';
+    private const BRAND_TAXONOMY_CANDIDATES = [ 'product_brand', 'pa_marca', 'pa_brand', 'yith_product_brand' ];
 
     /**
      * @var array<int, array<int, array{product_id:int,variation_id:int,quantity:int}>>
@@ -237,6 +238,7 @@ class ComboStockService
         self::update_component_index( $combo_id, $old_components, $components );
         self::sync_combo_stock_status( $combo_id );
         self::sync_combo_prices( $combo_id );
+        self::sync_combo_taxonomies( $combo_id );
     }
 
     public static function delete_components( int $combo_id ): void
@@ -246,6 +248,16 @@ class ComboStockService
         delete_post_meta( $combo_id, self::COMPONENTS_META );
         self::clear_cache( $combo_id );
         self::update_component_index( $combo_id, $old_components, [] );
+    }
+
+    public static function remove_combo_from_component_index( int $combo_id ): void
+    {
+        self::update_component_index( $combo_id, self::get_components( $combo_id ), [] );
+    }
+
+    public static function restore_combo_component_index( int $combo_id ): void
+    {
+        self::update_component_index( $combo_id, [], self::get_components( $combo_id ) );
     }
 
     public static function get_stock_unit_id( array $component ): int
@@ -398,9 +410,17 @@ class ComboStockService
 
     public static function get_components_regular_total( int $combo_id ): float
     {
+        return self::calculate_components_regular_total( self::get_components( $combo_id ) );
+    }
+
+    /**
+     * @param array<int, array{product_id:int,variation_id:int,quantity:int}> $components
+     */
+    public static function calculate_components_regular_total( array $components ): float
+    {
         $components_total = 0.0;
 
-        foreach ( self::get_components( $combo_id ) as $component ) {
+        foreach ( $components as $component ) {
             $component_product = self::get_component_stock_product( $component );
 
             if ( ! $component_product instanceof WC_Product ) {
@@ -417,6 +437,27 @@ class ComboStockService
         }
 
         return $components_total;
+    }
+
+    public static function sync_combo_taxonomies( int $combo_id ): void
+    {
+        if ( $combo_id <= 0 || ! function_exists( 'wc_get_product' ) ) {
+            return;
+        }
+
+        $combo_product = wc_get_product( $combo_id );
+
+        if ( ! self::is_combo_product( $combo_product ) ) {
+            return;
+        }
+
+        if ( taxonomy_exists( 'product_cat' ) ) {
+            wp_set_object_terms( $combo_id, self::derive_component_term_ids( $combo_id, 'product_cat' ), 'product_cat', false );
+        }
+
+        foreach ( self::get_brand_taxonomies() as $taxonomy ) {
+            wp_set_object_terms( $combo_id, self::derive_component_term_ids( $combo_id, $taxonomy ), $taxonomy, false );
+        }
     }
 
     /**
@@ -724,6 +765,37 @@ class ComboStockService
         }
     }
 
+    public static function sync_combo_taxonomies_for_component_product( WC_Product $product ): void
+    {
+        $ids = self::get_combo_ids_for_component_id( $product->get_id() );
+
+        if ( $product instanceof WC_Product_Variation ) {
+            $ids = array_merge( $ids, self::get_combo_ids_for_component_id( $product->get_parent_id() ) );
+        }
+
+        foreach ( array_unique( array_map( 'absint', $ids ) ) as $combo_id ) {
+            self::clear_cache( $combo_id );
+            self::sync_combo_taxonomies( $combo_id );
+        }
+    }
+
+    public static function sync_combos_for_component_taxonomy_change( int $object_id, $terms, $tt_ids, string $taxonomy ): void
+    {
+        if ( 'product_cat' !== $taxonomy && ! in_array( $taxonomy, self::get_brand_taxonomies(), true ) ) {
+            return;
+        }
+
+        if ( ! function_exists( 'wc_get_product' ) ) {
+            return;
+        }
+
+        $product = wc_get_product( $object_id );
+
+        if ( $product instanceof WC_Product ) {
+            self::sync_combo_taxonomies_for_component_product( $product );
+        }
+    }
+
     /**
      * @return array<int, int>
      */
@@ -736,6 +808,78 @@ class ComboStockService
         $ids = get_post_meta( $component_id, self::COMPONENT_INDEX_META, true );
 
         return is_array( $ids ) ? array_values( array_unique( array_map( 'absint', $ids ) ) ) : [];
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private static function derive_component_term_ids( int $combo_id, string $taxonomy ): array
+    {
+        $term_ids = [];
+
+        if ( ! taxonomy_exists( $taxonomy ) ) {
+            return [];
+        }
+
+        foreach ( self::get_components( $combo_id ) as $component ) {
+            $source_product = self::get_component_taxonomy_source_product( $component );
+
+            if ( ! $source_product instanceof WC_Product ) {
+                continue;
+            }
+
+            $ids = wp_get_object_terms( $source_product->get_id(), $taxonomy, [ 'fields' => 'ids' ] );
+
+            if ( is_wp_error( $ids ) || ! is_array( $ids ) ) {
+                continue;
+            }
+
+            foreach ( $ids as $term_id ) {
+                $term_id = absint( $term_id );
+
+                if ( $term_id && ! in_array( $term_id, $term_ids, true ) ) {
+                    $term_ids[] = $term_id;
+                }
+            }
+        }
+
+        return $term_ids;
+    }
+
+    private static function get_component_taxonomy_source_product( array $component ): ?WC_Product
+    {
+        $variation_id = absint( $component['variation_id'] ?? 0 );
+        $product_id   = absint( $component['product_id'] ?? 0 );
+
+        if ( $variation_id && $product_id && function_exists( 'wc_get_product' ) ) {
+            $parent = wc_get_product( $product_id );
+
+            return $parent instanceof WC_Product ? $parent : null;
+        }
+
+        return self::get_component_stock_product( $component );
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function get_brand_taxonomies(): array
+    {
+        $taxonomies = [];
+
+        foreach ( self::BRAND_TAXONOMY_CANDIDATES as $taxonomy ) {
+            if ( ! taxonomy_exists( $taxonomy ) ) {
+                continue;
+            }
+
+            $taxonomy_object = get_taxonomy( $taxonomy );
+
+            if ( $taxonomy_object && in_array( 'product', (array) $taxonomy_object->object_type, true ) ) {
+                $taxonomies[] = $taxonomy;
+            }
+        }
+
+        return $taxonomies;
     }
 
     /**

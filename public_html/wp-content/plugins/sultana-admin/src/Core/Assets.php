@@ -88,5 +88,50 @@ class Assets
                 ],
             ]
         );
+
+        $should_enqueue_combo = 'product_edit' === $route || ( 'product_new' === $route && 'combo' === self::requested_product_type() );
+
+        if ( ! $should_enqueue_combo ) {
+            return;
+        }
+
+        $combo_js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-combos.js';
+        $combo_js_version = file_exists( $combo_js_path ) ? (string) filemtime( $combo_js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-product-combos',
+            SULTANA_ADMIN_URL . 'assets/js/product-combos.js',
+            [],
+            $combo_js_version,
+            true
+        );
+
+        wp_localize_script(
+            'sultana-admin-product-combos',
+            'SultanaAdminProductCombos',
+            [
+                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+                'nonce'        => wp_create_nonce( ProductController::COMBO_COMPONENT_SEARCH_NONCE_ACTION ),
+                'searchAction' => ProductController::COMBO_COMPONENT_SEARCH_ACTION,
+                'currencySymbol' => function_exists( 'get_woocommerce_currency_symbol' ) ? get_woocommerce_currency_symbol() : 'C$',
+                'strings'      => [
+                    'component'         => __( 'Producto o variacion', 'sultana-admin' ),
+                    'searchPlaceholder' => __( 'Buscar producto o variacion', 'sultana-admin' ),
+                    'quantity'          => __( 'Cantidad', 'sultana-admin' ),
+                    'remove'            => __( 'Quitar', 'sultana-admin' ),
+                    'searching'         => __( 'Buscando...', 'sultana-admin' ),
+                    'searchError'       => __( 'No se pudo buscar componentes.', 'sultana-admin' ),
+                ],
+            ]
+        );
+    }
+
+    private static function requested_product_type(): string
+    {
+        $type = isset( $_POST['product_type'] )
+            ? sanitize_key( wp_unslash( $_POST['product_type'] ) )
+            : ( isset( $_GET['type'] ) ? sanitize_key( wp_unslash( $_GET['type'] ) ) : 'simple' );
+
+        return $type;
     }
 }
