@@ -14,6 +14,7 @@ $total_pages    = absint( $screen_data['total_pages'] ?? 1 );
 $pagination     = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
 $error          = $screen_data['error'] ?? '';
 $has_filters    = ! empty( $screen_data['has_filters'] );
+$icon_url       = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
 
 ?>
 <section class="sultana-admin-orders" aria-labelledby="sultana-admin-orders-title">
@@ -42,7 +43,10 @@ $has_filters    = ! empty( $screen_data['has_filters'] );
                     </option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit"><?php esc_html_e( 'Filtrar', 'sultana-admin' ); ?></button>
+            <button type="submit">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'funnel' ) ); ?>');" aria-hidden="true"></span>
+                <?php esc_html_e( 'Filtrar', 'sultana-admin' ); ?>
+            </button>
         </div>
     </form>
 
@@ -164,9 +168,9 @@ $has_filters    = ! empty( $screen_data['has_filters'] );
 
     <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginacion de pedidos', 'sultana-admin' ); ?>">
         <?php if ( ! empty( $pagination['previous'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['previous'] ); ?>"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></a>
+            <a href="<?php echo esc_url( $pagination['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
         <?php else : ?>
-            <span aria-disabled="true"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></span>
+            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></span>
         <?php endif; ?>
 
         <strong>
@@ -181,9 +185,9 @@ $has_filters    = ! empty( $screen_data['has_filters'] );
         </strong>
 
         <?php if ( ! empty( $pagination['next'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['next'] ); ?>"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></a>
+            <a href="<?php echo esc_url( $pagination['next'] ); ?>" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></a>
         <?php else : ?>
-            <span aria-disabled="true"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></span>
+            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></span>
         <?php endif; ?>
     </nav>
 </section>

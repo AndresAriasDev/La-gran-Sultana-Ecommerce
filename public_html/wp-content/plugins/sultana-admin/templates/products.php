@@ -28,19 +28,10 @@ $total_pages = absint( $screen_data['total_pages'] ?? 1 );
 $pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
 $notice      = $screen_data['notice'] ?? '';
 $errors      = $screen_data['errors'] ?? [];
+$icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
 
 ?>
-<section class="sultana-admin-products" aria-labelledby="sultana-admin-products-title">
-    <div class="sultana-admin-page-header">
-        <div>
-            <p class="sultana-admin-kicker"><?php esc_html_e( 'Catálogo', 'sultana-admin' ); ?></p>
-            <h1 id="sultana-admin-products-title"><?php esc_html_e( 'Productos', 'sultana-admin' ); ?></h1>
-        </div>
-        <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
-            <?php esc_html_e( 'Nuevo producto', 'sultana-admin' ); ?>
-        </a>
-    </div>
-
+<section class="sultana-admin-products">
     <?php if ( '' !== $notice ) : ?>
         <div class="sultana-admin-notice" role="status">
             <?php echo esc_html( $notice ); ?>
@@ -59,7 +50,13 @@ $errors      = $screen_data['errors'] ?? [];
     <?php endif; ?>
 
     <form class="sultana-admin-search" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" role="search">
-        <label for="sultana-admin-product-search"><?php esc_html_e( 'Buscar productos', 'sultana-admin' ); ?></label>
+        <div class="sultana-admin-section-header sultana-admin-search__header">
+            <label for="sultana-admin-product-search"><?php esc_html_e( 'Buscar productos', 'sultana-admin' ); ?></label>
+            <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'box' ) ); ?>');" aria-hidden="true"></span>
+                <?php esc_html_e( 'Nuevo', 'sultana-admin' ); ?>
+            </a>
+        </div>
         <div class="sultana-admin-search__controls">
             <input
                 id="sultana-admin-product-search"
@@ -68,7 +65,9 @@ $errors      = $screen_data['errors'] ?? [];
                 value="<?php echo esc_attr( $search ); ?>"
                 placeholder="<?php esc_attr_e( 'Nombre o SKU', 'sultana-admin' ); ?>"
             >
-            <button type="submit"><?php esc_html_e( 'Buscar', 'sultana-admin' ); ?></button>
+            <button class="sultana-admin-icon-button" type="submit" aria-label="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'search' ) ); ?>');" aria-hidden="true"></span>
+            </button>
         </div>
     </form>
 
@@ -117,28 +116,28 @@ $errors      = $screen_data['errors'] ?? [];
                             <td><?php echo esc_html( $product['status'] ); ?></td>
                             <td>
                                 <div class="sultana-admin-row-actions">
-                                <?php if ( ! empty( $product['can_edit'] ) ) : ?>
-                                    <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
-                                        <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                                    </a>
-                                <?php else : ?>
-                                    <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                                        <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                                    </button>
-                                <?php endif; ?>
-
                                 <?php if ( ! empty( $product['can_delete'] ) ) : ?>
-                                    <form method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                                    <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
                                         <input type="hidden" name="sultana_admin_action" value="trash_product">
                                         <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
                                         <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
-                                        <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="submit">
-                                            <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                        <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="submit" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
+                                            <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
                                         </button>
                                     </form>
                                 <?php else : ?>
-                                    <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="button" disabled aria-disabled="true">
-                                        <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                    <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
+                                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
+                                    </button>
+                                <?php endif; ?>
+
+                                <?php if ( ! empty( $product['can_edit'] ) ) : ?>
+                                    <a class="sultana-admin-icon-button sultana-admin-icon-button--success" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>" aria-label="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>">
+                                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'pencil' ) ); ?>');" aria-hidden="true"></span>
+                                    </a>
+                                <?php else : ?>
+                                    <button class="sultana-admin-icon-button sultana-admin-icon-button--success" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>">
+                                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'pencil' ) ); ?>');" aria-hidden="true"></span>
                                     </button>
                                 <?php endif; ?>
                                 </div>
@@ -178,28 +177,28 @@ $errors      = $screen_data['errors'] ?? [];
                         </div>
                     </dl>
                     <div class="sultana-admin-card-actions">
-                        <?php if ( ! empty( $product['can_edit'] ) ) : ?>
-                            <a class="sultana-admin-text-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>">
-                                <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                            </a>
-                        <?php else : ?>
-                            <button class="sultana-admin-text-action" type="button" disabled aria-disabled="true">
-                                <?php esc_html_e( 'Editar', 'sultana-admin' ); ?>
-                            </button>
-                        <?php endif; ?>
-
                         <?php if ( ! empty( $product['can_delete'] ) ) : ?>
-                            <form method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                            <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
                                 <input type="hidden" name="sultana_admin_action" value="trash_product">
                                 <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
                                 <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
-                                <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="submit">
-                                    <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                                <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="submit" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
+                                    <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
                                 </button>
                             </form>
                         <?php else : ?>
-                            <button class="sultana-admin-text-action sultana-admin-text-action--danger" type="button" disabled aria-disabled="true">
-                                <?php esc_html_e( 'Eliminar', 'sultana-admin' ); ?>
+                            <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
+                                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
+                            </button>
+                        <?php endif; ?>
+
+                        <?php if ( ! empty( $product['can_edit'] ) ) : ?>
+                            <a class="sultana-admin-icon-button sultana-admin-icon-button--success" href="<?php echo esc_url( \Sultana\Admin\Core\Router::edit_product_url( $product['id'] ) ); ?>" aria-label="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>">
+                                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'pencil' ) ); ?>');" aria-hidden="true"></span>
+                            </a>
+                        <?php else : ?>
+                            <button class="sultana-admin-icon-button sultana-admin-icon-button--success" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Editar producto', 'sultana-admin' ); ?>">
+                                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'pencil' ) ); ?>');" aria-hidden="true"></span>
                             </button>
                         <?php endif; ?>
                     </div>
@@ -210,9 +209,9 @@ $errors      = $screen_data['errors'] ?? [];
 
     <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginación de productos', 'sultana-admin' ); ?>">
         <?php if ( ! empty( $pagination['previous'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['previous'] ); ?>"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></a>
+            <a href="<?php echo esc_url( $pagination['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
         <?php else : ?>
-            <span aria-disabled="true"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></span>
+            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></span>
         <?php endif; ?>
 
         <strong>
@@ -227,9 +226,9 @@ $errors      = $screen_data['errors'] ?? [];
         </strong>
 
         <?php if ( ! empty( $pagination['next'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['next'] ); ?>"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></a>
+            <a href="<?php echo esc_url( $pagination['next'] ); ?>" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></a>
         <?php else : ?>
-            <span aria-disabled="true"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></span>
+            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></span>
         <?php endif; ?>
     </nav>
 </section>

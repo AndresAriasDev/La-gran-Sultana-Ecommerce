@@ -1,0 +1,42 @@
+<?php
+
+namespace Sultana\Admin\Core;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+class Icons
+{
+    private const ICONS = [
+        'brush-cleaning',
+        'box',
+        'chevron-left',
+        'chevron-right',
+        'eye',
+        'funnel',
+        'heart',
+        'layout-panel-left',
+        'lock',
+        'log-out',
+        'pencil',
+        'save',
+        'search',
+        'shelving-unit',
+        'shopping-cart',
+        'tickets',
+        'trash',
+        'user',
+    ];
+
+    public static function url( string $name ): string
+    {
+        $name = sanitize_key( $name );
+
+        if ( ! in_array( $name, self::ICONS, true ) ) {
+            return '';
+        }
+
+        return SULTANA_ADMIN_URL . 'assets/icons/' . $name . '.svg';
+    }
+}

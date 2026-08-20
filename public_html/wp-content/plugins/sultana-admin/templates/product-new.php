@@ -41,6 +41,7 @@ $form_kicker = $screen_data['form_kicker'] ?? __( 'Producto simple', 'sultana-ad
 $submit_label = $screen_data['submit_label'] ?? __( 'Guardar producto', 'sultana-admin' );
 $notice = $screen_data['notice'] ?? '';
 $selected_categories = array_map( 'absint', $form['category_ids'] ?? [] );
+$icon_url = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
 $selected_brand = absint( $form['brand_id'] ?? 0 );
 $product_image_ids = is_array( $form['product_image_ids'] ?? '' )
     ? implode( ',', array_map( 'absint', $form['product_image_ids'] ) )
@@ -255,9 +256,9 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                     ?>
                     <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginacion de variaciones', 'sultana-admin' ); ?>">
                         <?php if ( ! empty( $variation_links['previous'] ) ) : ?>
-                            <a href="<?php echo esc_url( $variation_links['previous'] ); ?>"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></a>
+                            <a href="<?php echo esc_url( $variation_links['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
                         <?php else : ?>
-                            <span aria-disabled="true"><?php esc_html_e( 'Anterior', 'sultana-admin' ); ?></span>
+                            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></span>
                         <?php endif; ?>
 
                         <strong>
@@ -273,9 +274,9 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                         </strong>
 
                         <?php if ( ! empty( $variation_links['next'] ) ) : ?>
-                            <a href="<?php echo esc_url( $variation_links['next'] ); ?>"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></a>
+                            <a href="<?php echo esc_url( $variation_links['next'] ); ?>" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></a>
                         <?php else : ?>
-                            <span aria-disabled="true"><?php esc_html_e( 'Siguiente', 'sultana-admin' ); ?></span>
+                            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></span>
                         <?php endif; ?>
                     </nav>
                 <?php endif; ?>
@@ -325,7 +326,10 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
             <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
                 <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
             </a>
-            <button type="submit"><?php echo esc_html( $submit_label ); ?></button>
+            <button type="submit">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'save' ) ); ?>');" aria-hidden="true"></span>
+                <?php echo esc_html( $submit_label ); ?>
+            </button>
         </div>
     </form>
 </section>

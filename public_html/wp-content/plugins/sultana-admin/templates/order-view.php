@@ -42,6 +42,7 @@ $gift     = $order['gift'] ?? [ 'is_gift' => false ];
 $status_action = $screen_data['status_action'] ?? [];
 $status_error  = $screen_data['status_error'] ?? '';
 $notice        = $screen_data['notice'] ?? '';
+$icon_url      = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
 
 ?>
 <section class="sultana-admin-order-view" aria-labelledby="sultana-admin-order-view-title">
@@ -102,7 +103,10 @@ $notice        = $screen_data['notice'] ?? '';
                             <option value="<?php echo esc_attr( $status_key ); ?>"><?php echo esc_html( $status_label ); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <button type="submit"><?php esc_html_e( 'Actualizar estado', 'sultana-admin' ); ?></button>
+                    <button type="submit">
+                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'save' ) ); ?>');" aria-hidden="true"></span>
+                        <?php esc_html_e( 'Actualizar estado', 'sultana-admin' ); ?>
+                    </button>
                 </div>
             </form>
         <?php else : ?>
