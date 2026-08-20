@@ -68,6 +68,11 @@ class Assets
             $version
         );
 
+        if ( 'products' === $route ) {
+            self::enqueue_product_list();
+            return;
+        }
+
         if ( ! in_array( $route, [ 'product_new', 'product_edit' ], true ) ) {
             return;
         }
@@ -150,6 +155,20 @@ class Assets
             ]
         );
 
+    }
+
+    private static function enqueue_product_list(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-list.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-product-list',
+            SULTANA_ADMIN_URL . 'assets/js/product-list.js',
+            [],
+            $js_version,
+            true
+        );
     }
 
     public static function enqueue_combo_editor(): void

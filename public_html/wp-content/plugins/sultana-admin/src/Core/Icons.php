@@ -13,6 +13,7 @@ class Icons
         'box',
         'chevron-left',
         'chevron-right',
+        'close',
         'eye',
         'funnel',
         'heart',

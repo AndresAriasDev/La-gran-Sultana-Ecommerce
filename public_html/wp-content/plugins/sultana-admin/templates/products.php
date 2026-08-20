@@ -49,7 +49,7 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
         </div>
     <?php endif; ?>
 
-    <form class="sultana-admin-search" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" role="search">
+    <form class="sultana-admin-search" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" role="search" data-applied-search="<?php echo esc_attr( $search ); ?>" data-clear-url="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
         <div class="sultana-admin-section-header sultana-admin-search__header">
             <label for="sultana-admin-product-search"><?php esc_html_e( 'Buscar productos', 'sultana-admin' ); ?></label>
             <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
@@ -65,7 +65,7 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                 value="<?php echo esc_attr( $search ); ?>"
                 placeholder="<?php esc_attr_e( 'Nombre o SKU', 'sultana-admin' ); ?>"
             >
-            <button class="sultana-admin-icon-button" type="submit" aria-label="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>">
+            <button class="sultana-admin-icon-button sultana-admin-search__button" type="submit" aria-label="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>" data-search-label="<?php esc_attr_e( 'Buscar productos', 'sultana-admin' ); ?>" data-clear-label="<?php esc_attr_e( 'Limpiar búsqueda', 'sultana-admin' ); ?>" data-search-icon="<?php echo esc_url( $icon_url( 'search' ) ); ?>" data-clear-icon="<?php echo esc_url( $icon_url( 'close' ) ); ?>">
                 <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'search' ) ); ?>');" aria-hidden="true"></span>
             </button>
         </div>
@@ -150,14 +150,17 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
 
         <div class="sultana-admin-product-cards">
             <?php foreach ( $products as $product ) : ?>
+                <?php $panel_id = 'sultana-admin-product-card-panel-' . absint( $product['id'] ); ?>
                 <article class="sultana-admin-product-card">
-                    <div class="sultana-admin-product-card__header">
+                    <button class="sultana-admin-product-card__header" type="button" aria-expanded="false" aria-controls="<?php echo esc_attr( $panel_id ); ?>">
                         <?php sultana_admin_product_image( $product ); ?>
-                        <div>
-                            <h2><?php echo esc_html( $product['name'] ); ?></h2>
-                            <p><?php echo esc_html( '' !== $product['sku'] ? $product['sku'] : __( 'Sin SKU', 'sultana-admin' ) ); ?></p>
-                        </div>
-                    </div>
+                        <span class="sultana-admin-product-card__identity">
+                            <span class="sultana-admin-product-card__name"><?php echo esc_html( $product['name'] ); ?></span>
+                            <span class="sultana-admin-product-card__sku"><?php echo esc_html( '' !== $product['sku'] ? $product['sku'] : __( 'Sin SKU', 'sultana-admin' ) ); ?></span>
+                        </span>
+                        <span class="sultana-admin-product-card__chevron sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span>
+                    </button>
+                    <div id="<?php echo esc_attr( $panel_id ); ?>" class="sultana-admin-product-card__panel" hidden>
                     <dl>
                         <div>
                             <dt><?php esc_html_e( 'Tipo', 'sultana-admin' ); ?></dt>
@@ -201,6 +204,7 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                                 <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'pencil' ) ); ?>');" aria-hidden="true"></span>
                             </button>
                         <?php endif; ?>
+                    </div>
                     </div>
                 </article>
             <?php endforeach; ?>
