@@ -1342,8 +1342,8 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     padding: 12px;
 }
 
-.sultana-admin-pagination a,
-.sultana-admin-pagination span {
+.sultana-admin-pagination > a,
+.sultana-admin-pagination > span {
     min-width: 96px;
     border-radius: var(--sultana-admin-radius-md);
     color: var(--sultana-admin-primary-dark);
@@ -1354,9 +1354,88 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     text-decoration: none;
 }
 
-.sultana-admin-pagination span {
+.sultana-admin-pagination > span {
     color: var(--sultana-admin-muted);
     opacity: 0.58;
+}
+
+.sultana-admin-pagination--compact {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 2px 0 0;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis {
+    display: inline-grid;
+    flex: 0 0 auto;
+    min-width: 46px;
+    min-height: 46px;
+    place-items: center;
+    border: 1px solid var(--sultana-admin-border);
+    border-right: 0;
+    border-radius: 0;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 8px 11px;
+    text-align: center;
+    text-decoration: none;
+    opacity: 1;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:first-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current:first-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis:first-child {
+    border-top-left-radius: var(--sultana-admin-radius-md);
+    border-bottom-left-radius: var(--sultana-admin-radius-md);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:last-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current:last-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis:last-child {
+    border-right: 1px solid var(--sultana-admin-border);
+    border-top-right-radius: var(--sultana-admin-radius-md);
+    border-bottom-right-radius: var(--sultana-admin-radius-md);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:hover {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-hover);
+}
+
+
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__current {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-hover);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__current + .sultana-admin-pagination__link,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current + .sultana-admin-pagination__ellipsis {
+    border-left-color: var(--sultana-admin-border);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis {
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link--icon .sultana-admin-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link--icon {
+    width: 46px;
+    min-width: 46px;
+    padding-right: 0;
+    padding-left: 0;
 }
 
 .sultana-admin-error-list {
@@ -1747,7 +1826,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
 
     body.sultana-admin-body .sultana-admin-main {
         padding-left: 0;
-        padding-bottom: 86px;
+        padding-bottom: 70px;
     }
 
     body.sultana-admin-body .sultana-admin-mobile-header {
@@ -2147,9 +2226,22 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         content: "";
     }
 
-    .sultana-admin-pagination a,
-    .sultana-admin-pagination span {
+    .sultana-admin-pagination > a,
+    .sultana-admin-pagination > span {
         min-width: 78px;
+    }
+
+    .sultana-admin-pagination--compact .sultana-admin-pagination__link,
+    .sultana-admin-pagination--compact .sultana-admin-pagination__current,
+    .sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis {
+        min-width: 50px;
+        min-height: 50px;
+        padding: 8px 10px;
+    }
+
+    .sultana-admin-pagination--compact .sultana-admin-pagination__link--icon {
+        width: 42px;
+        min-width: 42px;
     }
 
     .sultana-admin-form-grid {

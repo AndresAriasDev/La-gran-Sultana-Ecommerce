@@ -25,7 +25,7 @@ $search      = $screen_data['search'] ?? '';
 $page        = absint( $screen_data['page'] ?? 1 );
 $total       = absint( $screen_data['total'] ?? 0 );
 $total_pages = absint( $screen_data['total_pages'] ?? 1 );
-$pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '' ];
+$pagination  = $screen_data['pagination'] ?? [ 'previous' => '', 'next' => '', 'items' => [] ];
 $notice      = $screen_data['notice'] ?? '';
 $errors      = $screen_data['errors'] ?? [];
 $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
@@ -211,28 +211,25 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
         </div>
     <?php endif; ?>
 
-    <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginación de productos', 'sultana-admin' ); ?>">
+    <?php if ( $total_pages > 1 && ! empty( $pagination['items'] ) ) : ?>
+    <nav class="sultana-admin-pagination sultana-admin-pagination--compact" aria-label="<?php esc_attr_e( 'Paginación de productos', 'sultana-admin' ); ?>">
         <?php if ( ! empty( $pagination['previous'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
-        <?php else : ?>
-            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></span>
+            <a class="sultana-admin-pagination__link sultana-admin-pagination__link--icon" href="<?php echo esc_url( $pagination['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
         <?php endif; ?>
 
-        <strong>
-            <?php
-            printf(
-                /* translators: 1: current page, 2: total pages. */
-                esc_html__( '%1$d / %2$d', 'sultana-admin' ),
-                $page,
-                max( 1, $total_pages )
-            );
-            ?>
-        </strong>
+        <?php foreach ( $pagination['items'] as $item ) : ?>
+            <?php if ( 'ellipsis' === ( $item['type'] ?? '' ) ) : ?>
+                <span class="sultana-admin-pagination__ellipsis" aria-hidden="true">&hellip;</span>
+            <?php elseif ( ! empty( $item['current'] ) ) : ?>
+                <span class="sultana-admin-pagination__current" aria-current="page"><?php echo esc_html( (string) absint( $item['page'] ?? 0 ) ); ?></span>
+            <?php else : ?>
+                <a class="sultana-admin-pagination__link" href="<?php echo esc_url( (string) ( $item['url'] ?? '' ) ); ?>"><?php echo esc_html( (string) absint( $item['page'] ?? 0 ) ); ?></a>
+            <?php endif; ?>
+        <?php endforeach; ?>
 
         <?php if ( ! empty( $pagination['next'] ) ) : ?>
-            <a href="<?php echo esc_url( $pagination['next'] ); ?>" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></a>
-        <?php else : ?>
-            <span aria-disabled="true" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></span>
+            <a class="sultana-admin-pagination__link sultana-admin-pagination__link--icon" href="<?php echo esc_url( $pagination['next'] ); ?>" aria-label="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página siguiente', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span></a>
         <?php endif; ?>
     </nav>
+    <?php endif; ?>
 </section>
