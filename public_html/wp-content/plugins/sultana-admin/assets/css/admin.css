@@ -955,6 +955,24 @@ body.sultana-admin-body .sultana-admin-mobile-header {
     overflow-wrap: anywhere;
 }
 
+.sultana-admin-product-table td:nth-child(4) del,
+.sultana-admin-product-table td:nth-child(4) ins {
+    display: block;
+}
+
+.sultana-admin-product-table td:nth-child(4) del {
+    color: var(--sultana-admin-danger);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-regular);
+}
+
+.sultana-admin-product-table td:nth-child(4) ins {
+    color: var(--sultana-admin-success);
+    font-size: var(--sultana-admin-font-size-base);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    text-decoration: none;
+}
+
 .sultana-admin-product-image {
     display: block;
     width: 52px;
@@ -2059,6 +2077,27 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         margin: 0;
         text-align: right;
         overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-product-card dl div:nth-child(2) dd {
+        display: inline-flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+    }
+
+    .sultana-admin-product-card dl div:nth-child(2) dd del {
+        color: var(--sultana-admin-danger);
+        font-size: var(--sultana-admin-font-size-sm);
+        font-weight: var(--sultana-admin-font-weight-regular);
+    }
+
+    .sultana-admin-product-card dl div:nth-child(2) dd ins {
+        color: var(--sultana-admin-success);
+        font-size: var(--sultana-admin-font-size-base);
+        font-weight: var(--sultana-admin-font-weight-semibold);
+        text-decoration: none;
     }
 
     .sultana-admin-card-actions {
