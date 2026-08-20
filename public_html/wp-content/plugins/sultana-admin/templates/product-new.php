@@ -202,26 +202,30 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <?php endif; ?>
 
         <?php if ( 'variable' === $product_type ) : ?>
-            <section
-                class="sultana-admin-form-section sultana-admin-variable-editor"
-                aria-labelledby="sultana-admin-variable-title"
+            <div
+                class="sultana-admin-variable-editor"
                 data-sultana-variable-editor
                 data-available-attributes="<?php echo esc_attr( wp_json_encode( array_values( $available_attributes ) ) ); ?>"
                 data-initial-state="<?php echo esc_attr( wp_json_encode( $variable_state ) ); ?>"
             >
-                <h2 id="sultana-admin-variable-title"><?php esc_html_e( 'Atributos y variaciones', 'sultana-admin' ); ?></h2>
-                <div class="sultana-admin-variable-attributes" data-sultana-variable-attributes></div>
-                <div class="sultana-admin-variable-actions">
-                    <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
-                        <?php esc_html_e( 'Nuevo atributo', 'sultana-admin' ); ?>
-                    </button>
-                    <button type="button" data-sultana-add-variation disabled>
-                        <?php esc_html_e( 'Nueva variacion', 'sultana-admin' ); ?>
-                    </button>
-                </div>
-                <div class="sultana-admin-field-help" aria-live="polite" data-sultana-variation-count></div>
-                <div class="sultana-admin-image-status" aria-live="polite" data-sultana-variable-status></div>
-                <div class="sultana-admin-variation-list" data-sultana-variation-list></div>
+                <section class="sultana-admin-form-section sultana-admin-variable-attributes-module" aria-labelledby="sultana-admin-variable-attributes-title">
+                    <h2 id="sultana-admin-variable-attributes-title"><?php esc_html_e( 'Atributos', 'sultana-admin' ); ?></h2>
+                    <div class="sultana-admin-variable-attributes" data-sultana-variable-attributes></div>
+                    <div class="sultana-admin-variable-actions">
+                        <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
+                            <?php esc_html_e( 'Nuevo atributo', 'sultana-admin' ); ?>
+                        </button>
+                        <button type="button" data-sultana-generate-variations disabled>
+                            <?php esc_html_e( 'Crear variaciones', 'sultana-admin' ); ?>
+                        </button>
+                    </div>
+                    <div class="sultana-admin-image-status" aria-live="polite" data-sultana-variable-status></div>
+                </section>
+
+                <section class="sultana-admin-form-section sultana-admin-variable-variations-module" aria-labelledby="sultana-admin-variable-variations-title">
+                    <h2 id="sultana-admin-variable-variations-title"><?php esc_html_e( 'Variaciones', 'sultana-admin' ); ?></h2>
+                    <div class="sultana-admin-field-help" aria-live="polite" data-sultana-variation-count></div>
+                    <div class="sultana-admin-variation-list" data-sultana-variation-list></div>
                 <?php if ( ! empty( $variation_pagination ) && absint( $variation_pagination['total'] ?? 0 ) > absint( $variation_pagination['per_page'] ?? 0 ) ) : ?>
                     <?php
                     $variation_links = $variation_pagination['links'] ?? [ 'previous' => '', 'next' => '' ];
@@ -255,7 +259,8 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                         <?php endif; ?>
                     </nav>
                 <?php endif; ?>
-            </section>
+                </section>
+            </div>
         <?php endif; ?>
 
         <?php if ( 'combo' !== $product_type ) : ?>

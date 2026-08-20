@@ -9,7 +9,7 @@
     const attributesRoot = editor.querySelector('[data-sultana-variable-attributes]');
     const variationsRoot = editor.querySelector('[data-sultana-variation-list]');
     const addAttributeButton = editor.querySelector('[data-sultana-add-attribute]');
-    const addVariationButton = editor.querySelector('[data-sultana-add-variation]');
+    const generateButton = editor.querySelector('[data-sultana-generate-variations]');
     const status = editor.querySelector('[data-sultana-variable-status]');
     const countStatus = editor.querySelector('[data-sultana-variation-count]');
     const strings = config.strings || {};
@@ -24,18 +24,20 @@
     let openValuePicker = null;
     let deletedVariationIds = [];
     let forcedOpenVariation = null;
+    let pendingSelectChange = null;
+    const modal = createAdminModal();
     const deletedVariationsRoot = document.createElement('div');
     deletedVariationsRoot.hidden = true;
     editor.appendChild(deletedVariationsRoot);
 
-    if (!selectedAttributes.length && availableAttributes.length) {
+    if (!selectedAttributes.length) {
         selectedAttributes.push({ taxonomy: '', term_ids: [] });
     }
 
     renderAttributes();
     renderVariations();
     updateCombinationCount();
-    updateVariationActionState();
+    updateGenerateActionState();
     updateSubmitState();
 
     if (addAttributeButton) {
@@ -43,13 +45,13 @@
             selectedAttributes.push({ taxonomy: '', term_ids: [] });
             renderAttributes();
             updateCombinationCount();
-            updateVariationActionState();
+            updateGenerateActionState();
         });
     }
 
-    if (addVariationButton) {
-        addVariationButton.addEventListener('click', function () {
-            addManualVariation();
+    if (generateButton) {
+        generateButton.addEventListener('click', function () {
+            generateConcreteVariations();
         });
     }
 
@@ -119,6 +121,7 @@
 
             const header = document.createElement('div');
             header.className = 'sultana-admin-variable-attribute__header';
+            header.classList.toggle('sultana-admin-variable-attribute__header--removable', index > 0);
 
             const select = document.createElement('select');
             select.name = 'variable_attributes[' + index + '][taxonomy]';
@@ -126,23 +129,25 @@
             select.appendChild(option('', strings.selectAttribute || 'Selecciona atributo'));
 
             availableAttributes.forEach(function (attribute) {
-                select.appendChild(option(attribute.taxonomy, attribute.label, selected.taxonomy === attribute.taxonomy));
+                const item = option(attribute.taxonomy, attribute.label, selected.taxonomy === attribute.taxonomy);
+                item.disabled = selectedAttributes.some(function (current, currentIndex) {
+                    return currentIndex !== index && current.taxonomy === attribute.taxonomy;
+                });
+                select.appendChild(item);
             });
 
-            if (selected.taxonomy) {
-                select.disabled = true;
-                select.setAttribute('aria-disabled', 'true');
-            } else {
             select.addEventListener('change', function () {
                 selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
                 renderAttributes();
                 updateCombinationCount();
-                updateVariationActionState();
+                updateGenerateActionState();
             });
-            }
 
             const terms = document.createElement('div');
             terms.className = 'sultana-admin-variable-terms';
+            const selectedValues = document.createElement('div');
+            selectedValues.className = 'sultana-admin-attribute-value-picker__selected';
+            selectedValues.setAttribute('aria-live', 'polite');
             const attribute = findAttribute(selected.taxonomy);
             let termItems = [];
 
@@ -168,7 +173,7 @@
                         }
 
                         updateCombinationCount();
-                        updateVariationActionState();
+                        updateGenerateActionState();
                     });
 
                     label.appendChild(checkbox);
@@ -193,24 +198,26 @@
                 selectedAttributes.splice(index, 1);
                 renderAttributes();
                 updateCombinationCount();
-                updateVariationActionState();
+                updateGenerateActionState();
             });
 
             header.appendChild(select);
-            if (selected.taxonomy) {
-                header.appendChild(hidden('variable_attributes[' + index + '][taxonomy]', selected.taxonomy));
+            if (attribute) {
+                header.appendChild(valuePicker(attribute, termItems, selectedValues));
             }
-            header.appendChild(remove);
+            if (index > 0) {
+                header.appendChild(remove);
+            }
             block.appendChild(header);
             if (attribute) {
-                block.appendChild(valuePicker(attribute, termItems));
+                block.appendChild(selectedValues);
             }
             block.appendChild(terms);
             attributesRoot.appendChild(block);
         });
     }
 
-    function valuePicker(attribute, termItems) {
+    function valuePicker(attribute, termItems, selected) {
         const picker = document.createElement('div');
         const searchId = 'sultana-admin-attribute-value-search-' + attributeCounter++;
         const resultsId = 'sultana-admin-attribute-value-results-' + attributeCounter++;
@@ -233,10 +240,6 @@
         search.setAttribute('aria-expanded', 'false');
         search.setAttribute('aria-controls', resultsId);
 
-        const selected = document.createElement('div');
-        selected.className = 'sultana-admin-attribute-value-picker__selected';
-        selected.setAttribute('aria-live', 'polite');
-
         const results = document.createElement('div');
         results.id = resultsId;
         results.className = 'sultana-admin-attribute-value-picker__results';
@@ -245,7 +248,6 @@
 
         picker.appendChild(searchLabel);
         picker.appendChild(search);
-        picker.appendChild(selected);
         picker.appendChild(results);
 
         search.addEventListener('input', function () {
@@ -309,7 +311,7 @@
                 setTermChecked(term.checkbox, false);
                 renderSelectedValues(termItems, search, results, selected);
                 renderValueResults(termItems, search, results, selected);
-                updateVariationActionState();
+                updateGenerateActionState();
                 search.focus();
             });
 
@@ -348,7 +350,7 @@
                 search.value = '';
                 renderSelectedValues(termItems, search, results, selected);
                 renderValueResults(termItems, search, results, selected);
-                updateVariationActionState();
+                updateGenerateActionState();
                 closeResults(search, results);
                 search.focus();
             });
@@ -400,10 +402,6 @@
         variationsRoot.innerHTML = '';
 
         if (!variations.length) {
-            const empty = document.createElement('p');
-            empty.className = 'sultana-admin-field-help';
-            empty.textContent = strings.generateFirst || 'Genera variaciones para completar sus datos.';
-            variationsRoot.appendChild(empty);
             return;
         }
 
@@ -587,6 +585,7 @@
     function variationAttributeFields(variation, index, title) {
         const wrap = document.createElement('div');
         wrap.className = 'sultana-admin-variation-attributes';
+        const renderedTaxonomies = [];
 
         selectedAttributes.filter(function (attribute) {
             return attribute.taxonomy && attribute.term_ids.length;
@@ -596,6 +595,8 @@
             if (!attribute) {
                 return;
             }
+
+            renderedTaxonomies.push(selected.taxonomy);
 
             const label = document.createElement('label');
             const span = document.createElement('span');
@@ -610,9 +611,17 @@
             select.dataset.sultanaVariationAttribute = selected.taxonomy;
             select.appendChild(option('', anyAttributeLabel(attribute.label), '' === currentValue));
 
-            selectedTermObjects(attribute, selected.term_ids).forEach(function (term) {
+            const selectedTerms = selectedTermObjects(attribute, selected.term_ids);
+
+            selectedTerms.forEach(function (term) {
                 select.appendChild(option(term.slug, term.name, currentValue === term.slug));
             });
+
+            if (currentValue && !selectedTerms.some(function (term) {
+                return term.slug === currentValue;
+            })) {
+                select.appendChild(option(currentValue, currentValue, true));
+            }
 
             if (typeof variation.attributes[selected.taxonomy] === 'undefined') {
                 variation.attributes[selected.taxonomy] = '';
@@ -622,25 +631,53 @@
 
             select.addEventListener('change', function () {
                 const nextValue = select.value;
+                const previousAttributes = Object.assign({}, variation.attributes);
+                const nextAttributes = Object.assign({}, variation.attributes);
+                nextAttributes[selected.taxonomy] = nextValue;
+                const absorbed = absorbableVariationsFor(nextAttributes, variation);
+                const conflicting = overlappingVariationsFor(nextAttributes, variation).filter(function (conflict) {
+                    return absorbed.indexOf(conflict) === -1;
+                });
 
-                if (isVariationOptionUnavailable(variation, selected.taxonomy, nextValue)) {
+                if (isExactVariationUnavailable(variation, nextAttributes) || conflicting.length) {
                     select.value = previousValue;
                     refreshVariationAttributeOptions(wrap, variation);
                     setStatus('', false);
                     return;
                 }
 
-                variation.attributes[selected.taxonomy] = nextValue;
-                previousValue = select.value;
-                title.textContent = variationLabel(variation);
-                setStatus('', false);
-                refreshVariationAttributeOptions(wrap, variation);
-                updateVariationActionState();
+                if (absorbed.length) {
+                    pendingSelectChange = {
+                        variation: variation,
+                        select: select,
+                        taxonomy: selected.taxonomy,
+                        value: nextValue,
+                        previousValue: previousValue,
+                        previousAttributes: previousAttributes,
+                        title: title,
+                        wrap: wrap,
+                        remove: absorbed
+                    };
+                    select.value = previousValue;
+                    openReplacementModal(absorbed);
+                    return;
+                }
+
+                applyVariationAttributeChange(variation, selected.taxonomy, nextValue, title, wrap);
+                previousValue = nextValue;
             });
 
             label.appendChild(span);
             label.appendChild(select);
             wrap.appendChild(label);
+        });
+
+        Object.keys(variation.attributes).forEach(function (taxonomy) {
+            if (renderedTaxonomies.indexOf(taxonomy) !== -1) {
+                return;
+            }
+
+            wrap.appendChild(hidden('variations[' + index + '][attributes][' + taxonomy + ']', variation.attributes[taxonomy]));
         });
 
         refreshVariationAttributeOptions(wrap, variation);
@@ -654,7 +691,13 @@
             const currentValue = variation.attributes[taxonomy] || '';
 
             Array.prototype.forEach.call(select.options, function (item) {
-                item.disabled = item.value !== currentValue && isVariationOptionUnavailable(variation, taxonomy, item.value);
+                const candidate = Object.assign({}, variation.attributes);
+                candidate[taxonomy] = item.value;
+                const absorbed = absorbableVariationsFor(candidate, variation);
+                const hasBlockingConflict = overlappingVariationsFor(candidate, variation).some(function (conflict) {
+                    return absorbed.indexOf(conflict) === -1;
+                });
+                item.disabled = item.value !== currentValue && (isExactVariationUnavailable(variation, candidate) || hasBlockingConflict);
             });
         });
     }
@@ -734,42 +777,102 @@
             });
     }
 
-    function addManualVariation() {
-        const usable = selectedAttributes.filter(function (attribute) {
-            return attribute.taxonomy && attribute.term_ids.length;
-        });
-
-        if (!hasAvailableVariationCandidate()) {
-            setStatus(strings.chooseValues || 'Selecciona valores', true);
-            updateVariationActionState();
+    function generateConcreteVariations() {
+        if (!isAttributeConfigurationValid()) {
+            setStatus('', false);
+            updateGenerateActionState();
             return;
         }
 
-        const attributes = {};
+        const plan = buildVariationSyncPlan();
 
-        usable.forEach(function (attribute) {
-            attributes[attribute.taxonomy] = '';
+        if (plan.remove.length) {
+            openSyncModal(plan);
+            return;
+        }
+
+        applyVariationSyncPlan(plan);
+    }
+
+    function buildVariationSyncPlan() {
+        const existing = {};
+        const candidates = cartesian(configuredAttributeGroups());
+        const remove = [];
+
+        variations.forEach(function (variation) {
+            existing[variationKey(variation.attributes)] = true;
+
+            if (!variationWithinConfiguredDomain(variation)) {
+                remove.push(variation);
+            }
         });
 
-        const variation = {
-            id: 0,
-            client_uid: nextVariationClientUid(),
-            attributes: attributes,
-            sku: '',
-            regular_price: '',
-            sale_price: '',
-            stock_quantity: '',
-            weight: '',
-            image_id: 0,
-            image_url: ''
-        };
+        const created = [];
 
-        variations.unshift(variation);
-        forcedOpenVariation = variation;
+        variations.forEach(function (variation) {
+            if (remove.indexOf(variation) !== -1 || !hasWildcard(variation.attributes)) {
+                return;
+            }
+
+            variations.forEach(function (covered) {
+                if (variation === covered || remove.indexOf(covered) !== -1) {
+                    return;
+                }
+
+                if (combinationCovers(variation.attributes, covered.attributes)) {
+                    remove.push(covered);
+                }
+            });
+        });
+
+        candidates.forEach(function (attributes) {
+            const key = variationKey(attributes);
+
+            if (existing[key]) {
+                return;
+            }
+
+            if (variations.some(function (variation) {
+                return remove.indexOf(variation) === -1 && combinationCovers(variation.attributes, attributes);
+            })) {
+                return;
+            }
+
+            const variation = {
+                id: 0,
+                client_uid: nextVariationClientUid(),
+                attributes: attributes,
+                sku: '',
+                regular_price: '',
+                sale_price: '',
+                stock_quantity: '',
+                weight: '',
+                image_id: 0,
+                image_url: ''
+            };
+
+            existing[key] = true;
+            created.push(variation);
+        });
+
+        return {
+            created: created,
+            remove: remove
+        };
+    }
+
+    function applyVariationSyncPlan(plan) {
+        removeVariations(plan.remove || []);
+
+        if (plan.created.length) {
+            variations = plan.created.concat(variations);
+            forcedOpenVariation = plan.created[0];
+        }
+
         setStatus('', false);
         renderVariations();
         updateCombinationCount();
-        updateVariationActionState();
+        updateGenerateActionState();
         renderDeletedVariationInputs();
     }
 
@@ -780,20 +883,28 @@
             return;
         }
 
-        if (variation.id && !window.confirm('¿Eliminar esta variacion?')) {
-            return;
-        }
-
-        if (variation.id && deletedVariationIds.indexOf(variation.id) === -1) {
-            deletedVariationIds.push(variation.id);
-        }
-
-        variations.splice(index, 1);
+        removeVariations([variation]);
         setStatus('', false);
         renderVariations();
         updateCombinationCount();
-        updateVariationActionState();
+        updateGenerateActionState();
         renderDeletedVariationInputs();
+    }
+
+    function removeVariations(items) {
+        items.forEach(function (variation) {
+            const index = variations.indexOf(variation);
+
+            if (index === -1) {
+                return;
+            }
+
+            if (variation.id && deletedVariationIds.indexOf(variation.id) === -1) {
+                deletedVariationIds.push(variation.id);
+            }
+
+            variations.splice(index, 1);
+        });
     }
 
     function renderDeletedVariationInputs() {
@@ -823,66 +934,61 @@
             return;
         }
 
-        if (!activeAttributeChoices().length) {
+        if (!variations.length) {
             countStatus.textContent = '';
             countStatus.classList.remove('is-error');
             return;
         }
 
-        countStatus.textContent = '0 variaciones';
+        countStatus.textContent = '';
         countStatus.classList.remove('is-error');
     }
 
-    function updateVariationActionState() {
-        if (!addVariationButton) {
+    function updateGenerateActionState() {
+        if (!generateButton) {
             return;
         }
 
-        addVariationButton.disabled = !hasAvailableVariationCandidate();
+        generateButton.disabled = !isAttributeConfigurationValid();
+        generateButton.textContent = variations.length ? 'Actualizar variaciones' : 'Crear variaciones';
     }
 
-    function hasAvailableVariationCandidate() {
-        const choices = activeAttributeChoices();
-
-        if (!choices.length) {
-            return false;
-        }
-
-        return variationCandidates(choices).some(function (candidate) {
-            return !variations.some(function (variation) {
-                return variationAttributesOverlap(variation.attributes, candidate);
-            });
-        });
+    function isAttributeConfigurationValid() {
+        return Boolean(configuredAttributeGroups().length && selectedAttributes.every(function (selected) {
+            return Boolean(selected.taxonomy && selected.term_ids.length);
+        }));
     }
 
-    function activeAttributeChoices() {
-        return selectedAttributes.filter(function (attribute) {
-            return attribute.taxonomy && attribute.term_ids.length;
+    function configuredAttributeGroups() {
+        return selectedAttributes.filter(function (selected) {
+            return selected.taxonomy && selected.term_ids.length;
         }).map(function (selected) {
             const attribute = findAttribute(selected.taxonomy);
-            const values = [''];
+            const values = [];
 
             if (attribute) {
                 selectedTermObjects(attribute, selected.term_ids).forEach(function (term) {
-                    values.push(term.slug);
+                    values.push({
+                        taxonomy: selected.taxonomy,
+                        slug: term.slug
+                    });
                 });
             }
 
-            return {
-                taxonomy: selected.taxonomy,
-                values: values
-            };
+            return values;
+        }).filter(function (values) {
+            return values.length;
         });
     }
 
-    function variationCandidates(choices) {
-        return choices.reduce(function (acc, choice) {
+    function cartesian(groups) {
+        return groups.reduce(function (acc, group) {
             const next = [];
 
             acc.forEach(function (prefix) {
-                choice.values.forEach(function (value) {
+                group.forEach(function (term) {
                     const candidate = Object.assign({}, prefix);
-                    candidate[choice.taxonomy] = value;
+                    candidate[term.taxonomy] = term.slug;
                     next.push(candidate);
                 });
             });
@@ -1016,9 +1122,7 @@
         }).join('|');
     }
 
-    function isVariationOptionUnavailable(variation, taxonomy, value) {
-        const candidate = Object.assign({}, variation.attributes);
-        candidate[taxonomy] = value;
+    function isExactVariationUnavailable(variation, candidate) {
         const candidateKey = variationKey(candidate);
 
         return variations.some(function (compare) {
@@ -1026,8 +1130,78 @@
                 return false;
             }
 
-            return variationKey(compare.attributes) === candidateKey || variationAttributesOverlap(compare.attributes, candidate);
+            return variationKey(compare.attributes) === candidateKey;
         });
+    }
+
+    function hasWildcard(attributes) {
+        return Object.keys(attributes).some(function (taxonomy) {
+            return !attributes[taxonomy];
+        });
+    }
+
+    function combinationCovers(covering, covered) {
+        const taxonomies = Object.keys(Object.assign({}, covering, covered));
+
+        return taxonomies.every(function (taxonomy) {
+            const coveringValue = covering[taxonomy] || '';
+            const coveredValue = covered[taxonomy] || '';
+
+            return !coveringValue || coveringValue === coveredValue;
+        });
+    }
+
+    function combinationsOverlap(first, second) {
+        const taxonomies = Object.keys(Object.assign({}, first, second));
+
+        return taxonomies.every(function (taxonomy) {
+            const firstValue = first[taxonomy] || '';
+            const secondValue = second[taxonomy] || '';
+
+            return !firstValue || !secondValue || firstValue === secondValue;
+        });
+    }
+
+    function absorbableVariationsFor(attributes, currentVariation) {
+        if (!hasWildcard(attributes)) {
+            return [];
+        }
+
+        return variations.filter(function (variation) {
+            return !isSameVariation(variation, currentVariation) && combinationCovers(attributes, variation.attributes);
+        });
+    }
+
+    function overlappingVariationsFor(attributes, currentVariation) {
+        return variations.filter(function (variation) {
+            return !isSameVariation(variation, currentVariation) && combinationsOverlap(attributes, variation.attributes);
+        });
+    }
+
+    function variationWithinConfiguredDomain(variation) {
+        const allowed = configuredAttributeSlugMap();
+
+        return Object.keys(variation.attributes).every(function (taxonomy) {
+            const value = variation.attributes[taxonomy] || '';
+
+            return allowed[taxonomy] && (!value || allowed[taxonomy].indexOf(value) !== -1);
+        });
+    }
+
+    function configuredAttributeSlugMap() {
+        const allowed = {};
+
+        configuredAttributeGroups().forEach(function (group) {
+            group.forEach(function (term) {
+                if (!allowed[term.taxonomy]) {
+                    allowed[term.taxonomy] = [];
+                }
+
+                allowed[term.taxonomy].push(term.slug);
+            });
+        });
+
+        return allowed;
     }
 
     function isSameVariation(first, second) {
@@ -1042,27 +1216,197 @@
         return Boolean(first.client_uid && second.client_uid && first.client_uid === second.client_uid);
     }
 
-    function variationAttributesOverlap(first, second) {
-        const taxonomies = Object.keys(Object.assign({}, first, second));
-
-        return taxonomies.every(function (taxonomy) {
-            const firstValue = first[taxonomy] || '';
-            const secondValue = second[taxonomy] || '';
-
-            return !firstValue || !secondValue || firstValue === secondValue;
+    function openSyncModal(plan) {
+        openVariationModal({
+            title: 'Actualizar variaciones',
+            message: 'Algunos cambios eliminaran variaciones existentes.',
+            detail: 'Se eliminaran ' + plan.remove.length + ' variaciones que ya no corresponden a los atributos seleccionados.',
+            items: plan.remove,
+            confirmText: 'Confirmar cambios',
+            variant: 'warning',
+            onConfirm: function () {
+                applyVariationSyncPlan(plan);
+            }
         });
     }
 
-    function hasVariationConflict() {
-        for (let index = 0; index < variations.length; index++) {
-            for (let compare = index + 1; compare < variations.length; compare++) {
-                if (variationAttributesOverlap(variations[index].attributes, variations[compare].attributes)) {
-                    return true;
-                }
+    function openReplacementModal(items) {
+        openVariationModal({
+            title: 'Reemplazar variaciones',
+            message: 'Esta combinacion reemplazara variaciones existentes.',
+            items: items,
+            confirmText: 'Reemplazar variaciones',
+            variant: 'danger',
+            onCancel: cancelPendingSelectChange,
+            onConfirm: confirmPendingSelectChange
+        });
+    }
+
+    function openVariationModal(options) {
+        modal.open({
+            title: options.title,
+            message: options.message,
+            detail: options.detail || '',
+            items: (options.items || []).map(function (variation) {
+                return variationLabel(variation);
+            }),
+            confirmText: options.confirmText,
+            variant: options.variant,
+            onCancel: options.onCancel,
+            onConfirm: options.onConfirm
+        });
+    }
+
+    function cancelPendingSelectChange() {
+        if (!pendingSelectChange) {
+            return;
+        }
+
+        pendingSelectChange.variation.attributes = pendingSelectChange.previousAttributes;
+        pendingSelectChange.select.value = pendingSelectChange.previousValue;
+        pendingSelectChange = null;
+    }
+
+    function confirmPendingSelectChange() {
+        if (!pendingSelectChange) {
+            return;
+        }
+
+        removeVariations(pendingSelectChange.remove);
+        applyVariationAttributeChange(
+            pendingSelectChange.variation,
+            pendingSelectChange.taxonomy,
+            pendingSelectChange.value,
+            pendingSelectChange.title,
+            pendingSelectChange.wrap
+        );
+        pendingSelectChange = null;
+        renderVariations();
+        updateCombinationCount();
+        updateGenerateActionState();
+        renderDeletedVariationInputs();
+    }
+
+    function applyVariationAttributeChange(variation, taxonomy, value, title, wrap) {
+        variation.attributes[taxonomy] = value;
+        title.textContent = variationLabel(variation);
+        setStatus('', false);
+        refreshVariationAttributeOptions(wrap, variation);
+        updateGenerateActionState();
+    }
+
+    function createAdminModal() {
+        const root = document.createElement('div');
+        const dialog = document.createElement('div');
+        const title = document.createElement('h2');
+        const message = document.createElement('p');
+        const detail = document.createElement('p');
+        const list = document.createElement('ul');
+        const actions = document.createElement('div');
+        const cancel = document.createElement('button');
+        const confirm = document.createElement('button');
+        const titleId = 'sultana-admin-modal-title-' + Date.now();
+        let previousFocus = null;
+        let currentOptions = {};
+
+        root.className = 'sultana-admin-modal';
+        root.hidden = true;
+        dialog.className = 'sultana-admin-modal__dialog';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', titleId);
+        title.id = titleId;
+        title.className = 'sultana-admin-modal__title';
+        message.className = 'sultana-admin-modal__message';
+        detail.className = 'sultana-admin-modal__detail';
+        list.className = 'sultana-admin-modal__list';
+        actions.className = 'sultana-admin-modal__actions';
+        cancel.type = 'button';
+        cancel.className = 'sultana-admin-muted-action';
+        cancel.textContent = 'Cancelar';
+        confirm.type = 'button';
+
+        actions.appendChild(cancel);
+        actions.appendChild(confirm);
+        dialog.appendChild(title);
+        dialog.appendChild(message);
+        dialog.appendChild(detail);
+        dialog.appendChild(list);
+        dialog.appendChild(actions);
+        root.appendChild(dialog);
+        document.body.appendChild(root);
+
+        cancel.addEventListener('click', function () {
+            close(false);
+        });
+
+        confirm.addEventListener('click', function () {
+            close(true);
+        });
+
+        root.addEventListener('click', function (event) {
+            if (event.target === root) {
+                close(false);
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (root.hidden || 'Escape' !== event.key) {
+                return;
+            }
+
+            event.preventDefault();
+            close(false);
+        });
+
+        function open(options) {
+            currentOptions = options || {};
+            previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            title.textContent = currentOptions.title || '';
+            message.textContent = currentOptions.message || '';
+            detail.textContent = currentOptions.detail || '';
+            detail.hidden = !currentOptions.detail;
+            confirm.textContent = currentOptions.confirmText || 'Confirmar';
+            confirm.className = 'sultana-admin-modal__confirm sultana-admin-modal__confirm--' + (currentOptions.variant || 'warning');
+            renderModalList(currentOptions.items || []);
+            root.hidden = false;
+            confirm.focus();
+        }
+
+        function renderModalList(items) {
+            list.innerHTML = '';
+            list.hidden = !items.length;
+
+            items.slice(0, 6).forEach(function (item) {
+                const row = document.createElement('li');
+                row.textContent = item;
+                list.appendChild(row);
+            });
+
+            if (items.length > 6) {
+                const more = document.createElement('li');
+                more.textContent = '+ ' + (items.length - 6) + ' variaciones mas';
+                list.appendChild(more);
             }
         }
 
-        return false;
+        function close(confirmed) {
+            const callback = confirmed ? currentOptions.onConfirm : currentOptions.onCancel;
+            root.hidden = true;
+            currentOptions = {};
+
+            if ('function' === typeof callback) {
+                callback();
+            }
+
+            if (previousFocus && 'function' === typeof previousFocus.focus) {
+                previousFocus.focus();
+            }
+        }
+
+        return {
+            open: open
+        };
     }
 
     function setStatus(message, isError) {

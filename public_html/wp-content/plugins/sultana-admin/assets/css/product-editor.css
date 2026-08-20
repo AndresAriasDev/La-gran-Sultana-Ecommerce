@@ -483,6 +483,7 @@
 
 .sultana-admin-category-picker legend {
     padding: 0;
+    margin-bottom: 10px;
 }
 
 .sultana-admin-category-picker__selected {
@@ -703,6 +704,14 @@
     .sultana-admin-variable-main-row {
         grid-template-columns: 1fr;
         gap: 10px;
+    }
+
+    .sultana-admin-variable-main-row > div:first-child {
+        order: 2;
+    }
+
+    .sultana-admin-variable-main-row > div:nth-child(2) {
+        order: 1;
     }
 
     .sultana-admin-form-grid {

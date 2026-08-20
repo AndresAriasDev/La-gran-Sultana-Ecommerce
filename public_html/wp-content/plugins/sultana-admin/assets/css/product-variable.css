@@ -11,14 +11,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.sultana-admin-variable-editor {
+    display: grid;
+    gap: var(--sultana-admin-space-4);
+    min-width: 0;
+}
+
 .sultana-admin-type-switch .is-active {
     border-color: var(--sultana-admin-primary);
     background: var(--sultana-admin-primary-soft);
     color: var(--sultana-admin-primary-dark);
 }
 
-.sultana-admin-variable-actions,
-.sultana-admin-variation-actions {
+.sultana-admin-variable-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -27,9 +32,7 @@
 }
 
 .sultana-admin-variable-actions .sultana-admin-muted-action,
-.sultana-admin-variable-actions .sultana-admin-secondary-action,
-.sultana-admin-variation-actions .sultana-admin-muted-action,
-.sultana-admin-variation-actions .sultana-admin-secondary-action {
+.sultana-admin-variable-actions .sultana-admin-secondary-action {
     min-height: 42px;
     border-radius: 3px;
     padding: 9px 14px;
@@ -38,39 +41,22 @@
 }
 
 .sultana-admin-variable-actions .sultana-admin-muted-action:hover,
-.sultana-admin-variable-actions .sultana-admin-muted-action:focus-visible,
-.sultana-admin-variation-actions .sultana-admin-muted-action:hover,
-.sultana-admin-variation-actions .sultana-admin-muted-action:focus-visible {
+.sultana-admin-variable-actions .sultana-admin-muted-action:focus-visible {
     border-color: var(--sultana-admin-primary);
     background: var(--sultana-admin-primary);
     color: var(--sultana-admin-primary-contrast);
 }
 
 .sultana-admin-variable-actions .sultana-admin-muted-action:hover .sultana-admin-icon,
-.sultana-admin-variable-actions .sultana-admin-muted-action:focus-visible .sultana-admin-icon,
-.sultana-admin-variation-actions .sultana-admin-muted-action:hover .sultana-admin-icon,
-.sultana-admin-variation-actions .sultana-admin-muted-action:focus-visible .sultana-admin-icon {
+.sultana-admin-variable-actions .sultana-admin-muted-action:focus-visible .sultana-admin-icon {
     color: var(--sultana-admin-primary-contrast);
-}
-
-.sultana-admin-variation-actions button:disabled {
-    border-color: var(--sultana-admin-border);
-    background: var(--sultana-admin-surface-soft);
-    color: var(--sultana-admin-muted);
-    cursor: not-allowed;
-    opacity: 1;
-}
-
-.sultana-admin-variation-actions button:disabled:hover {
-    border-color: var(--sultana-admin-border);
-    background: var(--sultana-admin-surface-soft);
-    color: var(--sultana-admin-muted);
 }
 
 .sultana-admin-variable-actions button {
     flex: 0 1 auto;
     min-height: 42px;
     width: auto;
+    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -99,9 +85,14 @@
 
 .sultana-admin-variable-attribute__header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 42px;
+    grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr);
     gap: 10px;
     align-items: center;
+    min-width: 0;
+}
+
+.sultana-admin-variable-attribute__header--removable {
+    grid-template-columns: minmax(120px, 0.42fr) minmax(0, 1fr) 42px;
 }
 
 .sultana-admin-variable-attribute__header select {
@@ -132,6 +123,10 @@
     position: relative;
     display: grid;
     gap: var(--sultana-admin-space-2);
+    min-width: 0;
+}
+
+.sultana-admin-attribute-value-picker__search {
     min-width: 0;
 }
 
@@ -275,6 +270,78 @@
 
 .sultana-admin-variation-card__summary:empty {
     display: none;
+}
+
+.sultana-admin-modal[hidden] {
+    display: none;
+}
+
+.sultana-admin-modal {
+    position: fixed;
+    z-index: calc(var(--sultana-admin-z-popover) + 10);
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(31, 41, 51, 0.42);
+    padding: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-modal__dialog {
+    display: grid;
+    gap: var(--sultana-admin-space-3);
+    width: min(520px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 6px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 18px 42px rgba(31, 41, 51, 0.22);
+    padding: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-modal__title {
+    margin: 0;
+}
+
+.sultana-admin-modal__message,
+.sultana-admin-modal__detail {
+    margin: 0;
+    color: var(--sultana-admin-text);
+}
+
+.sultana-admin-modal__detail {
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-modal__list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 18px;
+    color: var(--sultana-admin-text);
+}
+
+.sultana-admin-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.sultana-admin-modal__confirm {
+    min-height: 42px;
+    font-weight: 600;
+}
+
+.sultana-admin-modal__confirm--danger {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger);
+    color: #fff;
+}
+
+.sultana-admin-modal__confirm--warning {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
 }
 
 .sultana-admin-variation-summary__regular-price {
@@ -456,16 +523,13 @@
         grid-template-columns: 1fr;
     }
 
-    .sultana-admin-variable-actions,
-    .sultana-admin-variation-actions {
+    .sultana-admin-variable-actions {
         display: flex;
         justify-content: flex-end;
     }
 
     .sultana-admin-variable-actions .sultana-admin-muted-action,
-    .sultana-admin-variable-actions .sultana-admin-secondary-action,
-    .sultana-admin-variation-actions .sultana-admin-muted-action,
-    .sultana-admin-variation-actions .sultana-admin-secondary-action {
+    .sultana-admin-variable-actions .sultana-admin-secondary-action {
         min-width: 0;
         padding-right: 10px;
         padding-left: 10px;
@@ -505,13 +569,17 @@
 }
 
 @media (max-width: 430px) {
-    .sultana-admin-variable-actions,
-    .sultana-admin-variation-actions {
+    .sultana-admin-variable-actions {
         gap: 8px;
     }
 
     .sultana-admin-variable-attribute__header {
-        grid-template-columns: minmax(0, 1fr) 42px;
+        grid-template-columns: minmax(96px, 0.48fr) minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .sultana-admin-variable-attribute__header--removable {
+        grid-template-columns: minmax(86px, 0.45fr) minmax(0, 1fr) 42px;
     }
 }
 
