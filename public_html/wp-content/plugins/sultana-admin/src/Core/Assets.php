@@ -101,6 +101,8 @@ class Assets
             return;
         }
 
+        self::enqueue_product_editor();
+
         $js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-images.js';
         $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
 
@@ -129,6 +131,11 @@ class Assets
                     'moveLeft'      => __( 'Mover a la izquierda', 'sultana-admin' ),
                     'moveRight'     => __( 'Mover a la derecha', 'sultana-admin' ),
                     'remove'        => __( 'Eliminar imagen', 'sultana-admin' ),
+                ],
+                'icons'        => [
+                    'chevronLeft'  => Icons::url( 'chevron-left' ),
+                    'chevronRight' => Icons::url( 'chevron-right' ),
+                    'trash'        => Icons::url( 'trash' ),
                 ],
             ]
         );
@@ -192,6 +199,20 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-product-list',
             SULTANA_ADMIN_URL . 'assets/js/product-list.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_product_editor(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-editor.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-product-editor',
+            SULTANA_ADMIN_URL . 'assets/js/product-editor.js',
             [],
             $js_version,
             true

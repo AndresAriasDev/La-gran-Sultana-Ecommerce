@@ -12,8 +12,9 @@
     const grid = manager.querySelector('[data-sultana-product-image-grid]');
     const status = manager.querySelector('[data-sultana-product-image-status]');
     const form = manager.closest('form');
-    const submitButton = form ? form.querySelector('button[type="submit"]') : null;
+    const submitButtons = form ? Array.from(document.querySelectorAll('button[type="submit"][form="' + form.id + '"], #' + form.id + ' button[type="submit"]')) : [];
     const strings = config.strings || {};
+    const icons = config.icons || {};
     let images = parseInitialImages();
     let pendingUploads = 0;
     let draggedId = null;
@@ -215,35 +216,45 @@
             imageEl.src = image.url;
             imageEl.alt = image.name || '';
 
+            const remove = actionButton('trash', strings.remove || 'Eliminar imagen', false, function () {
+                removeImage(image.id);
+            }, 'sultana-admin-image-remove sultana-admin-icon-button sultana-admin-icon-button--danger');
+
             const controls = document.createElement('div');
             controls.className = 'sultana-admin-image-controls';
 
-            controls.appendChild(actionButton('<', strings.moveLeft || 'Mover a la izquierda', index === 0, function () {
+            controls.appendChild(actionButton('chevronLeft', strings.moveLeft || 'Mover a la izquierda', index === 0, function () {
                 moveImage(index, index - 1);
-            }));
+            }, 'sultana-admin-icon-button'));
 
-            controls.appendChild(actionButton('>', strings.moveRight || 'Mover a la derecha', index === images.length - 1, function () {
+            controls.appendChild(actionButton('chevronRight', strings.moveRight || 'Mover a la derecha', index === images.length - 1, function () {
                 moveImage(index, index + 1);
-            }));
-
-            controls.appendChild(actionButton('Quitar', strings.remove || 'Eliminar imagen', false, function () {
-                removeImage(image.id);
-            }));
+            }, 'sultana-admin-icon-button'));
 
             item.appendChild(imageEl);
             item.appendChild(badge);
+            item.appendChild(remove);
             item.appendChild(controls);
             grid.appendChild(item);
         });
     }
 
-    function actionButton(text, label, disabled, onClick) {
+    function actionButton(iconName, label, disabled, onClick, className) {
         const button = document.createElement('button');
         button.type = 'button';
-        button.textContent = text;
+        button.className = className || '';
         button.setAttribute('aria-label', label);
+        button.setAttribute('title', label);
         button.disabled = disabled;
         button.addEventListener('click', onClick);
+
+        if (icons[iconName]) {
+            const icon = document.createElement('span');
+            icon.className = 'sultana-admin-icon';
+            icon.style.setProperty('--sultana-admin-icon-url', 'url("' + icons[iconName] + '")');
+            icon.setAttribute('aria-hidden', 'true');
+            button.appendChild(icon);
+        }
 
         return button;
     }
@@ -259,9 +270,9 @@
     }
 
     function updateSubmitState() {
-        if (submitButton) {
-            submitButton.disabled = pendingUploads > 0;
-        }
+        submitButtons.forEach(function (button) {
+            button.disabled = pendingUploads > 0;
+        });
 
         if (trigger) {
             trigger.disabled = pendingUploads > 0;

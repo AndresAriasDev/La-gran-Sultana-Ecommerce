@@ -17,6 +17,7 @@ class Icons
         'eye',
         'funnel',
         'heart',
+        'images',
         'layout-panel-left',
         'lock',
         'log-out',

@@ -162,7 +162,9 @@ body.sultana-admin-body .sultana-admin-sidebar {
 body.sultana-admin-body .sultana-admin-main {
     min-height: 100vh;
     min-height: 100dvh;
-    padding-left: 240px;
+    width: auto;
+    margin-left: 240px;
+    min-width: 0;
 }
 
 body.sultana-admin-body .sultana-admin-mobile-header {
@@ -170,7 +172,9 @@ body.sultana-admin-body .sultana-admin-mobile-header {
 }
 
 .sultana-admin-content {
-    width: min(100% - 48px, 1180px);
+    width: calc(100% - 48px);
+    max-width: 1180px;
+    min-width: 0;
     margin: 0 auto;
     padding: var(--sultana-admin-space-8) 0;
 }
@@ -186,7 +190,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     }
 
     body.sultana-admin-body .sultana-admin-main {
-        padding-left: 0;
+        margin-left: 0;
         padding-bottom: 70px;
     }
 
@@ -237,7 +241,8 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     }
 
     .sultana-admin-content {
-        width: min(100% - 24px, 640px);
+        width: calc(100% - 24px);
+        max-width: 640px;
         padding: var(--sultana-admin-space-5) 0 var(--sultana-admin-space-6);
     }
     body.sultana-admin-body .sultana-admin-mobile-nav {

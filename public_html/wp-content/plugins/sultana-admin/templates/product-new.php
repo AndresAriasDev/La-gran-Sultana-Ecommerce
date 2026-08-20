@@ -39,6 +39,7 @@ $form_nonce_action = $screen_data['form_nonce_action'] ?? ProductController::CRE
 $form_title = $screen_data['form_title'] ?? __( 'Nuevo producto', 'sultana-admin' );
 $form_kicker = $screen_data['form_kicker'] ?? __( 'Producto simple', 'sultana-admin' );
 $submit_label = $screen_data['submit_label'] ?? __( 'Guardar producto', 'sultana-admin' );
+$form_id = 'sultana-admin-product-form';
 $notice = $screen_data['notice'] ?? '';
 $selected_categories = array_map( 'absint', $form['category_ids'] ?? [] );
 $icon_url = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
@@ -57,14 +58,19 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
 
 ?>
 <section class="sultana-admin-product-form-screen" aria-labelledby="sultana-admin-product-new-title">
-    <div class="sultana-admin-page-header">
+    <div class="sultana-admin-page-header sultana-admin-editor-header">
         <div>
-            <p class="sultana-admin-kicker"><?php echo esc_html( $form_kicker ); ?></p>
             <h1 id="sultana-admin-product-new-title"><?php echo esc_html( $form_title ); ?></h1>
         </div>
-        <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
-            <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
-        </a>
+        <div class="sultana-admin-editor-header__actions">
+            <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
+                <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
+            </a>
+            <button type="submit" form="<?php echo esc_attr( $form_id ); ?>">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'save' ) ); ?>');" aria-hidden="true"></span>
+                <?php echo esc_html( $submit_label ); ?>
+            </button>
+        </div>
     </div>
 
     <?php if ( '' !== $notice ) : ?>
@@ -84,7 +90,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         </div>
     <?php endif; ?>
 
-    <form class="sultana-admin-product-form" method="post" action="<?php echo esc_url( $form_action ); ?>" enctype="multipart/form-data">
+    <form id="<?php echo esc_attr( $form_id ); ?>" class="<?php echo esc_attr( 'sultana-admin-product-form sultana-admin-product-form--' . $product_type ); ?>" method="post" action="<?php echo esc_url( $form_action ); ?>" enctype="multipart/form-data">
         <?php wp_nonce_field( $form_nonce_action, 'sultana_admin_product_nonce' ); ?>
         <input type="hidden" name="product_type" value="<?php echo esc_attr( $product_type ); ?>">
 
@@ -105,13 +111,14 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
             </section>
         <?php endif; ?>
 
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-main">
-            <h2 id="sultana-admin-product-main"><?php esc_html_e( 'Información principal', 'sultana-admin' ); ?></h2>
-            <label for="sultana-admin-product-name"><?php esc_html_e( 'Nombre del producto', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-name" type="text" name="name" value="<?php echo esc_attr( $form['name'] ?? '' ); ?>" required>
+        <div class="sultana-admin-editor-layout">
+            <div class="sultana-admin-editor-main">
+        <section class="sultana-admin-form-section sultana-admin-form-section--main" aria-label="<?php esc_attr_e( 'Información principal', 'sultana-admin' ); ?>">
+            <label class="sultana-admin-visually-hidden" for="sultana-admin-product-name"><?php esc_html_e( 'Nombre del producto', 'sultana-admin' ); ?></label>
+            <input id="sultana-admin-product-name" class="sultana-admin-product-name-input" type="text" name="name" value="<?php echo esc_attr( $form['name'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Nombre del producto', 'sultana-admin' ); ?>" required>
 
-            <label for="sultana-admin-product-short-description"><?php esc_html_e( 'Descripción corta', 'sultana-admin' ); ?></label>
-            <textarea id="sultana-admin-product-short-description" name="short_description" rows="4"><?php echo esc_textarea( $form['short_description'] ?? '' ); ?></textarea>
+            <label class="sultana-admin-visually-hidden" for="sultana-admin-product-short-description"><?php esc_html_e( 'Descripción corta', 'sultana-admin' ); ?></label>
+            <textarea id="sultana-admin-product-short-description" name="short_description" rows="4" placeholder="<?php esc_attr_e( 'Descripción corta', 'sultana-admin' ); ?>"><?php echo esc_textarea( $form['short_description'] ?? '' ); ?></textarea>
 
             <?php if ( 'combo' === $product_type ) : ?>
                 <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
@@ -151,8 +158,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <?php endif; ?>
 
         <?php if ( 'simple' === $product_type ) : ?>
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-pricing">
-            <h2 id="sultana-admin-product-pricing"><?php esc_html_e( 'Precio', 'sultana-admin' ); ?></h2>
+        <section class="sultana-admin-form-section sultana-admin-form-section--pricing" aria-label="<?php esc_attr_e( 'Precio', 'sultana-admin' ); ?>">
             <div class="sultana-admin-form-grid">
                 <div>
                     <label for="sultana-admin-product-regular-price"><?php esc_html_e( 'Precio regular', 'sultana-admin' ); ?></label>
@@ -165,66 +171,35 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
             </div>
         </section>
 
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-inventory">
+        <section class="sultana-admin-form-section sultana-admin-form-section--inventory" aria-labelledby="sultana-admin-product-inventory">
             <h2 id="sultana-admin-product-inventory"><?php esc_html_e( 'Inventario', 'sultana-admin' ); ?></h2>
-            <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
+            <div class="sultana-admin-inventory-grid">
+                <div>
+                    <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU', 'sultana-admin' ); ?></label>
+                    <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
+                </div>
 
-            <label for="sultana-admin-product-stock"><?php esc_html_e( 'Cantidad en stock', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-stock" type="number" name="stock_quantity" value="<?php echo esc_attr( $form['stock_quantity'] ?? '' ); ?>" min="0" step="1" inputmode="numeric" required>
+                <div>
+                    <label for="sultana-admin-product-stock"><?php esc_html_e( 'Cantidad en stock', 'sultana-admin' ); ?></label>
+                    <input id="sultana-admin-product-stock" type="number" name="stock_quantity" value="<?php echo esc_attr( $form['stock_quantity'] ?? '' ); ?>" min="0" step="1" inputmode="numeric" required>
+                </div>
 
-            <label for="sultana-admin-product-weight"><?php esc_html_e( 'Peso (kg)', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-weight" type="number" name="weight" value="<?php echo esc_attr( $form['weight'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal" required>
+                <div>
+                    <label for="sultana-admin-product-weight"><?php esc_html_e( 'Peso (kg)', 'sultana-admin' ); ?></label>
+                    <input id="sultana-admin-product-weight" type="number" name="weight" value="<?php echo esc_attr( $form['weight'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal" required>
+                </div>
+            </div>
         </section>
         <?php endif; ?>
 
         <?php if ( 'variable' === $product_type ) : ?>
         <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-parent-sku">
-            <h2 id="sultana-admin-product-parent-sku"><?php esc_html_e( 'Identificacion', 'sultana-admin' ); ?></h2>
+            <h2 id="sultana-admin-product-parent-sku"><?php esc_html_e( 'Identificación', 'sultana-admin' ); ?></h2>
             <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
             <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
         </section>
         <?php endif; ?>
 
-        <?php if ( 'combo' !== $product_type ) : ?>
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-organization">
-            <h2 id="sultana-admin-product-organization"><?php esc_html_e( 'Organización', 'sultana-admin' ); ?></h2>
-            <?php if ( empty( $categories ) ) : ?>
-                <p><?php esc_html_e( 'No hay categorías de producto disponibles.', 'sultana-admin' ); ?></p>
-            <?php else : ?>
-                <fieldset class="sultana-admin-category-list">
-                    <legend><?php esc_html_e( 'Categorías', 'sultana-admin' ); ?></legend>
-                    <?php foreach ( $categories as $category ) : ?>
-                        <label>
-                            <input
-                                type="checkbox"
-                                name="category_ids[]"
-                                value="<?php echo esc_attr( (string) $category['id'] ); ?>"
-                                <?php checked( in_array( $category['id'], $selected_categories, true ) ); ?>
-                            >
-                            <span><?php echo esc_html( $category['name'] ); ?></span>
-                        </label>
-                    <?php endforeach; ?>
-                </fieldset>
-            <?php endif; ?>
-
-            <label for="sultana-admin-product-brand"><?php esc_html_e( 'Marca', 'sultana-admin' ); ?></label>
-            <?php if ( '' === $brand_taxonomy || empty( $brands ) ) : ?>
-                <select id="sultana-admin-product-brand" name="brand_id" disabled aria-disabled="true">
-                    <option value="0"><?php esc_html_e( 'Sin marca', 'sultana-admin' ); ?></option>
-                </select>
-            <?php else : ?>
-                <select id="sultana-admin-product-brand" name="brand_id">
-                    <option value="0"><?php esc_html_e( 'Sin marca', 'sultana-admin' ); ?></option>
-                    <?php foreach ( $brands as $brand ) : ?>
-                        <option value="<?php echo esc_attr( (string) $brand['id'] ); ?>" <?php selected( $selected_brand, $brand['id'] ); ?>>
-                            <?php echo esc_html( $brand['name'] ); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-            <?php endif; ?>
-        </section>
-        <?php endif; ?>
 
         <?php if ( 'variable' === $product_type ) : ?>
             <section
@@ -254,7 +229,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                     $variation_total_pages = max( 1, absint( $variation_pagination['total_pages'] ?? 1 ) );
                     $variation_total = absint( $variation_pagination['total'] ?? 0 );
                     ?>
-                    <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginacion de variaciones', 'sultana-admin' ); ?>">
+                    <nav class="sultana-admin-pagination" aria-label="<?php esc_attr_e( 'Paginación de variaciones', 'sultana-admin' ); ?>">
                         <?php if ( ! empty( $variation_links['previous'] ) ) : ?>
                             <a href="<?php echo esc_url( $variation_links['previous'] ); ?>" aria-label="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Página anterior', 'sultana-admin' ); ?>"><span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-left' ) ); ?>');" aria-hidden="true"></span></a>
                         <?php else : ?>
@@ -284,10 +259,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <?php endif; ?>
 
         <?php if ( 'combo' !== $product_type ) : ?>
-            <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-images-title">
-                <h2 id="sultana-admin-product-images-title"><?php esc_html_e( 'Imagenes del producto', 'sultana-admin' ); ?></h2>
-                <p class="sultana-admin-field-help"><?php esc_html_e( 'La primera imagen sera la portada del producto.', 'sultana-admin' ); ?></p>
-
+            <section class="sultana-admin-form-section sultana-admin-form-section--images" aria-labelledby="sultana-admin-product-images-title">
                 <div
                     class="sultana-admin-product-images"
                     data-sultana-product-images
@@ -295,8 +267,9 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 >
                     <input type="hidden" name="product_image_ids" value="<?php echo esc_attr( $product_image_ids ); ?>" data-sultana-product-image-ids>
 
-                    <button type="button" class="sultana-admin-image-upload-button" data-sultana-product-image-trigger>
-                        <?php esc_html_e( 'Agregar imagenes', 'sultana-admin' ); ?>
+                    <button type="button" class="sultana-admin-image-upload-button sultana-admin-image-upload-zone" data-sultana-product-image-trigger>
+                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'images' ) ); ?>');" aria-hidden="true"></span>
+                        <span><?php esc_html_e( 'Agregar imágenes', 'sultana-admin' ); ?></span>
                     </button>
                     <input
                         id="sultana-admin-product-images-input"
@@ -313,14 +286,74 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
             </section>
         <?php endif; ?>
 
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-publication">
-            <h2 id="sultana-admin-product-publication"><?php esc_html_e( 'Publicación', 'sultana-admin' ); ?></h2>
+            </div>
+            <aside class="sultana-admin-editor-sidebar">
+                <?php if ( 'combo' !== $product_type ) : ?>
+                    <section class="sultana-admin-form-section sultana-admin-form-section--categories" aria-label="<?php esc_attr_e( 'Categorías', 'sultana-admin' ); ?>">
+                        <?php if ( empty( $categories ) ) : ?>
+                            <p><?php esc_html_e( 'No hay categorías de producto disponibles.', 'sultana-admin' ); ?></p>
+                        <?php else : ?>
+                            <fieldset class="sultana-admin-category-picker" data-sultana-category-picker>
+                                <legend><?php esc_html_e( 'Categorías', 'sultana-admin' ); ?></legend>
+                                <label class="sultana-admin-visually-hidden" for="sultana-admin-category-search"><?php esc_html_e( 'Buscar categorías', 'sultana-admin' ); ?></label>
+                                <input
+                                    id="sultana-admin-category-search"
+                                    class="sultana-admin-category-picker__search"
+                                    type="search"
+                                    placeholder="<?php esc_attr_e( 'Buscar categorías...', 'sultana-admin' ); ?>"
+                                    autocomplete="off"
+                                    role="combobox"
+                                    aria-autocomplete="list"
+                                    aria-expanded="false"
+                                    aria-controls="sultana-admin-category-results"
+                                    data-sultana-category-search
+                                >
+                                <div class="sultana-admin-category-picker__selected" aria-live="polite" data-sultana-category-selected></div>
+                                <div id="sultana-admin-category-results" class="sultana-admin-category-picker__results" role="listbox" hidden data-sultana-category-results></div>
+                                <div class="sultana-admin-category-picker__checkboxes" data-sultana-category-checkboxes>
+                                    <?php foreach ( $categories as $category ) : ?>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                name="category_ids[]"
+                                                value="<?php echo esc_attr( (string) $category['id'] ); ?>"
+                                                <?php checked( in_array( $category['id'], $selected_categories, true ) ); ?>
+                                            >
+                                            <span><?php echo esc_html( $category['name'] ); ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            </fieldset>
+                        <?php endif; ?>
+                    </section>
+
+                    <section class="sultana-admin-form-section sultana-admin-form-section--brand" aria-label="<?php esc_attr_e( 'Marca', 'sultana-admin' ); ?>">
+                        <label for="sultana-admin-product-brand"><?php esc_html_e( 'Marca', 'sultana-admin' ); ?></label>
+                        <?php if ( '' === $brand_taxonomy || empty( $brands ) ) : ?>
+                            <select id="sultana-admin-product-brand" name="brand_id" disabled aria-disabled="true">
+                                <option value="0"><?php esc_html_e( 'Sin marca', 'sultana-admin' ); ?></option>
+                            </select>
+                        <?php else : ?>
+                            <select id="sultana-admin-product-brand" name="brand_id">
+                                <option value="0"><?php esc_html_e( 'Sin marca', 'sultana-admin' ); ?></option>
+                                <?php foreach ( $brands as $brand ) : ?>
+                                    <option value="<?php echo esc_attr( (string) $brand['id'] ); ?>" <?php selected( $selected_brand, $brand['id'] ); ?>>
+                                        <?php echo esc_html( $brand['name'] ); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        <?php endif; ?>
+                    </section>
+                <?php endif; ?>
+        <section class="sultana-admin-form-section sultana-admin-form-section--publication" aria-label="<?php esc_attr_e( 'Publicación', 'sultana-admin' ); ?>">
             <label for="sultana-admin-product-status"><?php esc_html_e( 'Estado del producto', 'sultana-admin' ); ?></label>
             <select id="sultana-admin-product-status" name="status">
                 <option value="draft" <?php selected( $form['status'] ?? 'draft', 'draft' ); ?>><?php esc_html_e( 'Borrador', 'sultana-admin' ); ?></option>
                 <option value="publish" <?php selected( $form['status'] ?? 'draft', 'publish' ); ?>><?php esc_html_e( 'Publicado', 'sultana-admin' ); ?></option>
             </select>
         </section>
+            </aside>
+        </div>
 
         <div class="sultana-admin-form-actions">
             <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">

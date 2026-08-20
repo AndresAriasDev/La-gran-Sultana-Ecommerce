@@ -170,7 +170,7 @@ class ProductController
             'form_nonce_action' => self::UPDATE_NONCE_ACTION,
             'form_title'        => self::form_title_for_type( $product_type, true ),
             'form_kicker'       => self::form_kicker_for_type( $product_type ),
-            'submit_label'      => __( 'Actualizar producto', 'sultana-admin' ),
+            'submit_label'      => __( 'Actualizar', 'sultana-admin' ),
             'notice'            => self::edit_notice(),
             ],
             self::product_type_screen_data( $product_type, $form, $service, $product_id )
