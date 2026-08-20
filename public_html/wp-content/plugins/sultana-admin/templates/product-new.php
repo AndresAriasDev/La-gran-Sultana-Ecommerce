@@ -91,14 +91,13 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <input type="hidden" name="product_type" value="<?php echo esc_attr( $product_type ); ?>">
 
         <?php if ( empty( $screen_data['product_id'] ) ) : ?>
-            <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-type">
-                <h2 id="sultana-admin-product-type"><?php esc_html_e( 'Tipo de producto', 'sultana-admin' ); ?></h2>
+            <section class="sultana-admin-product-type-section" aria-label="<?php esc_attr_e( 'Tipo de producto', 'sultana-admin' ); ?>">
                 <div class="sultana-admin-type-switch">
                     <a class="<?php echo esc_attr( 'sultana-admin-muted-action' . ( 'simple' === $product_type ? ' is-active' : '' ) ); ?>" href="<?php echo esc_url( add_query_arg( 'type', 'simple', \Sultana\Admin\Core\Router::new_product_url() ) ); ?>">
-                        <?php esc_html_e( 'Producto simple', 'sultana-admin' ); ?>
+                        <?php esc_html_e( 'Simple', 'sultana-admin' ); ?>
                     </a>
                     <a class="<?php echo esc_attr( 'sultana-admin-muted-action' . ( 'variable' === $product_type ? ' is-active' : '' ) ); ?>" href="<?php echo esc_url( add_query_arg( 'type', 'variable', \Sultana\Admin\Core\Router::new_product_url() ) ); ?>">
-                        <?php esc_html_e( 'Producto variable', 'sultana-admin' ); ?>
+                        <?php esc_html_e( 'Variable', 'sultana-admin' ); ?>
                     </a>
                     <a class="<?php echo esc_attr( 'sultana-admin-muted-action' . ( 'combo' === $product_type ? ' is-active' : '' ) ); ?>" href="<?php echo esc_url( add_query_arg( 'type', 'combo', \Sultana\Admin\Core\Router::new_product_url() ) ); ?>">
                         <?php esc_html_e( 'Combo', 'sultana-admin' ); ?>
@@ -129,11 +128,6 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
             <label for="sultana-admin-product-short-description"><?php esc_html_e( 'Descripción del producto', 'sultana-admin' ); ?></label>
             <textarea id="sultana-admin-product-short-description" name="short_description" rows="4"><?php echo esc_textarea( $form['short_description'] ?? '' ); ?></textarea>
 
-            <?php if ( 'combo' === $product_type ) : ?>
-                <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
-                <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
-            <?php endif; ?>
-
         </section>
 
         <?php if ( 'combo' === $product_type ) : ?>
@@ -146,24 +140,11 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 <h2 id="sultana-admin-combo-components-title"><?php esc_html_e( 'Componentes del combo', 'sultana-admin' ); ?></h2>
                 <div class="sultana-admin-combo-components" data-sultana-combo-components></div>
                 <button class="sultana-admin-muted-action" type="button" data-sultana-add-combo-component>
-                    <?php esc_html_e( 'Agregar componente', 'sultana-admin' ); ?>
+                    <?php esc_html_e( 'Agregar producto', 'sultana-admin' ); ?>
                 </button>
                 <div class="sultana-admin-image-status" aria-live="polite" data-sultana-combo-status></div>
             </section>
 
-            <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-combo-pricing">
-                <h2 id="sultana-admin-combo-pricing"><?php esc_html_e( 'Precio', 'sultana-admin' ); ?></h2>
-                <div class="sultana-admin-form-grid">
-                    <div>
-                        <label for="sultana-admin-combo-current-price"><?php esc_html_e( 'Precio actual', 'sultana-admin' ); ?></label>
-                        <input id="sultana-admin-combo-current-price" type="text" value="<?php echo esc_attr( $combo_current_price ); ?>" readonly data-sultana-combo-current-price>
-                    </div>
-                    <div>
-                        <label for="sultana-admin-product-sale-price"><?php esc_html_e( 'Precio de oferta', 'sultana-admin' ); ?></label>
-                        <input id="sultana-admin-product-sale-price" type="number" name="sale_price" value="<?php echo esc_attr( $form['sale_price'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal">
-                    </div>
-                </div>
-            </section>
         <?php endif; ?>
 
         <?php if ( 'simple' === $product_type ) : ?>
@@ -293,6 +274,27 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
 
             </div>
             <aside class="sultana-admin-editor-sidebar">
+                <?php if ( 'combo' === $product_type ) : ?>
+                    <section class="sultana-admin-form-section sultana-admin-form-section--combo-sku" aria-label="<?php esc_attr_e( 'SKU general', 'sultana-admin' ); ?>">
+                        <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general', 'sultana-admin' ); ?></label>
+                        <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
+                    </section>
+
+                    <section class="sultana-admin-form-section sultana-admin-form-section--combo-pricing" aria-labelledby="sultana-admin-combo-pricing">
+                        <h2 id="sultana-admin-combo-pricing"><?php esc_html_e( 'Precio', 'sultana-admin' ); ?></h2>
+                        <div class="sultana-admin-combo-pricing-fields">
+                            <div>
+                                <label for="sultana-admin-combo-current-price"><?php esc_html_e( 'Precio actual', 'sultana-admin' ); ?></label>
+                                <input id="sultana-admin-combo-current-price" type="text" value="<?php echo esc_attr( $combo_current_price ); ?>" readonly data-sultana-combo-current-price>
+                            </div>
+                            <div>
+                                <label for="sultana-admin-product-sale-price"><?php esc_html_e( 'Precio de oferta', 'sultana-admin' ); ?></label>
+                                <input id="sultana-admin-product-sale-price" type="number" name="sale_price" value="<?php echo esc_attr( $form['sale_price'] ?? '' ); ?>" min="0.01" step="0.01" inputmode="decimal">
+                            </div>
+                        </div>
+                    </section>
+                <?php endif; ?>
+
                 <?php if ( 'combo' !== $product_type ) : ?>
                     <section class="sultana-admin-form-section sultana-admin-form-section--categories" aria-label="<?php esc_attr_e( 'Categorías', 'sultana-admin' ); ?>">
                         <?php if ( empty( $categories ) ) : ?>

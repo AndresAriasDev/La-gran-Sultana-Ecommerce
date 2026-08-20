@@ -249,9 +249,12 @@ class Assets
                     'component'         => __( 'Producto o variacion', 'sultana-admin' ),
                     'searchPlaceholder' => __( 'Buscar producto o variacion', 'sultana-admin' ),
                     'quantity'          => __( 'Cantidad', 'sultana-admin' ),
-                    'remove'            => __( 'Quitar', 'sultana-admin' ),
+                    'remove'            => __( 'Quitar producto', 'sultana-admin' ),
                     'searching'         => __( 'Buscando...', 'sultana-admin' ),
                     'searchError'       => __( 'No se pudo buscar componentes.', 'sultana-admin' ),
+                ],
+                'icons'          => [
+                    'trash' => Icons::url( 'trash' ),
                 ],
             ]
         );

@@ -1,5 +1,4 @@
 /* Variable product editor */
-.sultana-admin-type-switch,
 .sultana-admin-variable-attributes,
 .sultana-admin-variation-list,
 .sultana-admin-combo-components {
@@ -7,20 +6,10 @@
     gap: 12px;
 }
 
-.sultana-admin-type-switch {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
 .sultana-admin-variable-editor {
     display: grid;
     gap: var(--sultana-admin-space-4);
     min-width: 0;
-}
-
-.sultana-admin-type-switch .is-active {
-    border-color: var(--sultana-admin-primary);
-    background: var(--sultana-admin-primary-soft);
-    color: var(--sultana-admin-primary-dark);
 }
 
 .sultana-admin-variable-actions {
@@ -33,9 +22,9 @@
 
 .sultana-admin-variable-actions .sultana-admin-muted-action,
 .sultana-admin-variable-actions .sultana-admin-secondary-action {
-    min-height: 42px;
+    min-height: 44px;
     border-radius: 3px;
-    padding: 9px 14px;
+    padding: 10px 16px;
     width: auto;
     transition: background-color var(--sultana-admin-transition-fast), border-color var(--sultana-admin-transition-fast), color var(--sultana-admin-transition-fast);
 }
@@ -54,9 +43,11 @@
 
 .sultana-admin-variable-actions button {
     flex: 0 1 auto;
-    min-height: 42px;
+    min-height: 44px;
     width: auto;
-    font-weight: 600;
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 10px 16px;
     white-space: nowrap;
 }
 
@@ -518,7 +509,6 @@
 
 
 @media (max-width: 760px) {
-    .sultana-admin-type-switch,
     .sultana-admin-combo-component {
         grid-template-columns: 1fr;
     }

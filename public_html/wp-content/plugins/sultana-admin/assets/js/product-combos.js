@@ -11,6 +11,7 @@
     const status = editor.querySelector('[data-sultana-combo-status]');
     const currentPrice = document.querySelector('[data-sultana-combo-current-price]');
     const strings = config.strings || {};
+    const icons = config.icons || {};
     const currencySymbol = config.currencySymbol || 'C$';
     const initialState = readJson(editor.getAttribute('data-initial-state'), {});
     let components = Array.isArray(initialState.components) ? initialState.components.map(normalizeComponent) : [];
@@ -170,8 +171,10 @@
             actions.className = 'sultana-admin-combo-component-actions';
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.className = 'sultana-admin-text-action sultana-admin-text-action--danger';
-            remove.textContent = strings.remove || 'Quitar';
+            remove.className = 'sultana-admin-icon-button sultana-admin-icon-button--danger';
+            remove.setAttribute('aria-label', strings.remove || 'Quitar producto');
+            remove.setAttribute('title', strings.remove || 'Quitar producto');
+            appendIcon(remove, 'trash');
             remove.addEventListener('click', function () {
                 components.splice(index, 1);
 
@@ -324,5 +327,19 @@
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         });
+    }
+
+    function appendIcon(target, iconName) {
+        const url = icons[iconName] || '';
+
+        if (!url) {
+            return;
+        }
+
+        const icon = document.createElement('span');
+        icon.className = 'sultana-admin-icon';
+        icon.style.setProperty('--sultana-admin-icon-url', 'url("' + url + '")');
+        icon.setAttribute('aria-hidden', 'true');
+        target.appendChild(icon);
     }
 })();
