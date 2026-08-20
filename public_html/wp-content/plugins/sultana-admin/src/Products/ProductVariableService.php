@@ -251,7 +251,9 @@ class ProductVariableService
 
         $clean['product_image_ids'] = $image_ids;
         $clean['variable_attributes'] = $this->validate_attributes( $data['variable_attributes'] ?? [], $errors );
-        $this->validate_edit_attribute_structure( $product_id, $partial_update, $clean['variable_attributes'], $errors );
+        if ( $product_id > 0 ) {
+            $clean['variable_attributes'] = $this->merge_existing_variation_attribute_terms( $clean['variable_attributes'], $data['variations'] ?? [], $product_id );
+        }
         $this->validate_generation_size( $clean['variable_attributes'], $data['variations'] ?? [], $product_id, $partial_update, $errors );
         $clean['variations'] = $this->validate_variations( $data['variations'] ?? [], $clean['variable_attributes'], $product_id, $existing_variation_ids, $clean['sku'], $errors );
         $clean['all_image_ids'] = $this->collect_image_ids( $clean['product_image_ids'], $clean['variations'] );
@@ -427,6 +429,91 @@ class ProductVariableService
         }
 
         return array_values( $valid );
+    }
+
+    private function merge_existing_variation_attribute_terms( array $attributes, $raw_variations, int $product_id ): array
+    {
+        if ( ! is_array( $raw_variations ) ) {
+            return $attributes;
+        }
+
+        $by_taxonomy = [];
+
+        foreach ( $attributes as $attribute ) {
+            $taxonomy = sanitize_key( (string) ( $attribute['taxonomy'] ?? '' ) );
+
+            if ( '' === $taxonomy ) {
+                continue;
+            }
+
+            $by_taxonomy[ $taxonomy ] = [
+                'taxonomy' => $taxonomy,
+                'term_ids' => isset( $attribute['term_ids'] ) && is_array( $attribute['term_ids'] )
+                    ? array_values( array_unique( array_map( 'absint', $attribute['term_ids'] ) ) )
+                    : [],
+            ];
+        }
+
+        foreach ( $raw_variations as $raw_variation ) {
+            if ( ! is_array( $raw_variation ) ) {
+                continue;
+            }
+
+            $variation_id = absint( $raw_variation['id'] ?? 0 );
+
+            if ( ! $variation_id ) {
+                continue;
+            }
+
+            $variation = wc_get_product( $variation_id );
+
+            if ( ! $variation instanceof WC_Product_Variation || absint( $variation->get_parent_id() ) !== $product_id ) {
+                continue;
+            }
+
+            $variation_attributes = isset( $raw_variation['attributes'] ) && is_array( $raw_variation['attributes'] )
+                ? array_map( 'sanitize_title', wp_unslash( $raw_variation['attributes'] ) )
+                : [];
+
+            foreach ( $variation_attributes as $taxonomy => $slug ) {
+                $taxonomy = sanitize_key( (string) $taxonomy );
+                $slug     = sanitize_title( (string) $slug );
+
+                if ( '' === $taxonomy || '' === $slug || ! taxonomy_exists( $taxonomy ) || 0 !== strpos( $taxonomy, 'pa_' ) ) {
+                    continue;
+                }
+
+                $term = get_term_by( 'slug', $slug, $taxonomy );
+
+                if ( ! $term || is_wp_error( $term ) ) {
+                    continue;
+                }
+
+                if ( ! isset( $by_taxonomy[ $taxonomy ] ) ) {
+                    $by_taxonomy[ $taxonomy ] = [
+                        'taxonomy' => $taxonomy,
+                        'term_ids' => [],
+                    ];
+                }
+
+                $term_id = absint( $term->term_id );
+
+                if ( $term_id && ! in_array( $term_id, $by_taxonomy[ $taxonomy ]['term_ids'], true ) ) {
+                    $by_taxonomy[ $taxonomy ]['term_ids'][] = $term_id;
+                }
+            }
+        }
+
+        return array_values(
+            array_map(
+                static function ( array $attribute ): array {
+                    $attribute['term_ids'] = array_values( array_unique( array_map( 'absint', $attribute['term_ids'] ) ) );
+
+                    return $attribute;
+                },
+                $by_taxonomy
+            )
+        );
     }
 
     private function validate_variations( $raw_variations, array $attributes, int $product_id, array $existing_variation_ids, string $parent_sku, array &$errors ): array
@@ -644,63 +731,6 @@ class ProductVariableService
                 self::MAX_GENERATED_VARIATIONS
             );
         }
-    }
-
-    private function validate_edit_attribute_structure( int $product_id, bool $partial_update, array $posted_attributes, array &$errors ): void
-    {
-        if ( ! $partial_update || $product_id <= 0 ) {
-            return;
-        }
-
-        $product = wc_get_product( $product_id );
-
-        if ( ! $product instanceof WC_Product_Variable ) {
-            return;
-        }
-
-        if ( $this->attribute_structure_key( $posted_attributes ) !== $this->attribute_structure_key( $this->product_variation_attributes( $product ) ) ) {
-            $errors[] = __( 'Para cambiar atributos o valores de un producto variable se necesita una regeneracion controlada. En esta version puedes editar las variaciones existentes.', 'sultana-admin' );
-        }
-    }
-
-    private function product_variation_attributes( WC_Product_Variable $product ): array
-    {
-        $attributes = [];
-
-        foreach ( $product->get_attributes() as $attribute ) {
-            if ( ! $attribute->get_variation() || ! $attribute->is_taxonomy() ) {
-                continue;
-            }
-
-            $attributes[] = [
-                'taxonomy' => $attribute->get_name(),
-                'term_ids' => array_map( 'absint', $attribute->get_options() ),
-            ];
-        }
-
-        return $attributes;
-    }
-
-    private function attribute_structure_key( array $attributes ): string
-    {
-        $normalized = [];
-
-        foreach ( $attributes as $attribute ) {
-            $taxonomy = sanitize_key( (string) ( $attribute['taxonomy'] ?? '' ) );
-            $term_ids = isset( $attribute['term_ids'] ) && is_array( $attribute['term_ids'] )
-                ? array_values( array_unique( array_map( 'absint', $attribute['term_ids'] ) ) )
-                : [];
-
-            sort( $term_ids );
-
-            if ( '' !== $taxonomy && ! empty( $term_ids ) ) {
-                $normalized[ $taxonomy ] = $term_ids;
-            }
-        }
-
-        ksort( $normalized );
-
-        return wp_json_encode( $normalized ) ?: '';
     }
 
     private function theoretical_variation_count( array $attributes, int $stop_after ): int

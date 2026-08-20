@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
     const config = window.SultanaAdminProductVariables || {};
     const editor = document.querySelector('[data-sultana-variable-editor]');
 
@@ -116,11 +116,16 @@
                 select.appendChild(option(attribute.taxonomy, attribute.label, selected.taxonomy === attribute.taxonomy));
             });
 
-            select.addEventListener('change', function () {
-                selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
-                renderAttributes();
-                updateCombinationCount();
-            });
+            if (selected.taxonomy) {
+                select.disabled = true;
+                select.setAttribute('aria-disabled', 'true');
+            } else {
+                select.addEventListener('change', function () {
+                    selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
+                    renderAttributes();
+                    updateCombinationCount();
+                });
+            }
 
             const terms = document.createElement('div');
             terms.className = 'sultana-admin-variable-terms';
@@ -176,6 +181,9 @@
             });
 
             header.appendChild(select);
+            if (selected.taxonomy) {
+                header.appendChild(hidden('variable_attributes[' + index + '][taxonomy]', selected.taxonomy));
+            }
             header.appendChild(remove);
             block.appendChild(header);
             if (attribute) {
@@ -278,7 +286,7 @@
             text.textContent = term.name;
 
             remove.className = 'sultana-admin-category-chip__remove';
-            remove.textContent = '×';
+            remove.textContent = 'x';
             remove.setAttribute('aria-hidden', 'true');
 
             chip.addEventListener('click', function () {
@@ -402,7 +410,7 @@
 
             const summary = document.createElement('span');
             summary.className = 'sultana-admin-variation-card__summary';
-            summary.textContent = variationSummary(variation);
+            renderVariationSummary(summary, variation);
 
             const chevron = document.createElement('span');
             chevron.className = 'sultana-admin-variation-card__chevron';
@@ -421,7 +429,14 @@
 
             toggle.addEventListener('click', function () {
                 const expanded = 'true' === toggle.getAttribute('aria-expanded');
-                setVariationPanelState(toggle, panel, !expanded);
+
+                if (expanded) {
+                    setVariationPanelState(toggle, panel, false);
+                    return;
+                }
+
+                closeOpenVariationPanels(toggle);
+                setVariationPanelState(toggle, panel, true);
             });
 
             const id = hidden('variations[' + index + '][id]', variation.id);
@@ -433,18 +448,21 @@
 
             panel.appendChild(field('SKU', 'variations[' + index + '][sku]', variation.sku, 'text', false, '', '', 'sku', function (value) {
                 variation.sku = value;
-                summary.textContent = variationSummary(variation);
+                renderVariationSummary(summary, variation);
             }));
             panel.appendChild(field('Disponible', 'variations[' + index + '][stock_quantity]', variation.stock_quantity, 'number', true, '1', '', 'stock', function (value) {
                 variation.stock_quantity = value;
-                summary.textContent = variationSummary(variation);
+                renderVariationSummary(summary, variation);
             }));
             panel.appendChild(field('Peso (kg)', 'variations[' + index + '][weight]', variation.weight, 'number', true, '0.01', '0.01', 'weight'));
             panel.appendChild(field('Precio regular', 'variations[' + index + '][regular_price]', variation.regular_price, 'number', true, '0.01', '', 'regular-price', function (value) {
                 variation.regular_price = value;
-                summary.textContent = variationSummary(variation);
+                renderVariationSummary(summary, variation);
             }));
-            panel.appendChild(field('Precio de oferta', 'variations[' + index + '][sale_price]', variation.sale_price, 'number', false, '0.01', '', 'sale-price'));
+            panel.appendChild(field('Precio de oferta', 'variations[' + index + '][sale_price]', variation.sale_price, 'number', false, '0.01', '', 'sale-price', function (value) {
+                variation.sale_price = value;
+                renderVariationSummary(summary, variation);
+            }));
             panel.appendChild(variationImageField(variation, index));
             setVariationPanelState(toggle, panel, isOpen);
 
@@ -640,14 +658,20 @@
             existing[variationKey(variation.attributes)] = variation;
         });
 
-        variations = combos.map(function (combo) {
+        const desiredKeys = {};
+
+        combos.forEach(function (combo) {
             const attrs = {};
 
             combo.forEach(function (term) {
                 attrs[term.taxonomy] = term.slug;
             });
 
-            return existing[variationKey(attrs)] || {
+            const key = variationKey(attrs);
+            desiredKeys[key] = true;
+
+            if (!existing[key]) {
+                variations.push({
                 id: 0,
                 attributes: attrs,
                 sku: '',
@@ -657,7 +681,12 @@
                 weight: '',
                 image_id: 0,
                 image_url: ''
-            };
+                });
+            }
+        });
+
+        variations = variations.filter(function (variation) {
+            return variation.id || desiredKeys[variationKey(variation.attributes)];
         });
 
         setStatus('', false);
@@ -792,22 +821,56 @@
         }).join(' / ');
     }
 
-    function variationSummary(variation) {
-        const parts = [];
+    function renderVariationSummary(target, variation) {
+        target.innerHTML = '';
 
-        if (variation.sku) {
-            parts.push('SKU: ' + variation.sku);
+        appendSummaryText(target, variation.sku ? 'SKU: ' + variation.sku : '');
+        appendSummaryText(target, variation.stock_quantity !== '' ? 'Disponible: ' + variation.stock_quantity : '');
+        appendSummaryPrice(target, variation);
+    }
+
+    function appendSummaryText(target, text) {
+        if (!text) {
+            return;
         }
 
-        if (variation.stock_quantity !== '') {
-            parts.push('Disponible: ' + variation.stock_quantity);
+        appendSummarySeparator(target);
+        target.appendChild(document.createTextNode(text));
+    }
+
+    function appendSummaryPrice(target, variation) {
+        const regularPrice = String(variation.regular_price || '').trim();
+        const salePrice = String(variation.sale_price || '').trim();
+
+        if (!regularPrice) {
+            return;
         }
 
-        if (variation.regular_price) {
-            parts.push('C$' + variation.regular_price);
+        appendSummarySeparator(target);
+
+        if (salePrice) {
+            const regular = document.createElement('span');
+            const sale = document.createElement('span');
+
+            regular.className = 'sultana-admin-variation-summary__regular-price';
+            regular.textContent = 'C$' + regularPrice;
+
+            sale.className = 'sultana-admin-variation-summary__sale-price';
+            sale.textContent = 'C$' + salePrice;
+
+            target.appendChild(regular);
+            target.appendChild(document.createTextNode(' '));
+            target.appendChild(sale);
+            return;
         }
 
-        return parts.join(' · ');
+        target.appendChild(document.createTextNode('C$' + regularPrice));
+    }
+
+    function appendSummarySeparator(target) {
+        if (target.childNodes.length) {
+            target.appendChild(document.createTextNode(' · '));
+        }
     }
 
     function variationKey(attributes) {
@@ -839,6 +902,25 @@
 
         panel.querySelectorAll('[data-sultana-required]').forEach(function (input) {
             input.required = isOpen && '1' === input.dataset.sultanaRequired;
+        });
+    }
+
+    function closeOpenVariationPanels(currentToggle) {
+        if (!variationsRoot) {
+            return;
+        }
+
+        variationsRoot.querySelectorAll('.sultana-admin-variation-card__toggle[aria-expanded="true"]').forEach(function (toggle) {
+            if (toggle === currentToggle) {
+                return;
+            }
+
+            const panelId = toggle.getAttribute('aria-controls');
+            const panel = panelId ? document.getElementById(panelId) : null;
+
+            if (panel) {
+                setVariationPanelState(toggle, panel, false);
+            }
         });
     }
 
