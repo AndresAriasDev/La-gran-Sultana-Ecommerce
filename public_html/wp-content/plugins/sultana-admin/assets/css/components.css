@@ -1,0 +1,896 @@
+/* Shared panels, forms, login, buttons */
+.sultana-admin-login {
+    width: min(100% - 32px, 440px);
+    margin: 48px auto;
+}
+
+.sultana-admin-login__panel,
+.sultana-admin-panel,
+.sultana-admin-panel--elevated,
+.sultana-admin-card,
+.sultana-admin-page--message {
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    box-shadow: var(--sultana-admin-shadow);
+}
+
+.sultana-admin-panel--subtle {
+    background: var(--sultana-admin-surface-subtle);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    box-shadow: none;
+}
+
+.sultana-admin-section-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-section-header__content {
+    display: grid;
+    gap: var(--sultana-admin-space-1);
+}
+
+.sultana-admin-section-header h1,
+.sultana-admin-section-header h2,
+.sultana-admin-section-header h3 {
+    margin: 0;
+    line-height: var(--sultana-admin-line-height-heading);
+}
+
+.sultana-admin-section-header p {
+    margin: 0;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-login__panel {
+    padding: 28px;
+}
+
+.sultana-admin-login h1,
+.sultana-admin-content h1 {
+    margin: 0;
+    font-size: var(--sultana-admin-font-size-2xl);
+    line-height: var(--sultana-admin-line-height-tight);
+}
+
+.sultana-admin-login p,
+.sultana-admin-content p {
+    margin: 8px 0 0;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-login form {
+    display: grid;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.sultana-admin-login label {
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-login input[type="text"],
+.sultana-admin-login input[type="password"],
+.sultana-admin-input,
+.sultana-admin-select,
+.sultana-admin-textarea {
+    width: 100%;
+    min-height: 46px;
+    border: 1px solid var(--sultana-admin-border-strong);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    padding: 11px 12px;
+    font: inherit;
+}
+
+.sultana-admin-input::placeholder,
+.sultana-admin-textarea::placeholder {
+    color: var(--sultana-admin-text-soft);
+}
+
+.sultana-admin-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.sultana-admin-label,
+.sultana-admin-field label {
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-bold);
+}
+
+.sultana-admin-required {
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-field,
+.sultana-admin-field-group {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-field-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-field-help,
+.sultana-admin-helper-text {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+}
+
+.sultana-admin-error-text {
+    color: var(--sultana-admin-danger);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-loading {
+    color: var(--sultana-admin-muted);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-loading[aria-busy="true"] {
+    cursor: progress;
+}
+
+.sultana-admin-login__remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    font-weight: var(--sultana-admin-font-weight-medium);
+}
+
+.sultana-admin-login__error {
+    margin: 18px 0 0;
+    border: 1px solid var(--sultana-admin-danger);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+    padding: 10px 12px;
+}
+
+button,
+.sultana-admin-login button,
+.sultana-admin-button,
+.sultana-admin-secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sultana-admin-space-2);
+    min-height: 44px;
+    border: 0;
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+    cursor: pointer;
+    font: inherit;
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 11px 16px;
+    text-decoration: none;
+}
+
+button:hover,
+.sultana-admin-login button:hover,
+.sultana-admin-button:hover,
+.sultana-admin-secondary-action:hover {
+    background: var(--sultana-admin-primary-dark);
+}
+
+button:active,
+.sultana-admin-login button:active,
+.sultana-admin-button:active,
+.sultana-admin-secondary-action:active,
+.sultana-admin-text-action:active,
+.sultana-admin-image-upload-button:active {
+    background: var(--sultana-admin-primary-active);
+}
+
+.sultana-admin-button--primary {
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+}
+
+.sultana-admin-button--secondary,
+.sultana-admin-button--ghost {
+    border: 1px solid var(--sultana-admin-border);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+}
+
+.sultana-admin-button--secondary:hover,
+.sultana-admin-button--ghost:hover {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-primary-hover);
+}
+
+.sultana-admin-button--secondary:active,
+.sultana-admin-button--ghost:active,
+.sultana-admin-icon-button:active,
+.sultana-admin-logout-button:active {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-primary-active);
+}
+
+.sultana-admin-button--danger {
+    background: var(--sultana-admin-danger);
+    color: var(--sultana-admin-text-inverse);
+}
+
+.sultana-admin-button--danger:hover,
+.sultana-admin-button--danger:active {
+    background: var(--sultana-admin-danger-hover);
+}
+
+.sultana-admin-button--small {
+    min-height: 38px;
+    padding: var(--sultana-admin-space-2) var(--sultana-admin-space-3);
+}
+
+.sultana-admin-icon-button {
+    display: inline-grid;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    place-items: center;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    cursor: pointer;
+    padding: 0;
+    text-decoration: none;
+}
+
+.sultana-admin-icon-button:hover {
+    border-color: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-hover);
+}
+
+.sultana-admin-search__button:hover {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+}
+
+
+/* Shared icons and icon button states */
+.sultana-admin-icon {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    mask-image: var(--sultana-admin-icon-url);
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+    -webkit-mask-image: var(--sultana-admin-icon-url);
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+}
+
+.sultana-admin-icon-button--danger {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-icon-button--danger:hover,
+.sultana-admin-icon-button--danger:active {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger);
+    color: var(--sultana-admin-text-inverse);
+}
+
+.sultana-admin-icon-button--success {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success-soft);
+    color: var(--sultana-admin-success);
+}
+
+.sultana-admin-icon-button--success:hover,
+.sultana-admin-icon-button--success:active {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success);
+    color: var(--sultana-admin-text-inverse);
+}
+
+
+/* Dashboard shortcuts */
+.sultana-admin-hero,
+.sultana-admin-panel {
+    padding: 28px;
+}
+
+.sultana-admin-hero {
+    margin-bottom: 20px;
+}
+
+.sultana-admin-kicker {
+    color: var(--sultana-admin-primary-dark);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.sultana-admin-quicklinks {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.sultana-admin-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 116px;
+    padding: 20px;
+    text-decoration: none;
+}
+
+.sultana-admin-card:hover {
+    border-color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-card strong {
+    font-size: var(--sultana-admin-font-size-md);
+}
+
+.sultana-admin-card small {
+    margin-top: 3px;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-card__icon {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    place-items: center;
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-card__icon svg {
+    width: 25px;
+    height: 25px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+
+/* Shared page headers, actions, panels, search, notices, summaries */
+.sultana-admin-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.sultana-admin-secondary-action:disabled,
+.sultana-admin-text-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+.sultana-admin-muted-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 10px 16px;
+    text-decoration: none;
+}
+
+.sultana-admin-muted-action:hover {
+    border-color: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-search,
+.sultana-admin-toolbar,
+.sultana-admin-notice,
+.sultana-admin-table-wrap,
+.sultana-admin-empty,
+.sultana-admin-pagination {
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    box-shadow: var(--sultana-admin-shadow);
+}
+
+.sultana-admin-search {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+}
+
+.sultana-admin-search__header {
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.sultana-admin-search__header label {
+    margin: 0;
+}
+
+.sultana-admin-toolbar {
+    display: grid;
+    gap: var(--sultana-admin-space-3);
+    padding: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-notice {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success-soft);
+    color: var(--sultana-admin-success);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 12px 14px;
+}
+
+.sultana-admin-notice--success {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success-soft);
+    color: var(--sultana-admin-success);
+}
+
+.sultana-admin-notice--danger,
+.sultana-admin-notice--error {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-notice--warning {
+    border-color: var(--sultana-admin-warning);
+    background: var(--sultana-admin-warning-soft);
+    color: var(--sultana-admin-warning);
+}
+
+.sultana-admin-notice--info {
+    border-color: var(--sultana-admin-info);
+    background: var(--sultana-admin-info-soft);
+    color: var(--sultana-admin-info);
+}
+
+.sultana-admin-search label {
+    font-weight: var(--sultana-admin-font-weight-bold);
+}
+
+.sultana-admin-search__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+}
+
+.sultana-admin-search input[type="search"] {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--sultana-admin-border-strong);
+    border-radius: var(--sultana-admin-radius-md);
+    padding: 10px 12px;
+    font: inherit;
+}
+
+.sultana-admin-search input[type="search"]:focus,
+.sultana-admin-search input[type="search"]:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+    outline: 0;
+}
+
+.sultana-admin-search input[type="search"]::-webkit-search-cancel-button,
+.sultana-admin-search input[type="search"]::-webkit-search-decoration {
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.sultana-admin-search input[type="search"]::-ms-clear,
+.sultana-admin-search input[type="search"]::-ms-reveal {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.sultana-admin-filter-control {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-list-summary {
+    color: var(--sultana-admin-muted);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+
+/* Shared actions, badges, empty states, dividers */
+.sultana-admin-text-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    border: 0;
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+    font: inherit;
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 8px 12px;
+    text-decoration: none;
+}
+
+.sultana-admin-action-link {
+    color: var(--sultana-admin-primary-hover);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    text-decoration: none;
+}
+
+.sultana-admin-action-link:hover {
+    color: var(--sultana-admin-primary-active);
+    text-decoration: underline;
+}
+
+.sultana-admin-action-link--danger {
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-action-link--danger:hover {
+    color: var(--sultana-admin-danger-hover);
+}
+
+.sultana-admin-text-action:hover {
+    background: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-text-action[disabled],
+.sultana-admin-text-action[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.sultana-admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 4px 10px;
+}
+
+.sultana-admin-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    padding: 4px 10px;
+}
+
+.sultana-admin-badge--success {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success-soft);
+    color: var(--sultana-admin-success);
+}
+
+.sultana-admin-badge--warning {
+    border-color: var(--sultana-admin-warning);
+    background: var(--sultana-admin-warning-soft);
+    color: var(--sultana-admin-warning);
+}
+
+.sultana-admin-badge--danger {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-badge--info {
+    border-color: var(--sultana-admin-info);
+    background: var(--sultana-admin-info-soft);
+    color: var(--sultana-admin-info);
+}
+
+.sultana-admin-status-pill--completed,
+.sultana-admin-status-pill--processing {
+    border-color: var(--sultana-admin-success);
+    background: var(--sultana-admin-success-soft);
+    color: var(--sultana-admin-success);
+}
+
+.sultana-admin-status-pill--pending,
+.sultana-admin-status-pill--on-hold {
+    border-color: var(--sultana-admin-warning);
+    background: var(--sultana-admin-warning-soft);
+    color: var(--sultana-admin-warning);
+}
+
+.sultana-admin-status-pill--cancelled,
+.sultana-admin-status-pill--failed,
+.sultana-admin-status-pill--refunded {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-row-actions,
+.sultana-admin-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sultana-admin-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-row-actions {
+    align-items: center;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.sultana-admin-row-actions form,
+.sultana-admin-card-actions form {
+    margin: 0;
+}
+
+.sultana-admin-row-actions .sultana-admin-icon-button,
+.sultana-admin-card-actions .sultana-admin-icon-button {
+    width: 44px;
+    min-width: 44px;
+}
+
+.sultana-admin-text-action--danger {
+    background: var(--sultana-admin-danger);
+}
+
+.sultana-admin-text-action--danger:hover {
+    background: var(--sultana-admin-danger-hover);
+}
+
+.sultana-admin-empty {
+    padding: 22px;
+}
+
+.sultana-admin-empty {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-empty h2 {
+    margin: 0;
+    font-size: var(--sultana-admin-font-size-lg);
+}
+
+.sultana-admin-empty p {
+    margin: 0;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-divider {
+    border: 0;
+    border-top: 1px solid var(--sultana-admin-border);
+    margin: var(--sultana-admin-space-4) 0;
+}
+
+/* Shared pagination and errors */
+.sultana-admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+}
+
+.sultana-admin-pagination > a,
+.sultana-admin-pagination > span {
+    min-width: 96px;
+    border-radius: var(--sultana-admin-radius-md);
+    color: var(--sultana-admin-primary-dark);
+    font-weight: var(--sultana-admin-font-weight-bold);
+    min-height: 40px;
+    padding: 8px 10px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.sultana-admin-pagination > span {
+    color: var(--sultana-admin-muted);
+    opacity: 0.58;
+}
+
+.sultana-admin-pagination--compact {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 2px 0 0;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis {
+    display: inline-grid;
+    flex: 0 0 auto;
+    min-width: 46px;
+    min-height: 46px;
+    place-items: center;
+    border: 1px solid var(--sultana-admin-border);
+    border-right: 0;
+    border-radius: 0;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 8px 11px;
+    text-align: center;
+    text-decoration: none;
+    opacity: 1;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:first-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current:first-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis:first-child {
+    border-top-left-radius: var(--sultana-admin-radius-md);
+    border-bottom-left-radius: var(--sultana-admin-radius-md);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:last-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current:last-child,
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis:last-child {
+    border-right: 1px solid var(--sultana-admin-border);
+    border-top-right-radius: var(--sultana-admin-radius-md);
+    border-bottom-right-radius: var(--sultana-admin-radius-md);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link:hover {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-hover);
+}
+
+
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__current {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-hover);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__current + .sultana-admin-pagination__link,
+.sultana-admin-pagination--compact .sultana-admin-pagination__current + .sultana-admin-pagination__ellipsis {
+    border-left-color: var(--sultana-admin-border);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__ellipsis {
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link--icon .sultana-admin-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sultana-admin-pagination--compact .sultana-admin-pagination__link--icon {
+    width: 46px;
+    min-width: 46px;
+    padding-right: 0;
+    padding-left: 0;
+}
+
+.sultana-admin-error-list {
+    border: 1px solid var(--sultana-admin-danger);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-danger-soft);
+    color: var(--sultana-admin-danger);
+    padding: 14px 16px;
+}
+
+.sultana-admin-error-list ul {
+    margin: 8px 0 0;
+    padding-left: 20px;
+}
+
+/* Shared message page */
+.sultana-admin-page--message {
+    width: min(100% - 32px, 720px);
+    margin: 48px auto;
+    padding: 28px;
+}
+
+@media (max-width: 760px) {
+    .sultana-admin-hero,
+    .sultana-admin-panel {
+        padding: 18px 4px;
+    }
+
+    .sultana-admin-quicklinks {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .sultana-admin-page-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .sultana-admin-page-header button {
+        width: 100%;
+    }
+
+    .sultana-admin-page-header .sultana-admin-secondary-action,
+    .sultana-admin-page-header .sultana-admin-muted-action {
+        width: 100%;
+    }
+    .sultana-admin-card {
+        min-height: 96px;
+        padding: 16px;
+    }
+
+    .sultana-admin-content h1 {
+        font-size: var(--sultana-admin-font-size-xl);
+    }
+
+    .sultana-admin-pagination > a,
+    .sultana-admin-pagination > span {
+        min-width: 78px;
+    }
+}
+
+@media (max-width: 380px) {
+    .sultana-admin-login {
+        width: min(100% - 20px, 440px);
+        margin: 20px auto;
+    }
+
+    .sultana-admin-login__panel {
+        padding: 20px;
+    }
+
+    .sultana-admin-login h1,
+    .sultana-admin-content h1 {
+        font-size: 24px;
+    }
+
+    .sultana-admin-card {
+        gap: 10px;
+    }
+
+    .sultana-admin-card__icon {
+        width: 42px;
+        height: 42px;
+    }
+
+}
+

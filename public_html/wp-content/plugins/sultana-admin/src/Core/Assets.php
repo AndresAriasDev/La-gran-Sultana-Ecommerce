@@ -58,15 +58,24 @@ class Assets
 
     public static function enqueue( string $route = '', array $screen_data = [] ): void
     {
-        $css_path = SULTANA_ADMIN_PATH . 'assets/css/admin.css';
-        $version  = file_exists( $css_path ) ? (string) filemtime( $css_path ) : SULTANA_ADMIN_VERSION;
+        self::enqueue_style( 'admin' );
+        self::enqueue_style( 'components', [ 'sultana-admin' ] );
 
-        wp_enqueue_style(
-            'sultana-admin',
-            SULTANA_ADMIN_URL . 'assets/css/admin.css',
-            [],
-            $version
-        );
+        if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'orders', 'order_view' ], true ) ) {
+            self::enqueue_style( 'shell', [ 'sultana-admin-components' ] );
+        }
+
+        if ( 'products' === $route ) {
+            self::enqueue_style( 'products', [ 'sultana-admin-shell' ] );
+        }
+
+        if ( in_array( $route, [ 'product_new', 'product_edit' ], true ) ) {
+            self::enqueue_style( 'product-editor', [ 'sultana-admin-shell' ] );
+        }
+
+        if ( in_array( $route, [ 'orders', 'order_view' ], true ) ) {
+            self::enqueue_style( 'orders', [ 'sultana-admin-shell' ] );
+        }
 
         if ( 'products' === $route ) {
             self::enqueue_product_list();
@@ -78,6 +87,10 @@ class Assets
         }
 
         $product_type = self::screen_product_type( $route, $screen_data );
+
+        if ( 'variable' === $product_type ) {
+            self::enqueue_style( 'product-variable', [ 'sultana-admin-product-editor' ] );
+        }
 
         if ( 'combo' === $product_type ) {
             self::enqueue_combo_editor();
@@ -155,6 +168,20 @@ class Assets
             ]
         );
 
+    }
+
+    private static function enqueue_style( string $name, array $dependencies = [] ): void
+    {
+        $path    = SULTANA_ADMIN_PATH . 'assets/css/' . $name . '.css';
+        $version = file_exists( $path ) ? (string) filemtime( $path ) : SULTANA_ADMIN_VERSION;
+        $handle  = 'admin' === $name ? 'sultana-admin' : 'sultana-admin-' . $name;
+
+        wp_enqueue_style(
+            $handle,
+            SULTANA_ADMIN_URL . 'assets/css/' . $name . '.css',
+            $dependencies,
+            $version
+        );
     }
 
     private static function enqueue_product_list(): void

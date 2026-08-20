@@ -1,0 +1,278 @@
+/* Shell layout and navigation */
+/* SHELL */
+body.sultana-admin-body .sultana-admin-shell {
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.sultana-admin-skip-link {
+    position: fixed;
+    z-index: calc(var(--sultana-admin-z-popover) + 1);
+    top: var(--sultana-admin-space-3);
+    left: var(--sultana-admin-space-3);
+    transform: translateY(-140%);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    padding: var(--sultana-admin-space-2) var(--sultana-admin-space-3);
+    text-decoration: none;
+}
+
+.sultana-admin-skip-link:focus {
+    transform: translateY(0);
+}
+
+body.sultana-admin-body .sultana-admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    display: flex;
+    width: 240px;
+    height: 100vh;
+    height: 100dvh;
+    flex-direction: column;
+    gap: var(--sultana-admin-space-5);
+    border-right: 1px solid var(--sultana-admin-border);
+    background: var(--sultana-admin-surface-elevated);
+    overflow-y: auto;
+    padding: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--sultana-admin-space-3);
+    min-width: 0;
+    color: var(--sultana-admin-text);
+    text-decoration: none;
+}
+
+.sultana-admin-brand__mark {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    place-items: center;
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+    font-weight: var(--sultana-admin-font-weight-bold);
+}
+
+.sultana-admin-brand strong,
+.sultana-admin-brand small,
+.sultana-admin-card strong,
+.sultana-admin-card small {
+    display: block;
+}
+
+.sultana-admin-brand small {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+}
+
+/* NAVIGATION */
+.sultana-admin-nav {
+    display: grid;
+    gap: var(--sultana-admin-space-1);
+}
+
+.sultana-admin-nav__link,
+.sultana-admin-mobile-nav__link {
+    position: relative;
+    min-height: 44px;
+    border-radius: var(--sultana-admin-radius-lg);
+    color: var(--sultana-admin-muted);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    text-decoration: none;
+}
+
+.sultana-admin-nav__link {
+    display: flex;
+    align-items: center;
+    gap: var(--sultana-admin-space-3);
+    padding: 10px 12px 10px 14px;
+}
+
+.sultana-admin-nav__icon {
+    display: inline-grid;
+    flex: 0 0 auto;
+    width: 20px;
+    height: 20px;
+    place-items: center;
+}
+
+.sultana-admin-nav__icon svg,
+.sultana-admin-icon-button svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+.sultana-admin-nav__link:hover,
+.sultana-admin-nav__link.is-active,
+.sultana-admin-mobile-nav__link.is-active {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-nav__link.is-active::before {
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 5px;
+    width: 3px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-primary);
+    content: "";
+}
+
+.sultana-admin-user {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+    margin-top: auto;
+    border-top: 1px solid var(--sultana-admin-border);
+    padding-top: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-user strong {
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-logout-button {
+    width: 100%;
+    border: 1px solid var(--sultana-admin-border);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    gap: var(--sultana-admin-space-2);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-logout-button:hover {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-primary-hover);
+}
+
+body.sultana-admin-body .sultana-admin-main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding-left: 240px;
+}
+
+body.sultana-admin-body .sultana-admin-mobile-header {
+    display: none;
+}
+
+.sultana-admin-content {
+    width: min(100% - 48px, 1180px);
+    margin: 0 auto;
+    padding: var(--sultana-admin-space-8) 0;
+}
+
+body.sultana-admin-body .sultana-admin-mobile-nav {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    /* MOBILE NAV */
+    body.sultana-admin-body .sultana-admin-sidebar {
+        display: none;
+    }
+
+    body.sultana-admin-body .sultana-admin-main {
+        padding-left: 0;
+        padding-bottom: 70px;
+    }
+
+    body.sultana-admin-body .sultana-admin-mobile-header {
+        position: sticky;
+        top: 0;
+        z-index: var(--sultana-admin-z-sticky);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-bottom: 1px solid var(--sultana-admin-border);
+        background: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
+        padding: 10px 14px;
+    }
+
+    .sultana-admin-brand--compact {
+        min-width: 0;
+    }
+
+    .sultana-admin-brand--compact strong {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sultana-admin-brand--compact small {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sultana-admin-brand--compact .sultana-admin-brand__mark {
+        width: 36px;
+        height: 36px;
+    }
+
+    .sultana-admin-mobile-header form {
+        flex: 0 0 auto;
+    }
+
+    .sultana-admin-mobile-header .sultana-admin-mobile-logout {
+        width: 42px;
+        min-width: 42px;
+        min-height: 42px;
+        padding: 0;
+    }
+
+    .sultana-admin-content {
+        width: min(100% - 24px, 640px);
+        padding: var(--sultana-admin-space-5) 0 var(--sultana-admin-space-6);
+    }
+    body.sultana-admin-body .sultana-admin-mobile-nav {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: var(--sultana-admin-z-navigation);
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border-top: 1px solid var(--sultana-admin-border);
+        background: var(--sultana-admin-surface);
+        padding: 8px 8px max(8px, env(safe-area-inset-bottom));
+    }
+
+    .sultana-admin-mobile-nav__link {
+        display: grid;
+        gap: 3px;
+        place-items: center;
+        padding: 8px 4px;
+        font-size: var(--sultana-admin-font-size-sm);
+        line-height: var(--sultana-admin-line-height-control);
+        text-align: center;
+    }
+
+    .sultana-admin-mobile-nav__link.is-active::before {
+        position: absolute;
+        top: 4px;
+        left: 50%;
+        width: 22px;
+        height: 3px;
+        transform: translateX(-50%);
+        border-radius: var(--sultana-admin-radius-pill);
+        background: var(--sultana-admin-primary);
+        content: "";
+    }
+}
+

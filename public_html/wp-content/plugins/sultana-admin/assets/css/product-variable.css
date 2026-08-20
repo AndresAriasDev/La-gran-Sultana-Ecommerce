@@ -1,0 +1,98 @@
+/* Variable product editor */
+.sultana-admin-type-switch,
+.sultana-admin-variable-attributes,
+.sultana-admin-variation-list,
+.sultana-admin-combo-components {
+    display: grid;
+    gap: 12px;
+}
+
+.sultana-admin-type-switch {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sultana-admin-type-switch .is-active {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-dark);
+}
+
+.sultana-admin-variable-attribute,
+.sultana-admin-variation-card {
+    display: grid;
+    gap: 12px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface-soft);
+    padding: 14px;
+}
+
+.sultana-admin-variable-terms {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.sultana-admin-variable-terms label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 38px;
+    font-weight: var(--sultana-admin-font-weight-medium);
+}
+
+.sultana-admin-variation-card {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sultana-admin-variation-card h3,
+.sultana-admin-variation-image {
+    grid-column: 1 / -1;
+}
+
+.sultana-admin-variation-card h3 {
+    margin: 0;
+    font-size: var(--sultana-admin-font-size-base);
+}
+
+.sultana-admin-variation-card label,
+.sultana-admin-variation-image {
+    display: grid;
+    gap: 6px;
+}
+
+.sultana-admin-variation-image {
+    align-items: start;
+    grid-template-columns: 88px minmax(0, 1fr) auto;
+}
+
+.sultana-admin-variation-image-preview {
+    width: 76px;
+    height: 76px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface);
+}
+
+.sultana-admin-variation-image-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--sultana-admin-radius-lg);
+    object-fit: cover;
+}
+
+
+@media (max-width: 760px) {
+    .sultana-admin-type-switch,
+    .sultana-admin-variation-card,
+    .sultana-admin-variation-image,
+    .sultana-admin-combo-component {
+        grid-template-columns: 1fr;
+    }
+
+    .sultana-admin-variable-terms {
+        grid-template-columns: 1fr;
+    }
+}
+
