@@ -666,10 +666,6 @@ class ProductService
         $image_id   = $product->get_image_id();
         $stock_text = $this->stock_label_for_list( $product, $type );
 
-        if ( 'variable' !== $type && $product->managing_stock() && null !== $product->get_stock_quantity() ) {
-            $stock_text = $this->append_stock_quantity( $stock_text, (int) $product->get_stock_quantity() );
-        }
-
         $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'thumbnail' ) : '';
         $can_manage = in_array( $type, self::ALLOWED_TYPES, true );
 
@@ -708,16 +704,6 @@ class ProductService
         return ! empty( $availability['availability'] )
             ? wp_strip_all_tags( (string) $availability['availability'] )
             : $this->stock_status_label( $product->get_stock_status() );
-    }
-
-    private function append_stock_quantity( string $stock_text, int $stock_quantity ): string
-    {
-        return sprintf(
-            /* translators: 1: stock availability label, 2: stock quantity. */
-            __( '%1$s (%2$d)', 'sultana-admin' ),
-            $stock_text,
-            $stock_quantity
-        );
     }
 
     private function type_label( string $type ): string
