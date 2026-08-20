@@ -9,19 +9,24 @@
     const attributesRoot = editor.querySelector('[data-sultana-variable-attributes]');
     const variationsRoot = editor.querySelector('[data-sultana-variation-list]');
     const addAttributeButton = editor.querySelector('[data-sultana-add-attribute]');
-    const generateButton = editor.querySelector('[data-sultana-generate-variations]');
+    const addVariationButton = editor.querySelector('[data-sultana-add-variation]');
     const status = editor.querySelector('[data-sultana-variable-status]');
     const countStatus = editor.querySelector('[data-sultana-variation-count]');
     const strings = config.strings || {};
     const icons = config.icons || {};
-    const maxGeneratedVariations = parseInt(editor.getAttribute('data-max-generated-variations'), 10) || 100;
     const availableAttributes = readJson(editor.getAttribute('data-available-attributes'), []);
     const initialState = readJson(editor.getAttribute('data-initial-state'), {});
+    let variationClientCounter = 0;
     let selectedAttributes = Array.isArray(initialState.attributes) ? normalizeAttributes(initialState.attributes) : [];
     let variations = Array.isArray(initialState.variations) ? normalizeVariations(initialState.variations) : [];
     let attributeCounter = 0;
     let uploadCounter = 0;
     let openValuePicker = null;
+    let deletedVariationIds = [];
+    let forcedOpenVariation = null;
+    const deletedVariationsRoot = document.createElement('div');
+    deletedVariationsRoot.hidden = true;
+    editor.appendChild(deletedVariationsRoot);
 
     if (!selectedAttributes.length && availableAttributes.length) {
         selectedAttributes.push({ taxonomy: '', term_ids: [] });
@@ -30,6 +35,7 @@
     renderAttributes();
     renderVariations();
     updateCombinationCount();
+    updateVariationActionState();
     updateSubmitState();
 
     if (addAttributeButton) {
@@ -37,12 +43,13 @@
             selectedAttributes.push({ taxonomy: '', term_ids: [] });
             renderAttributes();
             updateCombinationCount();
+            updateVariationActionState();
         });
     }
 
-    if (generateButton) {
-        generateButton.addEventListener('click', function () {
-            generateVariations();
+    if (addVariationButton) {
+        addVariationButton.addEventListener('click', function () {
+            addManualVariation();
         });
     }
 
@@ -73,6 +80,7 @@
         return items.map(function (variation) {
             return {
                 id: toInt(variation.id),
+                client_uid: variation.client_uid || nextVariationClientUid(),
                 attributes: variation.attributes || {},
                 sku: variation.sku || '',
                 regular_price: variation.regular_price || '',
@@ -87,6 +95,11 @@
 
     function toInt(value) {
         return parseInt(value, 10) || 0;
+    }
+
+    function nextVariationClientUid() {
+        variationClientCounter += 1;
+        return 'variation-' + variationClientCounter;
     }
 
     function normalize(value) {
@@ -120,11 +133,12 @@
                 select.disabled = true;
                 select.setAttribute('aria-disabled', 'true');
             } else {
-                select.addEventListener('change', function () {
-                    selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
-                    renderAttributes();
-                    updateCombinationCount();
-                });
+            select.addEventListener('change', function () {
+                selectedAttributes[index] = { taxonomy: select.value, term_ids: [] };
+                renderAttributes();
+                updateCombinationCount();
+                updateVariationActionState();
+            });
             }
 
             const terms = document.createElement('div');
@@ -154,6 +168,7 @@
                         }
 
                         updateCombinationCount();
+                        updateVariationActionState();
                     });
 
                     label.appendChild(checkbox);
@@ -178,6 +193,7 @@
                 selectedAttributes.splice(index, 1);
                 renderAttributes();
                 updateCombinationCount();
+                updateVariationActionState();
             });
 
             header.appendChild(select);
@@ -293,6 +309,7 @@
                 setTermChecked(term.checkbox, false);
                 renderSelectedValues(termItems, search, results, selected);
                 renderValueResults(termItems, search, results, selected);
+                updateVariationActionState();
                 search.focus();
             });
 
@@ -331,6 +348,7 @@
                 search.value = '';
                 renderSelectedValues(termItems, search, results, selected);
                 renderValueResults(termItems, search, results, selected);
+                updateVariationActionState();
                 closeResults(search, results);
                 search.focus();
             });
@@ -393,7 +411,9 @@
             const card = document.createElement('div');
             card.className = 'sultana-admin-variation-card';
             const panelId = 'sultana-admin-variation-panel-' + index;
-            const isOpen = !window.matchMedia('(max-width: 760px)').matches && 0 === index;
+            const isOpen = forcedOpenVariation === variation || (!forcedOpenVariation && !window.matchMedia('(max-width: 760px)').matches && 0 === index);
+            const header = document.createElement('div');
+            header.className = 'sultana-admin-variation-card__header';
 
             const toggle = document.createElement('button');
             toggle.type = 'button';
@@ -423,6 +443,16 @@
             toggle.appendChild(titleWrap);
             toggle.appendChild(chevron);
 
+            const removeVariation = document.createElement('button');
+            removeVariation.type = 'button';
+            removeVariation.className = 'sultana-admin-icon-button sultana-admin-icon-button--danger sultana-admin-variation-card__remove';
+            removeVariation.setAttribute('aria-label', 'Eliminar variacion');
+            removeVariation.setAttribute('title', 'Eliminar variacion');
+            appendIcon(removeVariation, 'trash');
+            removeVariation.addEventListener('click', function () {
+                removeVariationAt(index);
+            });
+
             const panel = document.createElement('div');
             panel.id = panelId;
             panel.className = 'sultana-admin-variation-card__panel';
@@ -442,9 +472,7 @@
             const id = hidden('variations[' + index + '][id]', variation.id);
             card.appendChild(id);
 
-            Object.keys(variation.attributes).forEach(function (taxonomy) {
-                card.appendChild(hidden('variations[' + index + '][attributes][' + taxonomy + ']', variation.attributes[taxonomy]));
-            });
+            panel.appendChild(variationAttributeFields(variation, index, title));
 
             panel.appendChild(field('SKU', 'variations[' + index + '][sku]', variation.sku, 'text', false, '', '', 'sku', function (value) {
                 variation.sku = value;
@@ -466,10 +494,14 @@
             panel.appendChild(variationImageField(variation, index));
             setVariationPanelState(toggle, panel, isOpen);
 
-            card.appendChild(toggle);
+            header.appendChild(toggle);
+            header.appendChild(removeVariation);
+            card.appendChild(header);
             card.appendChild(panel);
             variationsRoot.appendChild(card);
         });
+
+        forcedOpenVariation = null;
     }
 
     function variationImageField(variation, index) {
@@ -552,6 +584,93 @@
         return wrap;
     }
 
+    function variationAttributeFields(variation, index, title) {
+        const wrap = document.createElement('div');
+        wrap.className = 'sultana-admin-variation-attributes';
+
+        selectedAttributes.filter(function (attribute) {
+            return attribute.taxonomy && attribute.term_ids.length;
+        }).forEach(function (selected) {
+            const attribute = findAttribute(selected.taxonomy);
+
+            if (!attribute) {
+                return;
+            }
+
+            const label = document.createElement('label');
+            const span = document.createElement('span');
+            const select = document.createElement('select');
+            const currentValue = variation.attributes[selected.taxonomy] || '';
+
+            label.className = 'sultana-admin-variation-attribute-field';
+            span.className = 'sultana-admin-variation-field__label';
+            span.textContent = attribute.label;
+
+            select.name = 'variations[' + index + '][attributes][' + selected.taxonomy + ']';
+            select.dataset.sultanaVariationAttribute = selected.taxonomy;
+            select.appendChild(option('', anyAttributeLabel(attribute.label), '' === currentValue));
+
+            selectedTermObjects(attribute, selected.term_ids).forEach(function (term) {
+                select.appendChild(option(term.slug, term.name, currentValue === term.slug));
+            });
+
+            if (typeof variation.attributes[selected.taxonomy] === 'undefined') {
+                variation.attributes[selected.taxonomy] = '';
+            }
+
+            let previousValue = variation.attributes[selected.taxonomy] || '';
+
+            select.addEventListener('change', function () {
+                const nextValue = select.value;
+
+                if (isVariationOptionUnavailable(variation, selected.taxonomy, nextValue)) {
+                    select.value = previousValue;
+                    refreshVariationAttributeOptions(wrap, variation);
+                    setStatus('', false);
+                    return;
+                }
+
+                variation.attributes[selected.taxonomy] = nextValue;
+                previousValue = select.value;
+                title.textContent = variationLabel(variation);
+                setStatus('', false);
+                refreshVariationAttributeOptions(wrap, variation);
+                updateVariationActionState();
+            });
+
+            label.appendChild(span);
+            label.appendChild(select);
+            wrap.appendChild(label);
+        });
+
+        refreshVariationAttributeOptions(wrap, variation);
+
+        return wrap;
+    }
+
+    function refreshVariationAttributeOptions(wrap, variation) {
+        Array.prototype.forEach.call(wrap.querySelectorAll('select[data-sultana-variation-attribute]'), function (select) {
+            const taxonomy = select.dataset.sultanaVariationAttribute || '';
+            const currentValue = variation.attributes[taxonomy] || '';
+
+            Array.prototype.forEach.call(select.options, function (item) {
+                item.disabled = item.value !== currentValue && isVariationOptionUnavailable(variation, taxonomy, item.value);
+            });
+        });
+    }
+
+    function selectedTermObjects(attribute, termIds) {
+        return termIds.map(function (termId) {
+            return attribute.terms.find(function (term) {
+                return toInt(term.id) === toInt(termId);
+            });
+        }).filter(Boolean);
+    }
+
+    function anyAttributeLabel(label) {
+        return 'Cualquier ' + String(label || '').toLowerCase();
+    }
+
     function uploadVariationImage(file, variation, hiddenInput, preview) {
         const formData = new FormData();
         formData.append('action', config.uploadAction);
@@ -615,83 +734,74 @@
             });
     }
 
-    function generateVariations() {
+    function addManualVariation() {
         const usable = selectedAttributes.filter(function (attribute) {
             return attribute.taxonomy && attribute.term_ids.length;
         });
 
-        if (!usable.length) {
+        if (!hasAvailableVariationCandidate()) {
             setStatus(strings.chooseValues || 'Selecciona valores', true);
+            updateVariationActionState();
             return;
         }
 
-        const groups = usable.map(function (attribute) {
-            const available = findAttribute(attribute.taxonomy);
+        const attributes = {};
 
-            return attribute.term_ids.map(function (termId) {
-                const term = available.terms.find(function (current) {
-                    return toInt(current.id) === toInt(termId);
-                });
-
-                return {
-                    taxonomy: attribute.taxonomy,
-                    slug: term ? term.slug : '',
-                    label: term ? term.name : ''
-                };
-            }).filter(function (term) {
-                return term.slug;
-            });
+        usable.forEach(function (attribute) {
+            attributes[attribute.taxonomy] = '';
         });
 
-        const total = theoreticalVariationCount(groups);
+        const variation = {
+            id: 0,
+            client_uid: nextVariationClientUid(),
+            attributes: attributes,
+            sku: '',
+            regular_price: '',
+            sale_price: '',
+            stock_quantity: '',
+            weight: '',
+            image_id: 0,
+            image_url: ''
+        };
 
-        if (total > maxGeneratedVariations) {
-            setStatus('La seleccion generaria ' + total + ' variaciones. Reduce los atributos o valores seleccionados.', true);
-            updateCombinationCount();
-            return;
-        }
-
-        const combos = cartesian(groups);
-        const existing = {};
-
-        variations.forEach(function (variation) {
-            existing[variationKey(variation.attributes)] = variation;
-        });
-
-        const desiredKeys = {};
-
-        combos.forEach(function (combo) {
-            const attrs = {};
-
-            combo.forEach(function (term) {
-                attrs[term.taxonomy] = term.slug;
-            });
-
-            const key = variationKey(attrs);
-            desiredKeys[key] = true;
-
-            if (!existing[key]) {
-                variations.push({
-                id: 0,
-                attributes: attrs,
-                sku: '',
-                regular_price: '',
-                sale_price: '',
-                stock_quantity: '',
-                weight: '',
-                image_id: 0,
-                image_url: ''
-                });
-            }
-        });
-
-        variations = variations.filter(function (variation) {
-            return variation.id || desiredKeys[variationKey(variation.attributes)];
-        });
-
+        variations.unshift(variation);
+        forcedOpenVariation = variation;
         setStatus('', false);
         renderVariations();
         updateCombinationCount();
+        updateVariationActionState();
+        renderDeletedVariationInputs();
+    }
+
+    function removeVariationAt(index) {
+        const variation = variations[index];
+
+        if (!variation) {
+            return;
+        }
+
+        if (variation.id && !window.confirm('¿Eliminar esta variacion?')) {
+            return;
+        }
+
+        if (variation.id && deletedVariationIds.indexOf(variation.id) === -1) {
+            deletedVariationIds.push(variation.id);
+        }
+
+        variations.splice(index, 1);
+        setStatus('', false);
+        renderVariations();
+        updateCombinationCount();
+        updateVariationActionState();
+        renderDeletedVariationInputs();
+    }
+
+    function renderDeletedVariationInputs() {
+        deletedVariationsRoot.innerHTML = '';
+
+        deletedVariationIds.forEach(function (variationId) {
+            deletedVariationsRoot.appendChild(hidden('deleted_variation_ids[]', variationId));
+        });
     }
 
     function updateCombinationCount() {
@@ -699,60 +809,86 @@
             return;
         }
 
-        const groups = selectedAttributes
-            .filter(function (attribute) {
-                return attribute.taxonomy && attribute.term_ids.length;
-            })
-            .map(function (attribute) {
-                return attribute.term_ids;
-            });
+        const total = variations.length;
 
-        const total = theoreticalVariationCount(groups);
+        if (1 === total) {
+            countStatus.textContent = '1 variacion';
+            countStatus.classList.remove('is-error');
+            return;
+        }
 
-        if (!total) {
+        if (total > 1) {
+            countStatus.textContent = total + ' variaciones';
+            countStatus.classList.remove('is-error');
+            return;
+        }
+
+        if (!activeAttributeChoices().length) {
             countStatus.textContent = '';
             countStatus.classList.remove('is-error');
             return;
         }
 
-        if (total > maxGeneratedVariations) {
-            countStatus.textContent = 'La seleccion generaria ' + total + ' variaciones. Reduce los atributos o valores seleccionados.';
-            countStatus.classList.add('is-error');
-            return;
-        }
-
-        countStatus.textContent = 'Se generaran ' + total + ' variaciones.';
+        countStatus.textContent = '0 variaciones';
         countStatus.classList.remove('is-error');
     }
 
-    function theoreticalVariationCount(groups) {
-        if (!groups.length) {
-            return 0;
+    function updateVariationActionState() {
+        if (!addVariationButton) {
+            return;
         }
 
-        return groups.reduce(function (total, group) {
-            const count = Array.isArray(group) ? group.length : 0;
-
-            if (!count || total > maxGeneratedVariations) {
-                return total;
-            }
-
-            return total * count;
-        }, 1);
+        addVariationButton.disabled = !hasAvailableVariationCandidate();
     }
 
-    function cartesian(groups) {
-        return groups.reduce(function (acc, group) {
+    function hasAvailableVariationCandidate() {
+        const choices = activeAttributeChoices();
+
+        if (!choices.length) {
+            return false;
+        }
+
+        return variationCandidates(choices).some(function (candidate) {
+            return !variations.some(function (variation) {
+                return variationAttributesOverlap(variation.attributes, candidate);
+            });
+        });
+    }
+
+    function activeAttributeChoices() {
+        return selectedAttributes.filter(function (attribute) {
+            return attribute.taxonomy && attribute.term_ids.length;
+        }).map(function (selected) {
+            const attribute = findAttribute(selected.taxonomy);
+            const values = [''];
+
+            if (attribute) {
+                selectedTermObjects(attribute, selected.term_ids).forEach(function (term) {
+                    values.push(term.slug);
+                });
+            }
+
+            return {
+                taxonomy: selected.taxonomy,
+                values: values
+            };
+        });
+    }
+
+    function variationCandidates(choices) {
+        return choices.reduce(function (acc, choice) {
             const next = [];
 
             acc.forEach(function (prefix) {
-                group.forEach(function (item) {
-                    next.push(prefix.concat([item]));
+                choice.values.forEach(function (value) {
+                    const candidate = Object.assign({}, prefix);
+                    candidate[choice.taxonomy] = value;
+                    next.push(candidate);
                 });
             });
 
             return next;
-        }, [[]]);
+        }, [{}]);
     }
 
     function field(labelText, name, value, type, required, step, min, modifier, onInput) {
@@ -811,13 +947,14 @@
     }
 
     function variationLabel(variation) {
-        return Object.keys(variation.attributes).map(function (taxonomy) {
+        return Object.keys(variation.attributes).sort().map(function (taxonomy) {
             const attribute = findAttribute(taxonomy);
+            const value = variation.attributes[taxonomy] || '';
             const term = attribute ? attribute.terms.find(function (current) {
-                return current.slug === variation.attributes[taxonomy];
+                return current.slug === value;
             }) : null;
 
-            return (attribute ? attribute.label : taxonomy) + ': ' + (term ? term.name : variation.attributes[taxonomy]);
+            return (attribute ? attribute.label : taxonomy) + ': ' + (value ? (term ? term.name : value) : anyAttributeLabel(attribute ? attribute.label : taxonomy));
         }).join(' / ');
     }
 
@@ -877,6 +1014,55 @@
         return Object.keys(attributes).sort().map(function (taxonomy) {
             return taxonomy + '=' + attributes[taxonomy];
         }).join('|');
+    }
+
+    function isVariationOptionUnavailable(variation, taxonomy, value) {
+        const candidate = Object.assign({}, variation.attributes);
+        candidate[taxonomy] = value;
+        const candidateKey = variationKey(candidate);
+
+        return variations.some(function (compare) {
+            if (isSameVariation(variation, compare)) {
+                return false;
+            }
+
+            return variationKey(compare.attributes) === candidateKey || variationAttributesOverlap(compare.attributes, candidate);
+        });
+    }
+
+    function isSameVariation(first, second) {
+        if (first === second) {
+            return true;
+        }
+
+        if (first.id && second.id && first.id === second.id) {
+            return true;
+        }
+
+        return Boolean(first.client_uid && second.client_uid && first.client_uid === second.client_uid);
+    }
+
+    function variationAttributesOverlap(first, second) {
+        const taxonomies = Object.keys(Object.assign({}, first, second));
+
+        return taxonomies.every(function (taxonomy) {
+            const firstValue = first[taxonomy] || '';
+            const secondValue = second[taxonomy] || '';
+
+            return !firstValue || !secondValue || firstValue === secondValue;
+        });
+    }
+
+    function hasVariationConflict() {
+        for (let index = 0; index < variations.length; index++) {
+            for (let compare = index + 1; compare < variations.length; compare++) {
+                if (variationAttributesOverlap(variations[index].attributes, variations[compare].attributes)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     function setStatus(message, isError) {

@@ -31,6 +31,7 @@ class ProductVariableService
             'status'            => 'draft',
             'variable_attributes' => [],
             'variations'        => [],
+            'deleted_variation_ids' => [],
         ];
     }
 
@@ -186,6 +187,7 @@ class ProductVariableService
 
         try {
             $this->save_parent_product( $product, $validated['data'] );
+            $this->delete_variations( $product_id, $validated['data']['deleted_variation_ids'] );
             $this->save_variations( $product_id, $validated['data']['variations'], [] );
             $this->sync_variable_product( $product_id, $validated['data']['all_image_ids'] );
         } catch ( Throwable $exception ) {
@@ -250,12 +252,21 @@ class ProductVariableService
         }
 
         $clean['product_image_ids'] = $image_ids;
+        $clean['deleted_variation_ids'] = $this->validate_deleted_variation_ids( $data['deleted_variation_ids'] ?? [], $product_id, $errors );
         $clean['variable_attributes'] = $this->validate_attributes( $data['variable_attributes'] ?? [], $errors );
         if ( $product_id > 0 ) {
             $clean['variable_attributes'] = $this->merge_existing_variation_attribute_terms( $clean['variable_attributes'], $data['variations'] ?? [], $product_id );
         }
         $this->validate_generation_size( $clean['variable_attributes'], $data['variations'] ?? [], $product_id, $partial_update, $errors );
         $clean['variations'] = $this->validate_variations( $data['variations'] ?? [], $clean['variable_attributes'], $product_id, $existing_variation_ids, $clean['sku'], $errors );
+        if ( ! empty( $clean['deleted_variation_ids'] ) ) {
+            $clean['variations'] = array_values(
+                array_filter(
+                    $clean['variations'],
+                    static fn( array $variation ): bool => ! in_array( absint( $variation['id'] ?? 0 ), $clean['deleted_variation_ids'], true )
+                )
+            );
+        }
         $clean['all_image_ids'] = $this->collect_image_ids( $clean['product_image_ids'], $clean['variations'] );
 
         if ( empty( $clean['variable_attributes'] ) ) {
@@ -339,6 +350,23 @@ class ProductVariableService
         }
 
         return $kept_ids;
+    }
+
+    private function delete_variations( int $product_id, array $variation_ids ): void
+    {
+        foreach ( array_values( array_unique( array_map( 'absint', $variation_ids ) ) ) as $variation_id ) {
+            if ( ! $variation_id ) {
+                continue;
+            }
+
+            $variation = wc_get_product( $variation_id );
+
+            if ( ! $variation instanceof WC_Product_Variation || absint( $variation->get_parent_id() ) !== $product_id ) {
+                continue;
+            }
+
+            wp_trash_post( $variation_id );
+        }
     }
 
     private function trash_variable_tree( int $product_id ): void
@@ -429,6 +457,32 @@ class ProductVariableService
         }
 
         return array_values( $valid );
+    }
+
+    private function validate_deleted_variation_ids( $raw_ids, int $product_id, array &$errors ): array
+    {
+        if ( $product_id <= 0 || ! is_array( $raw_ids ) ) {
+            return [];
+        }
+
+        $valid = [];
+
+        foreach ( array_values( array_unique( array_map( 'absint', wp_unslash( $raw_ids ) ) ) ) as $variation_id ) {
+            if ( ! $variation_id ) {
+                continue;
+            }
+
+            $variation = wc_get_product( $variation_id );
+
+            if ( ! $variation instanceof WC_Product_Variation || absint( $variation->get_parent_id() ) !== $product_id ) {
+                $errors[] = __( 'Una variacion marcada para eliminar no pertenece a este producto.', 'sultana-admin' );
+                continue;
+            }
+
+            $valid[] = $variation_id;
+        }
+
+        return $valid;
     }
 
     private function merge_existing_variation_attribute_terms( array $attributes, $raw_variations, int $product_id ): array
@@ -538,7 +592,7 @@ class ProductVariableService
             foreach ( $allowed_terms as $taxonomy => $term_slugs ) {
                 $slug = sanitize_title( (string) ( $attributes_value[ $taxonomy ] ?? '' ) );
 
-                if ( '' === $slug || ! in_array( $slug, $term_slugs, true ) ) {
+                if ( '' !== $slug && ! in_array( $slug, $term_slugs, true ) ) {
                     $errors[] = __( 'Una variacion contiene atributos invalidos.', 'sultana-admin' );
                     continue 2;
                 }
@@ -550,6 +604,13 @@ class ProductVariableService
 
             if ( isset( $seen_keys[ $key ] ) ) {
                 continue;
+            }
+
+            foreach ( $valid as $existing_variation ) {
+                if ( $this->variations_overlap( $existing_variation['attributes'], $variation_attributes ) ) {
+                    $errors[] = __( 'Hay variaciones que se solapan por usar Cualquier atributo. Evita combinar una variacion generica con otra especifica que pueda resolver la misma seleccion.', 'sultana-admin' );
+                    continue 2;
+                }
             }
 
             $regular_price = $this->validate_decimal( (string) ( $raw_variation['regular_price'] ?? '' ) );
@@ -721,41 +782,6 @@ class ProductVariableService
             return;
         }
 
-        $total = $this->theoretical_variation_count( $attributes, self::MAX_GENERATED_VARIATIONS );
-
-        if ( $total > self::MAX_GENERATED_VARIATIONS ) {
-            $errors[] = sprintf(
-                /* translators: 1: variation count, 2: maximum variation count. */
-                __( 'La seleccion generaria %1$d variaciones. Reduce los atributos o valores seleccionados a un maximo de %2$d.', 'sultana-admin' ),
-                $total,
-                self::MAX_GENERATED_VARIATIONS
-            );
-        }
-    }
-
-    private function theoretical_variation_count( array $attributes, int $stop_after ): int
-    {
-        if ( empty( $attributes ) ) {
-            return 0;
-        }
-
-        $total = 1;
-
-        foreach ( $attributes as $attribute ) {
-            $count = isset( $attribute['term_ids'] ) && is_array( $attribute['term_ids'] ) ? count( $attribute['term_ids'] ) : 0;
-
-            if ( $count <= 0 ) {
-                return 0;
-            }
-
-            $total *= $count;
-
-            if ( $total > $stop_after ) {
-                return $total;
-            }
-        }
-
-        return $total;
     }
 
     private function allowed_attribute_terms( array $attributes ): array
@@ -776,6 +802,22 @@ class ProductVariableService
         }
 
         return $allowed;
+    }
+
+    private function variations_overlap( array $first, array $second ): bool
+    {
+        $taxonomies = array_values( array_unique( array_merge( array_keys( $first ), array_keys( $second ) ) ) );
+
+        foreach ( $taxonomies as $taxonomy ) {
+            $first_value  = sanitize_title( (string) ( $first[ $taxonomy ] ?? '' ) );
+            $second_value = sanitize_title( (string) ( $second[ $taxonomy ] ?? '' ) );
+
+            if ( '' !== $first_value && '' !== $second_value && $first_value !== $second_value ) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function collect_image_ids( array $product_image_ids, array $variations ): array

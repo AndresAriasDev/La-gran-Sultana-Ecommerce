@@ -32,7 +32,6 @@ $selected_images = $screen_data['selected_images'] ?? [];
 $product_type = $screen_data['product_type'] ?? ( $form['product_type'] ?? 'simple' );
 $available_attributes = $screen_data['available_attributes'] ?? [];
 $combo_components = $screen_data['combo_components'] ?? [];
-$max_generated_variations = absint( $screen_data['max_generated_variations'] ?? 100 );
 $variation_pagination = $screen_data['variation_pagination'] ?? [];
 $form_action = $screen_data['form_action'] ?? \Sultana\Admin\Core\Router::new_product_url();
 $form_nonce_action = $screen_data['form_nonce_action'] ?? ProductController::CREATE_NONCE_ACTION;
@@ -209,7 +208,6 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 data-sultana-variable-editor
                 data-available-attributes="<?php echo esc_attr( wp_json_encode( array_values( $available_attributes ) ) ); ?>"
                 data-initial-state="<?php echo esc_attr( wp_json_encode( $variable_state ) ); ?>"
-                data-max-generated-variations="<?php echo esc_attr( (string) $max_generated_variations ); ?>"
             >
                 <h2 id="sultana-admin-variable-title"><?php esc_html_e( 'Atributos y variaciones', 'sultana-admin' ); ?></h2>
                 <div class="sultana-admin-variable-attributes" data-sultana-variable-attributes></div>
@@ -217,8 +215,8 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                     <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
                         <?php esc_html_e( 'Nuevo atributo', 'sultana-admin' ); ?>
                     </button>
-                    <button class="sultana-admin-secondary-action" type="button" data-sultana-generate-variations>
-                        <?php esc_html_e( 'Generar', 'sultana-admin' ); ?>
+                    <button type="button" data-sultana-add-variation disabled>
+                        <?php esc_html_e( 'Nueva variacion', 'sultana-admin' ); ?>
                     </button>
                 </div>
                 <div class="sultana-admin-field-help" aria-live="polite" data-sultana-variation-count></div>

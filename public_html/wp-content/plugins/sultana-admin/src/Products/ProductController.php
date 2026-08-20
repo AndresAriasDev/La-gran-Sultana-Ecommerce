@@ -464,6 +464,7 @@ class ProductController
             'product_image_ids' => isset( $_POST['product_image_ids'] ) ? sanitize_text_field( wp_unslash( $_POST['product_image_ids'] ) ) : '',
             'variable_attributes' => isset( $_POST['variable_attributes'] ) && is_array( $_POST['variable_attributes'] ) ? wp_unslash( $_POST['variable_attributes'] ) : [],
             'variations'        => isset( $_POST['variations'] ) && is_array( $_POST['variations'] ) ? wp_unslash( $_POST['variations'] ) : [],
+            'deleted_variation_ids' => isset( $_POST['deleted_variation_ids'] ) && is_array( $_POST['deleted_variation_ids'] ) ? array_map( 'absint', wp_unslash( $_POST['deleted_variation_ids'] ) ) : [],
             'combo_components'  => isset( $_POST['combo_components'] ) && is_array( $_POST['combo_components'] ) ? wp_unslash( $_POST['combo_components'] ) : [],
             'status'            => isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : 'draft',
         ];
@@ -522,7 +523,6 @@ class ProductController
 
         if ( 'variable' === $product_type ) {
             $data['available_attributes'] = ( new ProductVariableService() )->available_attributes();
-            $data['max_generated_variations'] = ProductVariableService::MAX_GENERATED_VARIATIONS;
 
             if ( $product_id > 0 && ! empty( $data['variation_pagination'] ) ) {
                 $data['variation_pagination']['links'] = self::variation_pagination_links( $product_id, $data['variation_pagination'] );
