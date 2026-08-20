@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $display_name = $current_user->display_name ?: $current_user->user_login;
+$shell_subtitle = $screen['subtitle'] ?? $screen['title'] ?? __( 'Inicio', 'sultana-admin' );
 
 $sultana_admin_icon_asset = static function ( string $name ): void {
     $icon_url = \Sultana\Admin\Core\Icons::url( $name );
@@ -41,7 +42,7 @@ $sultana_admin_nav_icons = [
                 <span class="sultana-admin-brand__mark" aria-hidden="true">S</span>
                 <span>
                     <strong><?php esc_html_e( 'Sultana Admin', 'sultana-admin' ); ?></strong>
-                    <small><?php esc_html_e( 'Gestión de tienda', 'sultana-admin' ); ?></small>
+                    <small><?php echo esc_html( $shell_subtitle ); ?></small>
                 </span>
             </a>
 
@@ -78,7 +79,7 @@ $sultana_admin_nav_icons = [
                     <span class="sultana-admin-brand__mark" aria-hidden="true">S</span>
                     <span>
                         <strong><?php esc_html_e( 'Sultana Admin', 'sultana-admin' ); ?></strong>
-                        <small><?php echo esc_html( $screen['title'] ); ?></small>
+                        <small><?php echo esc_html( $shell_subtitle ); ?></small>
                     </span>
                 </a>
                 <form method="post" action="<?php echo esc_url( $logout_url ); ?>">

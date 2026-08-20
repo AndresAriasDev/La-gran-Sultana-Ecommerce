@@ -13,6 +13,7 @@
     const status = editor.querySelector('[data-sultana-variable-status]');
     const countStatus = editor.querySelector('[data-sultana-variation-count]');
     const strings = config.strings || {};
+    const icons = config.icons || {};
     const maxGeneratedVariations = parseInt(editor.getAttribute('data-max-generated-variations'), 10) || 100;
     const availableAttributes = readJson(editor.getAttribute('data-available-attributes'), []);
     const initialState = readJson(editor.getAttribute('data-initial-state'), {});
@@ -20,6 +21,7 @@
     let variations = Array.isArray(initialState.variations) ? normalizeVariations(initialState.variations) : [];
     let attributeCounter = 0;
     let uploadCounter = 0;
+    let openValuePicker = null;
 
     if (!selectedAttributes.length && availableAttributes.length) {
         selectedAttributes.push({ taxonomy: '', term_ids: [] });
@@ -43,6 +45,12 @@
             generateVariations();
         });
     }
+
+    document.addEventListener('click', function (event) {
+        if (openValuePicker && !openValuePicker.picker.contains(event.target)) {
+            closeResults(openValuePicker.search, openValuePicker.results);
+        }
+    });
 
     function readJson(value, fallback) {
         try {
@@ -81,6 +89,10 @@
         return parseInt(value, 10) || 0;
     }
 
+    function normalize(value) {
+        return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
     function renderAttributes() {
         if (!attributesRoot) {
             return;
@@ -92,8 +104,12 @@
             const block = document.createElement('div');
             block.className = 'sultana-admin-variable-attribute';
 
+            const header = document.createElement('div');
+            header.className = 'sultana-admin-variable-attribute__header';
+
             const select = document.createElement('select');
             select.name = 'variable_attributes[' + index + '][taxonomy]';
+            select.setAttribute('aria-label', strings.selectAttribute || 'Selecciona atributo');
             select.appendChild(option('', strings.selectAttribute || 'Selecciona atributo'));
 
             availableAttributes.forEach(function (attribute) {
@@ -109,18 +125,19 @@
             const terms = document.createElement('div');
             terms.className = 'sultana-admin-variable-terms';
             const attribute = findAttribute(selected.taxonomy);
+            let termItems = [];
 
             if (attribute) {
-                attribute.terms.forEach(function (term) {
+                termItems = attribute.terms.map(function (term) {
                     const label = document.createElement('label');
                     const checkbox = document.createElement('input');
+                    const termId = toInt(term.id);
+
                     checkbox.type = 'checkbox';
                     checkbox.name = 'variable_attributes[' + index + '][term_ids][]';
                     checkbox.value = String(term.id);
-                    checkbox.checked = selected.term_ids.indexOf(toInt(term.id)) !== -1;
+                    checkbox.checked = selected.term_ids.indexOf(termId) !== -1;
                     checkbox.addEventListener('change', function () {
-                        const termId = toInt(term.id);
-
                         if (checkbox.checked && selected.term_ids.indexOf(termId) === -1) {
                             selected.term_ids.push(termId);
                         }
@@ -137,24 +154,216 @@
                     label.appendChild(checkbox);
                     label.appendChild(document.createTextNode(term.name));
                     terms.appendChild(label);
+
+                    return {
+                        id: termId,
+                        name: term.name || '',
+                        checkbox: checkbox
+                    };
                 });
             }
 
             const remove = document.createElement('button');
             remove.type = 'button';
-            remove.className = 'sultana-admin-muted-action';
-            remove.textContent = strings.removeAttribute || 'Quitar atributo';
+            remove.className = 'sultana-admin-icon-button sultana-admin-icon-button--danger sultana-admin-variable-attribute__remove';
+            remove.setAttribute('aria-label', strings.removeAttribute || 'Quitar atributo');
+            remove.setAttribute('title', strings.removeAttribute || 'Quitar atributo');
+            appendIcon(remove, 'trash');
             remove.addEventListener('click', function () {
                 selectedAttributes.splice(index, 1);
                 renderAttributes();
                 updateCombinationCount();
             });
 
-            block.appendChild(select);
+            header.appendChild(select);
+            header.appendChild(remove);
+            block.appendChild(header);
+            if (attribute) {
+                block.appendChild(valuePicker(attribute, termItems));
+            }
             block.appendChild(terms);
-            block.appendChild(remove);
             attributesRoot.appendChild(block);
         });
+    }
+
+    function valuePicker(attribute, termItems) {
+        const picker = document.createElement('div');
+        const searchId = 'sultana-admin-attribute-value-search-' + attributeCounter++;
+        const resultsId = 'sultana-admin-attribute-value-results-' + attributeCounter++;
+
+        picker.className = 'sultana-admin-attribute-value-picker';
+
+        const searchLabel = document.createElement('label');
+        searchLabel.className = 'sultana-admin-visually-hidden';
+        searchLabel.setAttribute('for', searchId);
+        searchLabel.textContent = 'Buscar valores de ' + attribute.label;
+
+        const search = document.createElement('input');
+        search.id = searchId;
+        search.className = 'sultana-admin-attribute-value-picker__search';
+        search.type = 'search';
+        search.placeholder = 'Buscar valores de ' + attribute.label + '...';
+        search.autocomplete = 'off';
+        search.setAttribute('role', 'combobox');
+        search.setAttribute('aria-autocomplete', 'list');
+        search.setAttribute('aria-expanded', 'false');
+        search.setAttribute('aria-controls', resultsId);
+
+        const selected = document.createElement('div');
+        selected.className = 'sultana-admin-attribute-value-picker__selected';
+        selected.setAttribute('aria-live', 'polite');
+
+        const results = document.createElement('div');
+        results.id = resultsId;
+        results.className = 'sultana-admin-attribute-value-picker__results';
+        results.setAttribute('role', 'listbox');
+        results.hidden = true;
+
+        picker.appendChild(searchLabel);
+        picker.appendChild(search);
+        picker.appendChild(selected);
+        picker.appendChild(results);
+
+        search.addEventListener('input', function () {
+            renderValueResults(termItems, search, results, selected);
+            openResults(picker, search, results);
+        });
+
+        search.addEventListener('focus', function () {
+            renderValueResults(termItems, search, results, selected);
+            openResults(picker, search, results);
+        });
+
+        search.addEventListener('keydown', function (event) {
+            const firstOption = results.querySelector('[data-sultana-attribute-value-option]');
+
+            if ('Escape' === event.key) {
+                closeResults(search, results);
+                return;
+            }
+
+            if ('ArrowDown' === event.key && firstOption) {
+                event.preventDefault();
+                firstOption.focus();
+                return;
+            }
+
+            if ('Enter' === event.key && firstOption) {
+                event.preventDefault();
+                firstOption.click();
+            }
+        });
+
+        renderSelectedValues(termItems, search, results, selected);
+        renderValueResults(termItems, search, results, selected);
+
+        return picker;
+    }
+
+    function renderSelectedValues(termItems, search, results, selected) {
+        selected.innerHTML = '';
+
+        termItems.filter(function (term) {
+            return term.checkbox.checked;
+        }).forEach(function (term) {
+            const chip = document.createElement('button');
+            const text = document.createElement('span');
+            const remove = document.createElement('span');
+
+            chip.type = 'button';
+            chip.className = 'sultana-admin-category-chip sultana-admin-attribute-value-chip';
+            chip.setAttribute('aria-label', 'Eliminar valor: ' + term.name);
+
+            text.className = 'sultana-admin-category-chip__text';
+            text.textContent = term.name;
+
+            remove.className = 'sultana-admin-category-chip__remove';
+            remove.textContent = '×';
+            remove.setAttribute('aria-hidden', 'true');
+
+            chip.addEventListener('click', function () {
+                setTermChecked(term.checkbox, false);
+                renderSelectedValues(termItems, search, results, selected);
+                renderValueResults(termItems, search, results, selected);
+                search.focus();
+            });
+
+            chip.appendChild(text);
+            chip.appendChild(remove);
+            selected.appendChild(chip);
+        });
+    }
+
+    function renderValueResults(termItems, search, results, selected) {
+        const normalizedQuery = normalize(search.value);
+        const matches = termItems.filter(function (term) {
+            return !term.checkbox.checked && (!normalizedQuery || normalize(term.name).indexOf(normalizedQuery) !== -1);
+        }).slice(0, 8);
+
+        results.innerHTML = '';
+
+        if (!matches.length) {
+            const empty = document.createElement('div');
+            empty.className = 'sultana-admin-attribute-value-picker__empty';
+            empty.textContent = 'Sin resultados';
+            results.appendChild(empty);
+            return;
+        }
+
+        matches.forEach(function (term) {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'sultana-admin-attribute-value-picker__option';
+            option.textContent = term.name;
+            option.setAttribute('role', 'option');
+            option.dataset.sultanaAttributeValueOption = String(term.id);
+
+            option.addEventListener('click', function () {
+                setTermChecked(term.checkbox, true);
+                search.value = '';
+                renderSelectedValues(termItems, search, results, selected);
+                renderValueResults(termItems, search, results, selected);
+                closeResults(search, results);
+                search.focus();
+            });
+
+            option.addEventListener('keydown', function (event) {
+                if ('Escape' === event.key) {
+                    closeResults(search, results);
+                    search.focus();
+                }
+            });
+
+            results.appendChild(option);
+        });
+    }
+
+    function setTermChecked(checkbox, checked) {
+        if (checkbox.checked === checked) {
+            return;
+        }
+
+        checkbox.checked = checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function openResults(picker, search, results) {
+        if (openValuePicker && openValuePicker.results !== results) {
+            closeResults(openValuePicker.search, openValuePicker.results);
+        }
+
+        openValuePicker = { picker: picker, search: search, results: results };
+        results.hidden = false;
+        search.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeResults(search, results) {
+        results.hidden = true;
+        search.setAttribute('aria-expanded', 'false');
+
+        if (openValuePicker && openValuePicker.results === results) {
+            openValuePicker = null;
+        }
     }
 
     function renderVariations() {
@@ -175,35 +384,86 @@
         variations.forEach(function (variation, index) {
             const card = document.createElement('div');
             card.className = 'sultana-admin-variation-card';
+            const panelId = 'sultana-admin-variation-panel-' + index;
+            const isOpen = !window.matchMedia('(max-width: 760px)').matches && 0 === index;
 
-            const title = document.createElement('h3');
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'sultana-admin-variation-card__toggle';
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            toggle.setAttribute('aria-controls', panelId);
+
+            const titleWrap = document.createElement('span');
+            titleWrap.className = 'sultana-admin-variation-card__title-wrap';
+
+            const title = document.createElement('span');
+            title.className = 'sultana-admin-variation-card__title';
             title.textContent = variationLabel(variation);
 
+            const summary = document.createElement('span');
+            summary.className = 'sultana-admin-variation-card__summary';
+            summary.textContent = variationSummary(variation);
+
+            const chevron = document.createElement('span');
+            chevron.className = 'sultana-admin-variation-card__chevron';
+            appendIcon(chevron, 'chevron');
+
+            titleWrap.appendChild(title);
+
+            titleWrap.appendChild(summary);
+
+            toggle.appendChild(titleWrap);
+            toggle.appendChild(chevron);
+
+            const panel = document.createElement('div');
+            panel.id = panelId;
+            panel.className = 'sultana-admin-variation-card__panel';
+
+            toggle.addEventListener('click', function () {
+                const expanded = 'true' === toggle.getAttribute('aria-expanded');
+                setVariationPanelState(toggle, panel, !expanded);
+            });
+
             const id = hidden('variations[' + index + '][id]', variation.id);
-            card.appendChild(title);
             card.appendChild(id);
 
             Object.keys(variation.attributes).forEach(function (taxonomy) {
                 card.appendChild(hidden('variations[' + index + '][attributes][' + taxonomy + ']', variation.attributes[taxonomy]));
             });
 
-            card.appendChild(field('SKU', 'variations[' + index + '][sku]', variation.sku, 'text', false));
-            card.appendChild(field('Precio regular', 'variations[' + index + '][regular_price]', variation.regular_price, 'number', true, '0.01'));
-            card.appendChild(field('Precio de oferta', 'variations[' + index + '][sale_price]', variation.sale_price, 'number', false, '0.01'));
-            card.appendChild(field('Stock', 'variations[' + index + '][stock_quantity]', variation.stock_quantity, 'number', true, '1'));
-            card.appendChild(field('Peso (kg)', 'variations[' + index + '][weight]', variation.weight, 'number', true, '0.01', '0.01'));
-            card.appendChild(variationImageField(variation, index));
+            panel.appendChild(field('SKU', 'variations[' + index + '][sku]', variation.sku, 'text', false, '', '', 'sku', function (value) {
+                variation.sku = value;
+                summary.textContent = variationSummary(variation);
+            }));
+            panel.appendChild(field('Disponible', 'variations[' + index + '][stock_quantity]', variation.stock_quantity, 'number', true, '1', '', 'stock', function (value) {
+                variation.stock_quantity = value;
+                summary.textContent = variationSummary(variation);
+            }));
+            panel.appendChild(field('Peso (kg)', 'variations[' + index + '][weight]', variation.weight, 'number', true, '0.01', '0.01', 'weight'));
+            panel.appendChild(field('Precio regular', 'variations[' + index + '][regular_price]', variation.regular_price, 'number', true, '0.01', '', 'regular-price', function (value) {
+                variation.regular_price = value;
+                summary.textContent = variationSummary(variation);
+            }));
+            panel.appendChild(field('Precio de oferta', 'variations[' + index + '][sale_price]', variation.sale_price, 'number', false, '0.01', '', 'sale-price'));
+            panel.appendChild(variationImageField(variation, index));
+            setVariationPanelState(toggle, panel, isOpen);
+
+            card.appendChild(toggle);
+            card.appendChild(panel);
             variationsRoot.appendChild(card);
         });
     }
 
     function variationImageField(variation, index) {
         const wrap = document.createElement('div');
-        wrap.className = 'sultana-admin-variation-image';
+        wrap.className = 'sultana-admin-variation-image sultana-admin-variation-field sultana-admin-variation-field--image';
 
         const hiddenInput = hidden('variations[' + index + '][image_id]', variation.image_id);
         const preview = document.createElement('div');
         preview.className = 'sultana-admin-variation-image-preview';
+        const label = document.createElement('span');
+        label.className = 'sultana-admin-variation-field__label';
+        label.textContent = strings.uploadImage || 'Imagen';
 
         if (variation.image_url) {
             const image = document.createElement('img');
@@ -214,6 +474,7 @@
 
         const upload = document.createElement('input');
         upload.type = 'file';
+        upload.className = 'sultana-admin-variation-image-input';
         upload.accept = 'image/jpeg,image/png,image/gif,image/webp';
         upload.addEventListener('change', function () {
             const file = upload.files && upload.files[0];
@@ -224,21 +485,50 @@
             }
         });
 
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'sultana-admin-variation-image-trigger';
+        trigger.setAttribute('aria-label', strings.uploadImage || 'Imagen');
+        trigger.addEventListener('click', function () {
+            upload.click();
+        });
+
+        const triggerIcon = document.createElement('span');
+        triggerIcon.className = 'sultana-admin-variation-image-trigger__icon';
+        appendIcon(triggerIcon, variation.image_url ? '' : 'images');
+
+        const triggerText = document.createElement('span');
+        triggerText.className = 'sultana-admin-variation-image-trigger__text';
+        triggerText.textContent = variation.image_url ? '' : (strings.uploadImage || 'Imagen');
+
         const remove = document.createElement('button');
         remove.type = 'button';
-        remove.className = 'sultana-admin-muted-action';
-        remove.textContent = strings.removeImage || 'Quitar imagen';
-        remove.addEventListener('click', function () {
+        remove.className = 'sultana-admin-icon-button sultana-admin-icon-button--danger sultana-admin-variation-image-remove';
+        remove.setAttribute('aria-label', strings.removeImage || 'Quitar imagen');
+        remove.setAttribute('title', strings.removeImage || 'Quitar imagen');
+        remove.hidden = !variation.image_id && !variation.image_url;
+        appendIcon(remove, 'trash');
+        remove.addEventListener('click', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
             variation.image_id = 0;
             variation.image_url = '';
             hiddenInput.value = '0';
             preview.innerHTML = '';
+            remove.hidden = true;
+            triggerIcon.innerHTML = '';
+            appendIcon(triggerIcon, 'images');
+            triggerText.textContent = strings.uploadImage || 'Imagen';
         });
 
-        wrap.appendChild(document.createTextNode(strings.uploadImage || 'Imagen'));
+        trigger.appendChild(preview);
+        trigger.appendChild(triggerIcon);
+        trigger.appendChild(triggerText);
+
+        wrap.appendChild(label);
         wrap.appendChild(hiddenInput);
-        wrap.appendChild(preview);
         wrap.appendChild(upload);
+        wrap.appendChild(trigger);
         wrap.appendChild(remove);
 
         return wrap;
@@ -277,6 +567,23 @@
                     image.src = variation.image_url;
                     image.alt = '';
                     preview.appendChild(image);
+                }
+
+                const wrap = preview.closest('.sultana-admin-variation-image');
+                const remove = wrap ? wrap.querySelector('.sultana-admin-variation-image-remove') : null;
+                const triggerIcon = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__icon') : null;
+                const triggerText = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__text') : null;
+
+                if (remove) {
+                    remove.hidden = false;
+                }
+
+                if (triggerIcon) {
+                    triggerIcon.innerHTML = '';
+                }
+
+                if (triggerText) {
+                    triggerText.textContent = '';
                 }
 
                 setStatus('', false);
@@ -419,21 +726,29 @@
         }, [[]]);
     }
 
-    function field(labelText, name, value, type, required, step, min) {
+    function field(labelText, name, value, type, required, step, min, modifier, onInput) {
         const label = document.createElement('label');
         const span = document.createElement('span');
         const input = document.createElement('input');
 
+        label.className = 'sultana-admin-variation-field' + (modifier ? ' sultana-admin-variation-field--' + modifier : '');
+        span.className = 'sultana-admin-variation-field__label';
         span.textContent = labelText;
         input.type = type;
         input.name = name;
         input.value = value || '';
-        input.required = Boolean(required);
+        input.dataset.sultanaRequired = required ? '1' : '0';
 
         if ('number' === type) {
             input.min = min || '0';
             input.step = step || '1';
             input.inputMode = 'decimal';
+        }
+
+        if ('function' === typeof onInput) {
+            input.addEventListener('input', function () {
+                onInput(input.value);
+            });
         }
 
         label.appendChild(span);
@@ -477,6 +792,24 @@
         }).join(' / ');
     }
 
+    function variationSummary(variation) {
+        const parts = [];
+
+        if (variation.sku) {
+            parts.push('SKU: ' + variation.sku);
+        }
+
+        if (variation.stock_quantity !== '') {
+            parts.push('Disponible: ' + variation.stock_quantity);
+        }
+
+        if (variation.regular_price) {
+            parts.push('C$' + variation.regular_price);
+        }
+
+        return parts.join(' · ');
+    }
+
     function variationKey(attributes) {
         return Object.keys(attributes).sort().map(function (taxonomy) {
             return taxonomy + '=' + attributes[taxonomy];
@@ -498,5 +831,26 @@
         if (submit) {
             submit.disabled = uploadCounter > 0;
         }
+    }
+
+    function setVariationPanelState(toggle, panel, isOpen) {
+        toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        panel.hidden = !isOpen;
+
+        panel.querySelectorAll('[data-sultana-required]').forEach(function (input) {
+            input.required = isOpen && '1' === input.dataset.sultanaRequired;
+        });
+    }
+
+    function appendIcon(target, iconName) {
+        if (!iconName || !icons[iconName]) {
+            return;
+        }
+
+        const icon = document.createElement('span');
+        icon.className = 'sultana-admin-icon';
+        icon.style.setProperty('--sultana-admin-icon-url', 'url("' + icons[iconName] + '")');
+        icon.setAttribute('aria-hidden', 'true');
+        target.appendChild(icon);
     }
 }());

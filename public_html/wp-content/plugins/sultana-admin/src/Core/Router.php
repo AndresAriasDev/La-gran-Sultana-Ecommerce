@@ -191,26 +191,32 @@ class Router
         $screens = [
             'dashboard' => [
                 'title'    => __( 'Inicio', 'sultana-admin' ),
+                'subtitle' => __( 'Inicio', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/dashboard.php',
             ],
             'products'  => [
                 'title'    => __( 'Productos', 'sultana-admin' ),
+                'subtitle' => __( 'Productos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/products.php',
             ],
             'product_new' => [
                 'title'    => __( 'Nuevo producto', 'sultana-admin' ),
+                'subtitle' => __( 'Nuevo producto', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/product-new.php',
             ],
             'product_edit' => [
                 'title'    => __( 'Editar producto', 'sultana-admin' ),
+                'subtitle' => __( 'Editar producto', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/product-new.php',
             ],
             'orders'    => [
                 'title'    => __( 'Pedidos', 'sultana-admin' ),
+                'subtitle' => __( 'Pedidos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/orders.php',
             ],
             'order_view' => [
                 'title'    => __( 'Ver pedido', 'sultana-admin' ),
+                'subtitle' => __( 'Pedido', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/order-view.php',
             ],
         ];

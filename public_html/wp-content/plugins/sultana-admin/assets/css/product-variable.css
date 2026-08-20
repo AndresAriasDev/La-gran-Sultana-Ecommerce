@@ -17,82 +17,371 @@
     color: var(--sultana-admin-primary-dark);
 }
 
-.sultana-admin-variable-attribute,
-.sultana-admin-variation-card {
+.sultana-admin-variable-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.sultana-admin-variable-actions .sultana-admin-muted-action,
+.sultana-admin-variable-actions .sultana-admin-secondary-action {
+    min-height: 42px;
+    border-radius: 3px;
+    padding: 9px 14px;
+    width: auto;
+}
+
+.sultana-admin-variable-attribute {
     display: grid;
-    gap: 12px;
+    gap: 10px;
     border: 1px solid var(--sultana-admin-border);
-    border-radius: var(--sultana-admin-radius-lg);
+    border-radius: 3px;
     background: var(--sultana-admin-surface-soft);
-    padding: 14px;
+    padding: 12px;
+}
+
+.sultana-admin-variable-attribute__header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    gap: 10px;
+    align-items: center;
+}
+
+.sultana-admin-variable-attribute__header select {
+    min-width: 0;
+}
+
+.sultana-admin-variable-attribute__remove {
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    border-radius: 3px;
 }
 
 .sultana-admin-variable-terms {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 8px;
+    display: none;
 }
 
-.sultana-admin-variable-terms label {
+.sultana-admin-attribute-value-picker {
+    position: relative;
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+    min-width: 0;
+}
+
+.sultana-admin-attribute-value-picker__selected {
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
     gap: 8px;
-    min-height: 38px;
-    font-weight: var(--sultana-admin-font-weight-medium);
+    min-width: 0;
+}
+
+.sultana-admin-attribute-value-picker__selected:empty {
+    display: none;
+}
+
+.sultana-admin-attribute-value-picker__results {
+    position: absolute;
+    z-index: var(--sultana-admin-z-popover);
+    top: calc(44px + var(--sultana-admin-space-2));
+    right: 0;
+    left: 0;
+    max-height: 232px;
+    overflow-y: auto;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 3px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 4px 12px rgba(31, 41, 51, 0.08);
+}
+
+.sultana-admin-attribute-value-picker__option {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    border: 0;
+    border-bottom: 1px solid var(--sultana-admin-border);
+    border-radius: 0;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    padding: 10px 12px;
+    text-align: left;
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-attribute-value-picker__option:hover,
+.sultana-admin-attribute-value-picker__option:focus-visible {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-dark);
+    outline: 0;
+}
+
+.sultana-admin-attribute-value-picker__empty {
+    padding: 12px;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-attribute-value-chip {
+    max-width: 100%;
 }
 
 .sultana-admin-variation-card {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    min-width: 0;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 3px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 1px 2px rgba(31, 41, 51, 0.05);
+    overflow: hidden;
 }
 
-.sultana-admin-variation-card h3,
-.sultana-admin-variation-image {
-    grid-column: 1 / -1;
+.sultana-admin-variation-card__toggle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 34px;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    min-height: 58px;
+    border: 0;
+    border-radius: 0;
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    padding: 12px 14px;
+    text-align: left;
 }
 
-.sultana-admin-variation-card h3 {
-    margin: 0;
-    font-size: var(--sultana-admin-font-size-base);
+.sultana-admin-variation-card__toggle:hover,
+.sultana-admin-variation-card__toggle:focus-visible {
+    background: var(--sultana-admin-primary-soft);
+    outline: 0;
 }
 
-.sultana-admin-variation-card label,
+.sultana-admin-variation-card__toggle:focus-visible {
+    box-shadow: inset 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-variation-card__title-wrap {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+}
+
+.sultana-admin-variation-card__title {
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-variation-card__summary {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-medium);
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-variation-card__summary:empty {
+    display: none;
+}
+
+.sultana-admin-variation-card__chevron {
+    display: inline-grid;
+    width: 34px;
+    height: 34px;
+    place-items: center;
+    color: var(--sultana-admin-muted);
+    transition: transform var(--sultana-admin-transition-fast), color var(--sultana-admin-transition-fast);
+}
+
+.sultana-admin-variation-card__toggle[aria-expanded="true"] .sultana-admin-variation-card__chevron {
+    color: var(--sultana-admin-primary);
+    transform: rotate(90deg);
+}
+
+.sultana-admin-variation-card__panel {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+    border-top: 1px solid var(--sultana-admin-border);
+    padding: 14px;
+}
+
+.sultana-admin-variation-card__panel[hidden] {
+    display: none;
+}
+
 .sultana-admin-variation-image {
     display: grid;
-    gap: 6px;
+    gap: var(--sultana-admin-space-2);
+    justify-items: start;
 }
 
-.sultana-admin-variation-image {
-    align-items: start;
-    grid-template-columns: 88px minmax(0, 1fr) auto;
+.sultana-admin-variation-field {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+    min-width: 0;
+}
+
+.sultana-admin-variation-field--sku,
+.sultana-admin-variation-field--stock,
+.sultana-admin-variation-field--weight {
+    grid-column: span 2;
+}
+
+.sultana-admin-variation-field--regular-price,
+.sultana-admin-variation-field--sale-price,
+.sultana-admin-variation-field--image {
+    grid-column: span 3;
+}
+
+.sultana-admin-variation-field--image {
+    width: min(100%, 180px);
+}
+
+.sultana-admin-variation-field__label {
+    margin: 0;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+}
+
+.sultana-admin-variation-field input {
+    width: 100%;
+    min-width: 0;
 }
 
 .sultana-admin-variation-image-preview {
-    width: 76px;
-    height: 76px;
-    border: 1px solid var(--sultana-admin-border);
-    border-radius: var(--sultana-admin-radius-lg);
-    background: var(--sultana-admin-surface);
+    display: grid;
+    width: 100%;
+    min-height: 0;
+    place-items: center;
+    border-radius: 3px;
+    overflow: hidden;
 }
 
 .sultana-admin-variation-image-preview img {
     display: block;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 3px;
+    object-fit: contain;
+}
+
+.sultana-admin-variation-image-input {
+    display: none;
+}
+
+.sultana-admin-variation-image-trigger {
+    display: grid;
     width: 100%;
-    height: 100%;
-    border-radius: var(--sultana-admin-radius-lg);
-    object-fit: cover;
+    min-height: 116px;
+    place-items: center;
+    border: 1px dashed var(--sultana-admin-border);
+    border-radius: 3px;
+    background: var(--sultana-admin-surface-subtle);
+    color: var(--sultana-admin-text);
+    padding: 12px;
+}
+
+.sultana-admin-variation-image-trigger:hover,
+.sultana-admin-variation-image-trigger:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary-dark);
+    outline: 0;
+}
+
+.sultana-admin-variation-image-trigger:focus-visible {
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-variation-image-trigger__icon .sultana-admin-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-variation-image-trigger__text {
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-variation-image {
+    position: relative;
+}
+
+.sultana-admin-variation-image-remove {
+    position: absolute;
+    top: 28px;
+    right: 8px;
+    width: 30px;
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 100px;
+}
+
+.sultana-admin-variation-image-remove .sultana-admin-icon {
+    width: 14px;
+    height: 14px;
 }
 
 
 @media (max-width: 760px) {
     .sultana-admin-type-switch,
-    .sultana-admin-variation-card,
-    .sultana-admin-variation-image,
     .sultana-admin-combo-component {
         grid-template-columns: 1fr;
     }
 
-    .sultana-admin-variable-terms {
-        grid-template-columns: 1fr;
+    .sultana-admin-variable-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .sultana-admin-variable-actions .sultana-admin-muted-action,
+    .sultana-admin-variable-actions .sultana-admin-secondary-action {
+        min-width: 0;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .sultana-admin-variation-card__toggle {
+        min-height: 56px;
+        padding: 11px 12px;
+    }
+
+    .sultana-admin-variation-card__panel {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .sultana-admin-variation-field--sku,
+    .sultana-admin-variation-field--stock,
+    .sultana-admin-variation-field--weight {
+        grid-column: span 2;
+    }
+
+    .sultana-admin-variation-field--regular-price,
+    .sultana-admin-variation-field--sale-price {
+        grid-column: span 3;
+    }
+
+    .sultana-admin-variation-image-trigger,
+    .sultana-admin-variation-image-preview {
+        min-height: 104px;
+    }
+}
+
+@media (max-width: 430px) {
+    .sultana-admin-variable-actions {
+        gap: 8px;
+    }
+
+    .sultana-admin-variable-attribute__header {
+        grid-template-columns: minmax(0, 1fr) 42px;
     }
 }
 

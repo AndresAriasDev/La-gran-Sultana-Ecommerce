@@ -57,11 +57,8 @@ $combo_state = [
 $combo_current_price = (string) ( $form['current_price'] ?? '' );
 
 ?>
-<section class="sultana-admin-product-form-screen" aria-labelledby="sultana-admin-product-new-title">
+<section class="sultana-admin-product-form-screen" aria-label="<?php echo esc_attr( $form_title ); ?>">
     <div class="sultana-admin-page-header sultana-admin-editor-header">
-        <div>
-            <h1 id="sultana-admin-product-new-title"><?php echo esc_html( $form_title ); ?></h1>
-        </div>
         <div class="sultana-admin-editor-header__actions">
             <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
                 <?php esc_html_e( 'Cancelar', 'sultana-admin' ); ?>
@@ -114,11 +111,24 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <div class="sultana-admin-editor-layout">
             <div class="sultana-admin-editor-main">
         <section class="sultana-admin-form-section sultana-admin-form-section--main" aria-label="<?php esc_attr_e( 'Información principal', 'sultana-admin' ); ?>">
-            <label class="sultana-admin-visually-hidden" for="sultana-admin-product-name"><?php esc_html_e( 'Nombre del producto', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-name" class="sultana-admin-product-name-input" type="text" name="name" value="<?php echo esc_attr( $form['name'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'Nombre del producto', 'sultana-admin' ); ?>" required>
+            <?php if ( 'variable' === $product_type ) : ?>
+                <div class="sultana-admin-variable-main-row">
+                    <div>
+                        <label for="sultana-admin-product-name"><?php esc_html_e( 'Nombre del producto', 'sultana-admin' ); ?></label>
+                        <input id="sultana-admin-product-name" class="sultana-admin-product-name-input" type="text" name="name" value="<?php echo esc_attr( $form['name'] ?? '' ); ?>" required>
+                    </div>
+                    <div>
+                        <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general', 'sultana-admin' ); ?></label>
+                        <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
+                    </div>
+                </div>
+            <?php else : ?>
+                <label for="sultana-admin-product-name"><?php esc_html_e( 'Nombre del producto', 'sultana-admin' ); ?></label>
+                <input id="sultana-admin-product-name" class="sultana-admin-product-name-input" type="text" name="name" value="<?php echo esc_attr( $form['name'] ?? '' ); ?>" required>
+            <?php endif; ?>
 
-            <label class="sultana-admin-visually-hidden" for="sultana-admin-product-short-description"><?php esc_html_e( 'Descripción corta', 'sultana-admin' ); ?></label>
-            <textarea id="sultana-admin-product-short-description" name="short_description" rows="4" placeholder="<?php esc_attr_e( 'Descripción corta', 'sultana-admin' ); ?>"><?php echo esc_textarea( $form['short_description'] ?? '' ); ?></textarea>
+            <label for="sultana-admin-product-short-description"><?php esc_html_e( 'Descripción del producto', 'sultana-admin' ); ?></label>
+            <textarea id="sultana-admin-product-short-description" name="short_description" rows="4"><?php echo esc_textarea( $form['short_description'] ?? '' ); ?></textarea>
 
             <?php if ( 'combo' === $product_type ) : ?>
                 <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
@@ -180,7 +190,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 </div>
 
                 <div>
-                    <label for="sultana-admin-product-stock"><?php esc_html_e( 'Cantidad en stock', 'sultana-admin' ); ?></label>
+                    <label for="sultana-admin-product-stock"><?php esc_html_e( 'Disponible', 'sultana-admin' ); ?></label>
                     <input id="sultana-admin-product-stock" type="number" name="stock_quantity" value="<?php echo esc_attr( $form['stock_quantity'] ?? '' ); ?>" min="0" step="1" inputmode="numeric" required>
                 </div>
 
@@ -193,15 +203,6 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
         <?php endif; ?>
 
         <?php if ( 'variable' === $product_type ) : ?>
-        <section class="sultana-admin-form-section" aria-labelledby="sultana-admin-product-parent-sku">
-            <h2 id="sultana-admin-product-parent-sku"><?php esc_html_e( 'Identificación', 'sultana-admin' ); ?></h2>
-            <label for="sultana-admin-product-sku"><?php esc_html_e( 'SKU general opcional', 'sultana-admin' ); ?></label>
-            <input id="sultana-admin-product-sku" type="text" name="sku" value="<?php echo esc_attr( $form['sku'] ?? '' ); ?>">
-        </section>
-        <?php endif; ?>
-
-
-        <?php if ( 'variable' === $product_type ) : ?>
             <section
                 class="sultana-admin-form-section sultana-admin-variable-editor"
                 aria-labelledby="sultana-admin-variable-title"
@@ -211,14 +212,15 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 data-max-generated-variations="<?php echo esc_attr( (string) $max_generated_variations ); ?>"
             >
                 <h2 id="sultana-admin-variable-title"><?php esc_html_e( 'Atributos y variaciones', 'sultana-admin' ); ?></h2>
-                <p class="sultana-admin-field-help"><?php esc_html_e( 'Selecciona atributos globales existentes y configura cada combinacion.', 'sultana-admin' ); ?></p>
                 <div class="sultana-admin-variable-attributes" data-sultana-variable-attributes></div>
-                <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
-                    <?php esc_html_e( 'Agregar atributo', 'sultana-admin' ); ?>
-                </button>
-                <button class="sultana-admin-secondary-action" type="button" data-sultana-generate-variations>
-                    <?php esc_html_e( 'Generar variaciones', 'sultana-admin' ); ?>
-                </button>
+                <div class="sultana-admin-variable-actions">
+                    <button class="sultana-admin-muted-action" type="button" data-sultana-add-attribute>
+                        <?php esc_html_e( 'Nuevo atributo', 'sultana-admin' ); ?>
+                    </button>
+                    <button class="sultana-admin-secondary-action" type="button" data-sultana-generate-variations>
+                        <?php esc_html_e( 'Generar', 'sultana-admin' ); ?>
+                    </button>
+                </div>
                 <div class="sultana-admin-field-help" aria-live="polite" data-sultana-variation-count></div>
                 <div class="sultana-admin-image-status" aria-live="polite" data-sultana-variable-status></div>
                 <div class="sultana-admin-variation-list" data-sultana-variation-list></div>

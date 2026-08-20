@@ -172,6 +172,11 @@ class Assets
                     'uploadError'     => __( 'No se pudo subir la imagen.', 'sultana-admin' ),
                     'generateFirst'   => __( 'Genera variaciones para completar sus datos.', 'sultana-admin' ),
                 ],
+                'icons'        => [
+                    'chevron' => Icons::url( 'chevron-right' ),
+                    'images'  => Icons::url( 'images' ),
+                    'trash'   => Icons::url( 'trash' ),
+                ],
             ]
         );
 

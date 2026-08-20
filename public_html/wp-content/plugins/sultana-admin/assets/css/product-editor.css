@@ -83,7 +83,11 @@
 
 .sultana-admin-form-section label,
 .sultana-admin-category-picker legend {
-    font-weight: var(--sultana-admin-font-weight-bold);
+    margin: 0;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
 }
 
 .sultana-admin-form-section input[type="text"],
@@ -156,12 +160,26 @@
 }
 
 .sultana-admin-form-section--main {
-    gap: 14px;
+    gap: var(--sultana-admin-space-2);
 }
 
 .sultana-admin-product-name-input {
     font-size: var(--sultana-admin-font-size-lg);
     font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-variable-main-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 0.36fr);
+    gap: 12px;
+    align-items: end;
+    min-width: 0;
+}
+
+.sultana-admin-variable-main-row > div {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+    min-width: 0;
 }
 
 .sultana-admin-form-section--main textarea {
@@ -388,6 +406,12 @@
     gap: 14px;
 }
 
+.sultana-admin-form-grid > div {
+    display: grid;
+    gap: var(--sultana-admin-space-2);
+    min-width: 0;
+}
+
 .sultana-admin-combo-component {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 130px auto;
@@ -450,7 +474,7 @@
 
 .sultana-admin-category-picker {
     display: grid;
-    gap: 10px;
+    gap: var(--sultana-admin-space-2);
     min-width: 0;
     margin: 0;
     border: 0;
@@ -458,9 +482,7 @@
 }
 
 .sultana-admin-category-picker legend {
-    margin: 0;
     padding: 0;
-    font-weight: var(--sultana-admin-font-weight-semibold);
 }
 
 .sultana-admin-category-picker__selected {
@@ -644,6 +666,45 @@
         order: 8;
     }
 
+    .sultana-admin-product-form--variable .sultana-admin-editor-layout,
+    .sultana-admin-product-form--variable .sultana-admin-editor-main,
+    .sultana-admin-product-form--variable .sultana-admin-editor-sidebar {
+        display: contents;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-section--main {
+        order: 1;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-variable-editor {
+        order: 2;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-section--categories {
+        order: 3;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-section--brand {
+        order: 4;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-section--images {
+        order: 5;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-section--publication {
+        order: 6;
+    }
+
+    .sultana-admin-product-form--variable .sultana-admin-form-actions {
+        order: 7;
+    }
+
+    .sultana-admin-variable-main-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
     .sultana-admin-form-grid {
         grid-template-columns: 1fr;
     }
@@ -654,7 +715,12 @@
     }
 
     .sultana-admin-inventory-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .sultana-admin-inventory-grid > div:first-child {
+        grid-column: 1 / -1;
     }
 
     .sultana-admin-field-group {
