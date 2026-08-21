@@ -33,6 +33,8 @@ require_once SULTANA_ADMIN_PATH . 'src/Orders/OrderController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerMetrics.php';
 require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerController.php';
+require_once SULTANA_ADMIN_PATH . 'src/Statistics/StatisticsService.php';
+require_once SULTANA_ADMIN_PATH . 'src/Statistics/StatisticsController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Router.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Bootstrap.php';
 

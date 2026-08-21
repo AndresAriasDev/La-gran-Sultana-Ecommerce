@@ -5,6 +5,7 @@ namespace Sultana\Admin\Core;
 use Sultana\Admin\Customers\CustomerController;
 use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
+use Sultana\Admin\Statistics\StatisticsController;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -13,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -27,6 +28,7 @@ class Router
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
         add_rewrite_rule( '^gestion/clientes/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=customer_view&sultana_admin_customer_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/clientes/?$', 'index.php?' . self::QUERY_VAR . '=customers', 'top' );
+        add_rewrite_rule( '^gestion/estadisticas/?$', 'index.php?' . self::QUERY_VAR . '=statistics', 'top' );
     }
 
     public static function register_query_vars( array $vars ): array
@@ -81,7 +83,7 @@ class Router
             exit;
         }
 
-        if ( in_array( $route, [ 'orders', 'order_view', 'customers', 'customer_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
+        if ( in_array( $route, [ 'orders', 'order_view', 'customers', 'customer_view', 'statistics' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -138,6 +140,11 @@ class Router
     public static function customer_url( int $customer_id ): string
     {
         return home_url( '/gestion/clientes/' . absint( $customer_id ) . '/' );
+    }
+
+    public static function statistics_url(): string
+    {
+        return home_url( '/gestion/estadisticas/' );
     }
 
     public static function is_admin_request(): bool
@@ -202,6 +209,10 @@ class Router
                 'label' => __( 'Clientes', 'sultana-admin' ),
                 'url'   => self::customers_url(),
             ],
+            'statistics' => [
+                'label' => __( 'Estadisticas', 'sultana-admin' ),
+                'url'   => self::statistics_url(),
+            ],
         ];
     }
 
@@ -248,6 +259,11 @@ class Router
                 'subtitle' => __( 'Cliente', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/customer-view.php',
             ],
+            'statistics' => [
+                'title'    => __( 'Estadisticas', 'sultana-admin' ),
+                'subtitle' => __( 'Estadisticas', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/statistics.php',
+            ],
         ];
 
         return $screens[ $route ] ?? $screens['dashboard'];
@@ -281,6 +297,10 @@ class Router
 
         if ( 'customer_view' === $route ) {
             return CustomerController::prepare_view_screen( self::current_customer_id() );
+        }
+
+        if ( 'statistics' === $route ) {
+            return StatisticsController::prepare_screen();
         }
 
         return [];

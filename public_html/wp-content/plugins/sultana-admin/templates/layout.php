@@ -24,6 +24,7 @@ $sultana_admin_nav_icons = [
     'products'  => 'box',
     'orders'    => 'shelving-unit',
     'customers' => 'user',
+    'statistics' => 'receipt-text',
 ];
 
 ?>

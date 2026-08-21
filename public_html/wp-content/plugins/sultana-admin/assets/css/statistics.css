@@ -1,0 +1,316 @@
+.sultana-admin-statistics {
+    display: grid;
+    gap: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-statistics__toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-statistics__toolbar > span {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+}
+
+.sultana-admin-period-switcher {
+    display: inline-grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-1);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface);
+    padding: var(--sultana-admin-space-1);
+}
+
+.sultana-admin-period-switcher__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    border-radius: var(--sultana-admin-radius-md);
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 0 var(--sultana-admin-space-4);
+    text-decoration: none;
+    transition: background var(--sultana-admin-transition-fast), color var(--sultana-admin-transition-fast);
+}
+
+.sultana-admin-period-switcher__item:hover,
+.sultana-admin-period-switcher__item:focus-visible {
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-period-switcher__item:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-period-switcher__item.is-active {
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-statistics-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-stat-card {
+    display: grid;
+    align-content: start;
+    gap: var(--sultana-admin-space-3);
+    min-width: 0;
+    min-height: 150px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface);
+    box-shadow: var(--sultana-admin-shadow);
+    padding: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-stat-card__icon {
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-stat-card__icon .sultana-admin-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.sultana-admin-stat-card__label {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.sultana-admin-stat-card strong {
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-xl);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-heading);
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-stat-card__trend {
+    width: fit-content;
+    border-radius: var(--sultana-admin-radius-pill);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+}
+
+.sultana-admin-stat-card__trend--up {
+    color: var(--sultana-admin-success);
+}
+
+.sultana-admin-stat-card__trend--down {
+    color: var(--sultana-admin-danger);
+}
+
+.sultana-admin-statistics-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+    gap: var(--sultana-admin-space-5);
+    align-items: start;
+}
+
+.sultana-admin-statistics-panel {
+    display: grid;
+    gap: var(--sultana-admin-space-4);
+    min-width: 0;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface);
+    box-shadow: var(--sultana-admin-shadow);
+    padding: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-statistics-panel h2 {
+    margin: 0;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-lg);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-heading);
+}
+
+.sultana-admin-statistics-empty {
+    margin: 0;
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-sales-chart {
+    min-width: 0;
+}
+
+.sultana-admin-sales-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.sultana-admin-sales-chart__line {
+    fill: none;
+    stroke: var(--sultana-admin-primary);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 3;
+}
+
+.sultana-admin-sales-chart__point {
+    fill: var(--sultana-admin-surface);
+    stroke: var(--sultana-admin-primary);
+    stroke-width: 3;
+}
+
+.sultana-admin-sales-chart__label {
+    fill: var(--sultana-admin-muted);
+    font-size: 12px;
+    text-anchor: middle;
+}
+
+.sultana-admin-top-products {
+    display: grid;
+    gap: var(--sultana-admin-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sultana-admin-top-products li {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: var(--sultana-admin-space-3);
+    align-items: center;
+    min-width: 0;
+}
+
+.sultana-admin-top-products img {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    object-fit: cover;
+}
+
+.sultana-admin-top-products__body {
+    display: grid;
+    gap: var(--sultana-admin-space-1);
+    min-width: 0;
+}
+
+.sultana-admin-top-products__body strong {
+    overflow: hidden;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sultana-admin-top-products__body small {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-xs);
+    line-height: var(--sultana-admin-line-height-tight);
+}
+
+.sultana-admin-top-products__revenue {
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    text-align: right;
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+    .sultana-admin-statistics {
+        gap: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-statistics__toolbar {
+        display: grid;
+        gap: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-period-switcher {
+        width: 100%;
+    }
+
+    .sultana-admin-period-switcher__item {
+        padding-right: var(--sultana-admin-space-2);
+        padding-left: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-statistics-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-stat-card {
+        min-height: 128px;
+        padding: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-stat-card__icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .sultana-admin-stat-card__icon .sultana-admin-icon {
+        width: 18px;
+        height: 18px;
+    }
+
+    .sultana-admin-stat-card strong {
+        font-size: var(--sultana-admin-font-size-lg);
+    }
+
+    .sultana-admin-statistics-grid {
+        grid-template-columns: 1fr;
+        gap: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-statistics-panel {
+        padding: var(--sultana-admin-space-4);
+    }
+}
+
+@media (max-width: 430px) {
+    .sultana-admin-statistics-metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .sultana-admin-stat-card {
+        min-height: 0;
+    }
+
+    .sultana-admin-top-products li {
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-top-products img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .sultana-admin-top-products__revenue {
+        font-size: var(--sultana-admin-font-size-xs);
+    }
+}
