@@ -23,6 +23,7 @@ $sultana_admin_nav_icons = [
     'dashboard' => 'layout-panel-left',
     'products'  => 'box',
     'orders'    => 'shelving-unit',
+    'customers' => 'user',
 ];
 
 ?>

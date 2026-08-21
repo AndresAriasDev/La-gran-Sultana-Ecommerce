@@ -2,6 +2,7 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\Admin\Customers\CustomerController;
 use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
 
@@ -12,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -24,6 +25,8 @@ class Router
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
         add_rewrite_rule( '^gestion/pedidos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=order_view&sultana_admin_order_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
+        add_rewrite_rule( '^gestion/clientes/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=customer_view&sultana_admin_customer_id=$matches[1]', 'top' );
+        add_rewrite_rule( '^gestion/clientes/?$', 'index.php?' . self::QUERY_VAR . '=customers', 'top' );
     }
 
     public static function register_query_vars( array $vars ): array
@@ -31,6 +34,7 @@ class Router
         $vars[] = self::QUERY_VAR;
         $vars[] = 'sultana_admin_product_id';
         $vars[] = 'sultana_admin_order_id';
+        $vars[] = 'sultana_admin_customer_id';
 
         return $vars;
     }
@@ -77,7 +81,7 @@ class Router
             exit;
         }
 
-        if ( in_array( $route, [ 'orders', 'order_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
+        if ( in_array( $route, [ 'orders', 'order_view', 'customers', 'customer_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -126,6 +130,16 @@ class Router
         return home_url( '/gestion/pedidos/' . absint( $order_id ) . '/' );
     }
 
+    public static function customers_url(): string
+    {
+        return home_url( '/gestion/clientes/' );
+    }
+
+    public static function customer_url( int $customer_id ): string
+    {
+        return home_url( '/gestion/clientes/' . absint( $customer_id ) . '/' );
+    }
+
     public static function is_admin_request(): bool
     {
         return self::is_valid_route( self::current_route() );
@@ -151,6 +165,7 @@ class Router
         $logout_url   = self::logout_url();
         $active_route = in_array( $route, [ 'product_new', 'product_edit' ], true ) ? 'products' : $route;
         $active_route = 'order_view' === $active_route ? 'orders' : $active_route;
+        $active_route = 'customer_view' === $active_route ? 'customers' : $active_route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
@@ -182,6 +197,10 @@ class Router
             'orders'    => [
                 'label' => __( 'Pedidos', 'sultana-admin' ),
                 'url'   => self::orders_url(),
+            ],
+            'customers' => [
+                'label' => __( 'Clientes', 'sultana-admin' ),
+                'url'   => self::customers_url(),
             ],
         ];
     }
@@ -219,6 +238,16 @@ class Router
                 'subtitle' => __( 'Pedido', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/order-view.php',
             ],
+            'customers' => [
+                'title'    => __( 'Clientes', 'sultana-admin' ),
+                'subtitle' => __( 'Clientes', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/customers.php',
+            ],
+            'customer_view' => [
+                'title'    => __( 'Ver cliente', 'sultana-admin' ),
+                'subtitle' => __( 'Cliente', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/customer-view.php',
+            ],
         ];
 
         return $screens[ $route ] ?? $screens['dashboard'];
@@ -246,6 +275,14 @@ class Router
             return OrderController::prepare_view_screen( self::current_order_id() );
         }
 
+        if ( 'customers' === $route ) {
+            return CustomerController::prepare_list_screen();
+        }
+
+        if ( 'customer_view' === $route ) {
+            return CustomerController::prepare_view_screen( self::current_customer_id() );
+        }
+
         return [];
     }
 
@@ -257,6 +294,11 @@ class Router
     private static function current_order_id(): int
     {
         return absint( get_query_var( 'sultana_admin_order_id' ) );
+    }
+
+    private static function current_customer_id(): int
+    {
+        return absint( get_query_var( 'sultana_admin_customer_id' ) );
     }
 
     private static function handle_login_request(): void

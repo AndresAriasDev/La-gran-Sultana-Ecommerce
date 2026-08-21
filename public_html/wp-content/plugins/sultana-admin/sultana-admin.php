@@ -30,6 +30,9 @@ require_once SULTANA_ADMIN_PATH . 'src/Products/ProductComboService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Orders/OrderService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Orders/OrderController.php';
+require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerMetrics.php';
+require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerService.php';
+require_once SULTANA_ADMIN_PATH . 'src/Customers/CustomerController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Router.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Bootstrap.php';
 

@@ -10,6 +10,10 @@
         {
             root: document.querySelector('.sultana-admin-order-cards'),
             header: '.sultana-admin-order-card__header'
+        },
+        {
+            root: document.querySelector('.sultana-admin-customer-cards'),
+            header: '.sultana-admin-customer-card__header'
         }
     ];
 

@@ -1,0 +1,501 @@
+/* Customers listing and detail */
+.sultana-admin-customers,
+.sultana-admin-customer-view {
+    display: grid;
+}
+
+.sultana-admin-customer-view {
+    gap: var(--sultana-admin-space-6);
+}
+
+.sultana-admin-customer-table-wrap {
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    box-shadow: var(--sultana-admin-shadow);
+    overflow: hidden;
+}
+
+.sultana-admin-customer-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.sultana-admin-customer-table th,
+.sultana-admin-customer-table td {
+    border-bottom: 1px solid var(--sultana-admin-border);
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-customer-table th {
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-customer-table th:nth-child(1),
+.sultana-admin-customer-table td:nth-child(1) {
+    width: 22%;
+}
+
+.sultana-admin-customer-table th:nth-child(2),
+.sultana-admin-customer-table td:nth-child(2) {
+    width: 28%;
+}
+
+.sultana-admin-customer-table th:nth-child(3),
+.sultana-admin-customer-table td:nth-child(3) {
+    width: 92px;
+    text-align: center;
+}
+
+.sultana-admin-customer-table th:nth-child(4),
+.sultana-admin-customer-table td:nth-child(4),
+.sultana-admin-customer-table th:nth-child(5),
+.sultana-admin-customer-table td:nth-child(5) {
+    width: 15%;
+}
+
+.sultana-admin-customer-table th:nth-child(6),
+.sultana-admin-customer-table td:nth-child(6) {
+    width: 132px;
+    text-align: right;
+}
+
+.sultana-admin-customer-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.sultana-admin-customer-table td strong {
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-customer-table td small,
+.sultana-admin-customer-card__summary {
+    display: block;
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+}
+
+.sultana-admin-customer-view-action {
+    display: inline-flex;
+    width: auto;
+    min-width: 0;
+    min-height: 40px;
+    gap: 8px;
+    padding: 8px 12px;
+    border-color: var(--sultana-admin-border);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-customer-view-action .sultana-admin-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sultana-admin-customer-view-action:hover,
+.sultana-admin-customer-view-action:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+}
+
+.sultana-admin-order-id-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 4px 0px;
+}
+
+.sultana-admin-customer-cards {
+    display: none;
+}
+
+.sultana-admin-customers > .sultana-admin-pagination--compact {
+    margin-top: var(--sultana-admin-space-7);
+}
+
+.sultana-admin-customer-view-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 1.2fr) minmax(0, 1.35fr);
+    gap: var(--sultana-admin-space-6);
+    align-items: start;
+}
+
+.sultana-admin-customer-view-grid__main,
+.sultana-admin-customer-view-grid__aside {
+    display: grid;
+    gap: var(--sultana-admin-space-5);
+    min-width: 0;
+}
+
+.sultana-admin-customer-detail-grid,
+.sultana-admin-customer-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-page-actions {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.sultana-admin-detail-panel {
+    display: grid;
+    gap: 14px;
+    background: var(--sultana-admin-surface);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    box-shadow: var(--sultana-admin-shadow);
+    padding: 18px;
+}
+
+.sultana-admin-detail-panel h2 {
+    margin: 0;
+    font-size: var(--sultana-admin-font-size-lg);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-heading);
+}
+
+.sultana-admin-detail-list {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.sultana-admin-detail-list div {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.sultana-admin-detail-list dt {
+    color: var(--sultana-admin-muted);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-detail-list dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+.sultana-admin-customer-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-customer-metrics article {
+    display: grid;
+    min-height: 132px;
+    align-content: center;
+    justify-items: center;
+    gap: var(--sultana-admin-space-2);
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: var(--sultana-admin-surface);
+    box-shadow: var(--sultana-admin-shadow);
+    padding: var(--sultana-admin-space-4);
+    text-align: center;
+}
+
+.sultana-admin-customer-metric__icon {
+    width: 30px;
+    height: 30px;
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-customer-metrics span {
+    color: var(--sultana-admin-muted);
+    text-transform: uppercase;
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-customer-metrics strong {
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-lg);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-heading);
+}
+
+.sultana-admin-customer-metrics strong * {
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+}
+
+.sultana-admin-customer-orders {
+    display: grid;
+}
+
+.sultana-admin-customer-order-row {
+    display: grid;
+    grid-template-columns: 90px minmax(0, 1fr) minmax(132px, auto) auto;
+    gap: var(--sultana-admin-space-4);
+    align-items: center;
+    border-top: 1px solid var(--sultana-admin-border);
+    padding: 10px 0;
+}
+
+.sultana-admin-customer-order-row .sultana-admin-status-pill {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    padding: 2px 6px;
+    font-size: var(--sultana-admin-font-size-xs);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    text-align: center;
+}
+
+.sultana-admin-customer-order-row > .sultana-admin-customer-view-action {
+    justify-self: end;
+}
+
+.sultana-admin-customer-order-row:first-child {
+    border-top: 0;
+}
+
+.sultana-admin-muted {
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-customer-history-pagination {
+    margin-top: 0;
+}
+
+@media (max-width: 760px) {
+    .sultana-admin-customer-search .sultana-admin-search__controls {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .sultana-admin-customer-search input[type="search"] {
+        min-width: 0;
+    }
+
+    .sultana-admin-customer-table-wrap {
+        display: none;
+    }
+
+    .sultana-admin-customer-cards {
+        display: grid;
+        gap: 12px;
+    }
+
+    .sultana-admin-customer-card {
+        display: grid;
+        gap: 0;
+        background: var(--sultana-admin-surface);
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: var(--sultana-admin-radius-lg);
+        box-shadow: var(--sultana-admin-shadow);
+        overflow: hidden;
+    }
+
+    .sultana-admin-customer-card__header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        width: 100%;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: var(--sultana-admin-text);
+        padding: 12px;
+        text-align: left;
+    }
+
+    .sultana-admin-customer-card__header:hover,
+    .sultana-admin-customer-card__header:focus-visible {
+        background: var(--sultana-admin-primary-soft);
+        color: var(--sultana-admin-text);
+    }
+
+    .sultana-admin-customer-card__identity {
+        display: grid;
+        min-width: 0;
+        gap: 3px;
+    }
+
+    .sultana-admin-customer-card__name {
+        font-weight: var(--sultana-admin-font-weight-semibold);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sultana-admin-customer-card__chevron {
+        color: var(--sultana-admin-muted);
+        transform: rotate(90deg);
+        transition: transform 140ms ease, color 140ms ease;
+    }
+
+    .sultana-admin-customer-card__header[aria-expanded="true"] .sultana-admin-customer-card__chevron {
+        color: var(--sultana-admin-primary);
+        transform: rotate(270deg);
+    }
+
+    .sultana-admin-customer-card__panel {
+        display: grid;
+        gap: 10px;
+        border-top: 1px solid var(--sultana-admin-border);
+        padding: 10px 12px 12px;
+    }
+
+    .sultana-admin-customer-card__panel[hidden] {
+        display: none;
+    }
+
+    .sultana-admin-customer-card dl {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+    }
+
+    .sultana-admin-customer-card dl div {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        border-top: 1px solid var(--sultana-admin-border);
+        padding-top: 6px;
+    }
+
+    .sultana-admin-customer-card dl div:first-child {
+        border-top: 0;
+        padding-top: 0;
+    }
+
+    .sultana-admin-customer-card dt {
+        color: var(--sultana-admin-muted);
+        font-weight: var(--sultana-admin-font-weight-semibold);
+    }
+
+    .sultana-admin-customer-card dd {
+        margin: 0;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-customer-card__panel > .sultana-admin-customer-view-action {
+        width: min(50%, 180px);
+        justify-content: center;
+        justify-self: end;
+    }
+
+    .sultana-admin-customer-view-grid,
+    .sultana-admin-customer-view-grid__main,
+    .sultana-admin-customer-view-grid__aside,
+    .sultana-admin-customer-detail-grid {
+        grid-template-columns: 1fr;
+        gap: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-customer-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-detail-panel {
+        padding: 14px;
+    }
+
+    .sultana-admin-detail-list div {
+        grid-template-columns: 1fr;
+        gap: var(--sultana-admin-space-1);
+    }
+
+    .sultana-admin-detail-list dd {
+        text-align: left;
+    }
+
+    .sultana-admin-customer-view-grid__main .sultana-admin-detail-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-customer-field {
+        min-width: 0;
+    }
+
+    .sultana-admin-customer-field--wide {
+        grid-column: 1 / -1;
+    }
+
+    .sultana-admin-customer-field dt {
+        font-size: var(--sultana-admin-font-size-xs);
+        line-height: var(--sultana-admin-line-height-tight);
+    }
+
+    .sultana-admin-customer-field dd {
+        overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-customer-metrics article {
+        min-height: 120px;
+        padding: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-customer-orders {
+        gap: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-customer-order-row {
+        grid-template-areas:
+            "order status action"
+            "date date action";
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 2px var(--sultana-admin-space-2);
+        align-items: center;
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: var(--sultana-admin-radius-md);
+        background: var(--sultana-admin-surface);
+        padding: 9px 10px;
+    }
+
+    .sultana-admin-customer-order-row:first-child {
+        border-top: 1px solid var(--sultana-admin-border);
+    }
+
+    .sultana-admin-customer-order-row > .sultana-admin-order-id-pill {
+        grid-area: order;
+        justify-self: start;
+    }
+
+    .sultana-admin-customer-order-row > span:nth-child(2) {
+        grid-area: date;
+        color: var(--sultana-admin-muted);
+        font-size: var(--sultana-admin-font-size-sm);
+        line-height: var(--sultana-admin-line-height-tight);
+    }
+
+    .sultana-admin-customer-order-row > .sultana-admin-status-pill {
+        grid-area: status;
+        justify-self: start;
+    }
+
+    .sultana-admin-customer-order-row > .sultana-admin-customer-view-action {
+        grid-area: action;
+        align-self: center;
+        justify-self: end;
+        min-height: 34px;
+        padding: 6px 10px;
+    }
+}

@@ -23,6 +23,7 @@ class Icons
         'log-out',
         'package-check',
         'pencil',
+        'piggy-bank',
         'save',
         'search',
         'shelving-unit',
