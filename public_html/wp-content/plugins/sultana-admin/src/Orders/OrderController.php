@@ -104,13 +104,76 @@ class OrderController
             $base_args['status'] = $status;
         }
 
+        $page_url = static function ( int $target_page ) use ( $base_args ): string {
+            return add_query_arg( array_merge( $base_args, [ 'order_page' => $target_page ] ), Router::orders_url() );
+        };
+
         return [
             'previous' => $page > 1 && $total_pages > 1
-                ? add_query_arg( array_merge( $base_args, [ 'order_page' => $page - 1 ] ), Router::orders_url() )
+                ? $page_url( $page - 1 )
                 : '',
             'next'     => $page < $total_pages
-                ? add_query_arg( array_merge( $base_args, [ 'order_page' => $page + 1 ] ), Router::orders_url() )
+                ? $page_url( $page + 1 )
                 : '',
+            'items'    => self::pagination_items( $page, $total_pages, $page_url ),
         ];
+    }
+
+    private static function pagination_items( int $page, int $total_pages, callable $page_url ): array
+    {
+        if ( $total_pages <= 1 ) {
+            return [];
+        }
+
+        if ( $total_pages <= 7 ) {
+            $pages = range( 1, $total_pages );
+        } else {
+            $start = max( 2, $page - 2 );
+            $end   = min( $total_pages - 1, $page + 2 );
+
+            if ( $page <= 3 ) {
+                $end = min( $total_pages - 1, 5 );
+            }
+
+            if ( $page >= $total_pages - 2 ) {
+                $start = max( 2, $total_pages - 4 );
+            }
+
+            $pages = [ 1 ];
+
+            if ( $start > 2 ) {
+                $pages[] = 'ellipsis';
+            }
+
+            foreach ( range( $start, $end ) as $number ) {
+                $pages[] = $number;
+            }
+
+            if ( $end < $total_pages - 1 ) {
+                $pages[] = 'ellipsis';
+            }
+
+            $pages[] = $total_pages;
+        }
+
+        return array_map(
+            static function ( $item ) use ( $page, $page_url ): array {
+                if ( 'ellipsis' === $item ) {
+                    return [
+                        'type' => 'ellipsis',
+                    ];
+                }
+
+                $number = absint( $item );
+
+                return [
+                    'type'    => 'page',
+                    'page'    => $number,
+                    'url'     => $page_url( $number ),
+                    'current' => $number === $page,
+                ];
+            },
+            $pages
+        );
     }
 }

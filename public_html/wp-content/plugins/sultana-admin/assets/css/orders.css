@@ -52,9 +52,27 @@
     width: 18%;
 }
 
-.sultana-admin-order-table th:nth-child(8),
-.sultana-admin-order-table td:nth-child(8) {
-    width: 122px;
+.sultana-admin-order-table th:nth-child(6),
+.sultana-admin-order-table td:nth-child(6) {
+    width: 24%;
+}
+
+.sultana-admin-order-table th:nth-child(7),
+.sultana-admin-order-table td:nth-child(7) {
+    width: 76px;
+    text-align: center;
+}
+
+.sultana-admin-order-id-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-surface-soft);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 4px 10px;
 }
 
 .sultana-admin-order-table tbody tr:last-child td {
@@ -299,8 +317,8 @@
         text-align: right;
     }
 
-    .sultana-admin-order-card .sultana-admin-text-action {
-        width: 100%;
+    .sultana-admin-order-card > .sultana-admin-icon-button {
+        justify-self: end;
     }
 
     .sultana-admin-order-detail-grid {

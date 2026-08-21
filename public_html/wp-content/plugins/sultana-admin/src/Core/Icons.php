@@ -21,6 +21,7 @@ class Icons
         'layout-panel-left',
         'lock',
         'log-out',
+        'package-check',
         'pencil',
         'save',
         'search',
