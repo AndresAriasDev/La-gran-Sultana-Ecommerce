@@ -538,16 +538,275 @@ class OrderService
             $items_subtotal += $subtotal;
 
             $items[] = [
-                'name'       => $item->get_name(),
+                'name'       => $this->line_item_display_name( $item ),
                 'quantity'   => (float) $item->get_quantity(),
                 'subtotal'   => $this->format_money( $subtotal, $order ),
                 'total'      => $this->format_money( $item->get_total(), $order ),
-                'attributes' => $this->presentable_item_meta( $item ),
+                'attributes' => $this->variation_attributes( $item ),
                 'components' => $this->combo_components_snapshot( $item, max( 1, (float) $item->get_quantity() ) ),
             ];
         }
 
         return $items;
+    }
+
+    private function line_item_display_name( WC_Order_Item_Product $item ): string
+    {
+        $product = $item->get_product();
+
+        if ( $product && $product->is_type( 'variation' ) ) {
+            $parent_id = $product->get_parent_id();
+            $parent    = $parent_id > 0 ? wc_get_product( $parent_id ) : false;
+
+            if ( $parent ) {
+                return $parent->get_name();
+            }
+        }
+
+        return $item->get_name();
+    }
+
+    private function variation_attributes( WC_Order_Item_Product $item ): array
+    {
+        $product = $item->get_product();
+
+        if ( ! $product || ! $product->is_type( 'variation' ) ) {
+            return [];
+        }
+
+        $attribute_context = $this->variation_attribute_context( $product );
+        $item_attributes   = $this->line_item_variation_attributes( $item, $attribute_context );
+        $product_attributes = $this->product_variation_attributes( $product, $attribute_context );
+
+        return $this->merge_variation_attribute_lists( $item_attributes, $product_attributes );
+    }
+
+    private function product_variation_attributes( $product, array $attribute_context ): array
+    {
+        $attributes = $product->get_variation_attributes();
+
+        if ( empty( $attributes ) ) {
+            return [];
+        }
+
+        $formatted = [];
+
+        foreach ( $attributes as $attribute_name => $attribute_value ) {
+            $attribute_value = trim( (string) $attribute_value );
+
+            if ( '' === $attribute_value ) {
+                continue;
+            }
+
+            $attribute_key = $this->normalize_attribute_key( (string) $attribute_name );
+            $context       = $this->attribute_context_for_key( $attribute_key, $attribute_context );
+            $taxonomy      = $context['taxonomy'] ?? $attribute_key;
+            $label         = $context['label'] ?? trim( wc_attribute_label( $taxonomy, $product ) );
+            $value         = $this->readable_attribute_value( $attribute_value, $taxonomy );
+
+            if ( '' !== $label && '' !== $value ) {
+                $formatted[] = [
+                    'label' => $label,
+                    'value' => $value,
+                ];
+            }
+        }
+
+        return $formatted;
+    }
+
+    private function line_item_variation_attributes( WC_Order_Item_Product $item, array $attribute_context ): array
+    {
+        $formatted     = [];
+        $seen           = [];
+        $formatted_meta = [];
+
+        foreach ( $item->get_formatted_meta_data( '_', false ) as $meta ) {
+            $key   = isset( $meta->key ) ? (string) $meta->key : '';
+            $label = isset( $meta->display_key ) ? wp_strip_all_tags( (string) $meta->display_key ) : '';
+            $value = isset( $meta->display_value ) ? wp_strip_all_tags( (string) $meta->display_value ) : '';
+
+            if ( '' === $value ) {
+                continue;
+            }
+
+            $formatted_meta[ $this->normalize_attribute_key( $key ) ] = [
+                'label' => $label,
+                'value' => $value,
+            ];
+        }
+
+        foreach ( $item->get_meta_data() as $meta ) {
+            $key = method_exists( $meta, 'get_data' ) ? (string) ( $meta->get_data()['key'] ?? '' ) : '';
+
+            if ( '' === $key || $this->is_internal_meta_key( $key ) ) {
+                continue;
+            }
+
+            $normalized_key = $this->normalize_attribute_key( $key );
+            $context        = $this->attribute_context_for_key( $normalized_key, $attribute_context );
+
+            if ( empty( $context ) ) {
+                $label_context = $this->attribute_context_for_label( $key, $attribute_context );
+                $context       = $label_context;
+            }
+
+            if ( empty( $context ) ) {
+                continue;
+            }
+
+            $raw_value = $item->get_meta( $key, true );
+            $raw_value = is_scalar( $raw_value ) ? trim( (string) $raw_value ) : '';
+
+            if ( '' === $raw_value ) {
+                continue;
+            }
+
+            $display_meta = $formatted_meta[ $normalized_key ] ?? [];
+            $label        = trim( (string) ( $display_meta['label'] ?? $context['label'] ?? '' ) );
+            $taxonomy     = trim( (string) ( $context['taxonomy'] ?? $normalized_key ) );
+            $value        = trim( (string) ( $display_meta['value'] ?? '' ) );
+
+            if ( '' === $value ) {
+                $value = $this->readable_attribute_value( $raw_value, $taxonomy );
+            }
+
+            if ( '' === $label || '' === $value ) {
+                continue;
+            }
+
+            $dedupe_key = $this->normalize_attribute_label( $label );
+
+            if ( isset( $seen[ $dedupe_key ] ) ) {
+                continue;
+            }
+
+            $seen[ $dedupe_key ] = true;
+            $formatted[]         = [
+                'label' => $label,
+                'value' => $value,
+            ];
+        }
+
+        return $formatted;
+    }
+
+    private function variation_attribute_context( $product ): array
+    {
+        $by_key   = [];
+        $by_label = [];
+
+        foreach ( array_keys( $product->get_variation_attributes() ) as $attribute_name ) {
+            $this->add_variation_attribute_context( $by_key, $by_label, (string) $attribute_name, $product );
+        }
+
+        $parent_id = method_exists( $product, 'get_parent_id' ) ? $product->get_parent_id() : 0;
+        $parent    = $parent_id > 0 ? wc_get_product( $parent_id ) : false;
+
+        if ( $parent && method_exists( $parent, 'get_variation_attributes' ) ) {
+            foreach ( array_keys( $parent->get_variation_attributes() ) as $attribute_name ) {
+                $this->add_variation_attribute_context( $by_key, $by_label, (string) $attribute_name, $parent );
+            }
+        }
+
+        return [
+            'by_key'   => $by_key,
+            'by_label' => $by_label,
+        ];
+    }
+
+    private function add_variation_attribute_context( array &$by_key, array &$by_label, string $attribute_name, $product ): void
+    {
+        $taxonomy = $this->normalize_attribute_key( $attribute_name );
+
+        if ( '' === $taxonomy ) {
+            return;
+        }
+
+        $label = trim( wc_attribute_label( $taxonomy, $product ) );
+
+        if ( '' === $label ) {
+            $label = $taxonomy;
+        }
+
+        $context = [
+            'taxonomy' => $taxonomy,
+            'label'    => $label,
+        ];
+
+        $by_key[ $taxonomy ] = $context;
+
+        if ( str_starts_with( $taxonomy, 'pa_' ) ) {
+            $by_key[ substr( $taxonomy, 3 ) ] = $context;
+        }
+
+        $by_label[ $this->normalize_attribute_label( $label ) ] = $context;
+    }
+
+    private function attribute_context_for_key( string $key, array $attribute_context ): array
+    {
+        return $attribute_context['by_key'][ $key ] ?? [];
+    }
+
+    private function attribute_context_for_label( string $label, array $attribute_context ): array
+    {
+        return $attribute_context['by_label'][ $this->normalize_attribute_label( $label ) ] ?? [];
+    }
+
+    private function readable_attribute_value( string $value, string $taxonomy ): string
+    {
+        if ( taxonomy_exists( $taxonomy ) ) {
+            $term = get_term_by( 'slug', $value, $taxonomy );
+
+            if ( $term && ! is_wp_error( $term ) ) {
+                return $term->name;
+            }
+        }
+
+        return $value;
+    }
+
+    private function merge_variation_attribute_lists( array ...$lists ): array
+    {
+        $merged = [];
+        $seen   = [];
+
+        foreach ( $lists as $list ) {
+            foreach ( $list as $attribute ) {
+                $label = trim( (string) ( $attribute['label'] ?? '' ) );
+                $value = trim( (string) ( $attribute['value'] ?? '' ) );
+
+                if ( '' === $label || '' === $value ) {
+                    continue;
+                }
+
+                $dedupe_key = $this->normalize_attribute_label( $label );
+
+                if ( isset( $seen[ $dedupe_key ] ) ) {
+                    continue;
+                }
+
+                $seen[ $dedupe_key ] = true;
+                $merged[]            = [
+                    'label' => $label,
+                    'value' => $value,
+                ];
+            }
+        }
+
+        return $merged;
+    }
+
+    private function normalize_attribute_key( string $key ): string
+    {
+        $key = preg_replace( '/^attribute_/', '', trim( $key ) );
+
+        return sanitize_title( (string) $key );
+    }
+
+    private function normalize_attribute_label( string $label ): string
+    {
+        return sanitize_title( remove_accents( trim( $label ) ) );
     }
 
     private function presentable_item_meta( WC_Order_Item_Product $item ): array
