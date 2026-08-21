@@ -252,7 +252,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         left: 0;
         z-index: var(--sultana-admin-z-navigation);
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         background: var(--sultana-admin-surface);
         padding: 6px 8px max(8px, env(safe-area-inset-bottom));
     }
@@ -266,7 +266,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         padding: 7px 4px;
         border-radius: var(--sultana-admin-radius-lg);
         color: var(--sultana-admin-muted);
-        font-size: var(--sultana-admin-font-size-xs);
+        font-size: var(--sultana-admin-font-size-sm);
         line-height: var(--sultana-admin-line-height-control);
         text-align: center;
     }

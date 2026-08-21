@@ -63,6 +63,10 @@ class Router
             exit;
         }
 
+        if ( 'statistics' === $route ) {
+            self::redirect_statistics_to_dashboard();
+        }
+
         if ( ! is_user_logged_in() ) {
             wp_safe_redirect( self::login_url() );
             exit;
@@ -83,7 +87,7 @@ class Router
             exit;
         }
 
-        if ( in_array( $route, [ 'orders', 'order_view', 'customers', 'customer_view', 'statistics' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
+        if ( in_array( $route, [ 'dashboard', 'orders', 'order_view', 'customers', 'customer_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -144,7 +148,7 @@ class Router
 
     public static function statistics_url(): string
     {
-        return home_url( '/gestion/estadisticas/' );
+        return self::dashboard_url();
     }
 
     public static function is_admin_request(): bool
@@ -208,10 +212,6 @@ class Router
             'customers' => [
                 'label' => __( 'Clientes', 'sultana-admin' ),
                 'url'   => self::customers_url(),
-            ],
-            'statistics' => [
-                'label' => __( 'Estadisticas', 'sultana-admin' ),
-                'url'   => self::statistics_url(),
             ],
         ];
     }
@@ -299,11 +299,24 @@ class Router
             return CustomerController::prepare_view_screen( self::current_customer_id() );
         }
 
-        if ( 'statistics' === $route ) {
+        if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
             return StatisticsController::prepare_screen();
         }
 
         return [];
+    }
+
+    private static function redirect_statistics_to_dashboard(): void
+    {
+        $period = isset( $_GET['period'] ) ? sanitize_key( wp_unslash( $_GET['period'] ) ) : '';
+        $url    = self::dashboard_url();
+
+        if ( in_array( $period, [ 'today', 'week', 'month' ], true ) ) {
+            $url = add_query_arg( 'period', $period, $url );
+        }
+
+        wp_safe_redirect( $url, 301 );
+        exit;
     }
 
     private static function current_product_id(): int

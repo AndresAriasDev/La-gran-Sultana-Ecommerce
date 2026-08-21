@@ -81,7 +81,7 @@ class Assets
             self::enqueue_style( 'customers', [ 'sultana-admin-shell' ] );
         }
 
-        if ( 'statistics' === $route ) {
+        if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
             self::enqueue_style( 'statistics', [ 'sultana-admin-shell' ] );
         }
 

@@ -5,7 +5,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 $display_name = $current_user->display_name ?: $current_user->user_login;
-$shell_subtitle = $screen['subtitle'] ?? $screen['title'] ?? __( 'Inicio', 'sultana-admin' );
+$shell_subtitle = sprintf(
+    /* translators: %s: current user display name. */
+    __( 'Hola, %s', 'sultana-admin' ),
+    $display_name
+);
 
 $sultana_admin_icon_asset = static function ( string $name ): void {
     $icon_url = \Sultana\Admin\Core\Icons::url( $name );
@@ -24,7 +28,6 @@ $sultana_admin_nav_icons = [
     'products'  => 'box',
     'orders'    => 'shelving-unit',
     'customers' => 'user',
-    'statistics' => 'receipt-text',
 ];
 
 ?>
