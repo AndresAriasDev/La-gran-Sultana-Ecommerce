@@ -1,24 +1,43 @@
 (function () {
     'use strict';
 
-    var list = document.querySelector('.sultana-admin-product-cards');
-    var searchForm = document.querySelector('.sultana-admin-search');
+    var mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 760px)') : null;
+    var lists = [
+        {
+            root: document.querySelector('.sultana-admin-product-cards'),
+            header: '.sultana-admin-product-card__header'
+        },
+        {
+            root: document.querySelector('.sultana-admin-order-cards'),
+            header: '.sultana-admin-order-card__header'
+        }
+    ];
 
-    if (searchForm) {
+    document.querySelectorAll('.sultana-admin-search').forEach(function (searchForm) {
         var searchInput = searchForm.querySelector('input[type="search"][name="s"]');
         var searchButton = searchForm.querySelector('.sultana-admin-search__button');
         var searchIcon = searchButton ? searchButton.querySelector('.sultana-admin-icon') : null;
         var appliedSearch = searchForm.getAttribute('data-applied-search') || '';
         var clearUrl = searchForm.getAttribute('data-clear-url') || searchForm.getAttribute('action') || '';
+        var mobileClearOnly = searchForm.getAttribute('data-mobile-clear-only') === 'true';
+
+        function isMobileSearchMode() {
+            return !mobileClearOnly || !mobileQuery || mobileQuery.matches;
+        }
 
         function setSearchMode(mode) {
-            var isClear = mode === 'clear';
-            var label = searchButton.getAttribute(isClear ? 'data-clear-label' : 'data-search-label') || '';
-            var icon = searchButton.getAttribute(isClear ? 'data-clear-icon' : 'data-search-icon') || '';
+            var isClear = mode === 'clear' && isMobileSearchMode();
+            var isDesktop = mobileClearOnly && !isMobileSearchMode();
+            var label = isDesktop
+                ? searchButton.getAttribute('data-desktop-label') || searchButton.getAttribute('data-search-label') || ''
+                : searchButton.getAttribute(isClear ? 'data-clear-label' : 'data-search-label') || '';
+            var icon = isDesktop
+                ? searchButton.getAttribute('data-desktop-icon') || searchButton.getAttribute('data-search-icon') || ''
+                : searchButton.getAttribute(isClear ? 'data-clear-icon' : 'data-search-icon') || '';
 
             searchButton.setAttribute('aria-label', label);
             searchButton.setAttribute('title', label);
-            searchButton.setAttribute('data-mode', mode);
+            searchButton.setAttribute('data-mode', isClear ? 'clear' : 'search');
 
             if (searchIcon && icon) {
                 searchIcon.style.setProperty('--sultana-admin-icon-url', "url('" + icon + "')");
@@ -35,6 +54,10 @@
             syncSearchMode();
             searchInput.addEventListener('input', syncSearchMode);
 
+            if (mobileQuery && mobileQuery.addEventListener) {
+                mobileQuery.addEventListener('change', syncSearchMode);
+            }
+
             searchButton.addEventListener('click', function (event) {
                 if (searchButton.getAttribute('data-mode') !== 'clear') {
                     return;
@@ -44,11 +67,7 @@
                 window.location.assign(clearUrl);
             });
         }
-    }
-
-    if (!list) {
-        return;
-    }
+    });
 
     function setCardState(button, expanded) {
         var panelId = button.getAttribute('aria-controls');
@@ -61,22 +80,30 @@
         }
     }
 
-    list.addEventListener('click', function (event) {
-        var button = event.target.closest('.sultana-admin-product-card__header');
+    lists.forEach(function (config) {
+        var list = config.root;
 
-        if (!button || !list.contains(button)) {
+        if (!list) {
             return;
         }
 
-        var shouldOpen = button.getAttribute('aria-expanded') !== 'true';
-        var buttons = list.querySelectorAll('.sultana-admin-product-card__header[aria-expanded="true"]');
+        list.addEventListener('click', function (event) {
+            var button = event.target.closest(config.header);
 
-        buttons.forEach(function (openButton) {
-            if (openButton !== button) {
-                setCardState(openButton, false);
+            if (!button || !list.contains(button)) {
+                return;
             }
-        });
 
-        setCardState(button, shouldOpen);
+            var shouldOpen = button.getAttribute('aria-expanded') !== 'true';
+            var buttons = list.querySelectorAll(config.header + '[aria-expanded="true"]');
+
+            buttons.forEach(function (openButton) {
+                if (openButton !== button) {
+                    setCardState(openButton, false);
+                }
+            });
+
+            setCardState(button, shouldOpen);
+        });
     });
 }());

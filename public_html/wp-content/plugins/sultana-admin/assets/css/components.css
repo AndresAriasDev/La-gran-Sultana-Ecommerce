@@ -520,6 +520,7 @@ button:active,
 
 .sultana-admin-list-summary {
     color: var(--sultana-admin-muted);
+    margin: 1rem 0;
     font-weight: var(--sultana-admin-font-weight-semibold);
 }
 

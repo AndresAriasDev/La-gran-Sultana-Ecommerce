@@ -77,6 +77,10 @@ class Assets
             self::enqueue_style( 'orders', [ 'sultana-admin-shell' ] );
         }
 
+        if ( 'orders' === $route ) {
+            self::enqueue_product_list();
+        }
+
         if ( 'products' === $route ) {
             self::enqueue_product_list();
             return;

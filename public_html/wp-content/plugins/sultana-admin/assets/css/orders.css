@@ -59,8 +59,33 @@
 
 .sultana-admin-order-table th:nth-child(7),
 .sultana-admin-order-table td:nth-child(7) {
-    width: 76px;
+    width: 132px;
     text-align: center;
+}
+
+.sultana-admin-order-view-action {
+    display: inline-flex;
+    width: auto;
+    min-width: 0;
+    min-height: 40px;
+    gap: 8px;
+    padding: 8px 12px;
+    border-color: var(--sultana-admin-border);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-order-view-action .sultana-admin-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.sultana-admin-order-view-action:hover,
+.sultana-admin-order-view-action:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
 }
 
 .sultana-admin-order-id-pill {
@@ -78,6 +103,11 @@
 .sultana-admin-order-table tbody tr:last-child td {
     border-bottom: 0;
 }
+
+.sultana-admin-orders > .sultana-admin-pagination--compact {
+    margin-top: var(--sultana-admin-space-7);
+}
+
 .sultana-admin-order-cards {
     display: none;
 }
@@ -256,6 +286,61 @@
 
 
 @media (max-width: 760px) {
+    .sultana-admin-order-filters {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(132px, 44%);
+        gap: 10px;
+    }
+
+    .sultana-admin-order-filters > label {
+        align-self: center;
+    }
+
+    .sultana-admin-order-filters__controls {
+        display: contents;
+    }
+
+    .sultana-admin-order-filters input[type="search"] {
+        grid-column: 1;
+        grid-row: 2;
+        min-width: 0;
+    }
+
+    .sultana-admin-order-filters select {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        min-height: 40px;
+        padding: 8px 10px;
+    }
+
+    .sultana-admin-order-filters .sultana-admin-search__button {
+        display: inline-grid;
+        grid-column: 2;
+        grid-row: 2;
+        width: 44px;
+        min-width: 44px;
+        min-height: 44px;
+        justify-self: end;
+        place-items: center;
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: var(--sultana-admin-radius-md);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-primary);
+        padding: 0;
+    }
+
+    .sultana-admin-order-filters .sultana-admin-search__button:hover,
+    .sultana-admin-order-filters .sultana-admin-search__button:focus-visible {
+        border-color: var(--sultana-admin-primary);
+        background: var(--sultana-admin-primary);
+        color: var(--sultana-admin-primary-contrast);
+    }
+
+    .sultana-admin-order-filter-button__text {
+        display: none;
+    }
+
     .sultana-admin-order-table-wrap {
         display: none;
     }
@@ -267,30 +352,85 @@
 
     .sultana-admin-order-card {
         display: grid;
-        gap: 14px;
+        gap: 0;
         background: var(--sultana-admin-surface);
         border: 1px solid var(--sultana-admin-border);
         border-radius: var(--sultana-admin-radius-lg);
         box-shadow: var(--sultana-admin-shadow);
-        padding: 14px;
+        overflow: hidden;
+        padding: 0;
     }
 
     .sultana-admin-order-card__header {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        align-items: start;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        width: 100%;
+        gap: 10px;
+        align-items: center;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        padding: 12px;
+        text-align: left;
     }
 
-    .sultana-admin-order-card h2 {
-        margin: 0;
-        font-size: var(--sultana-admin-font-size-md);
-        line-height: var(--sultana-admin-line-height-heading);
+    .sultana-admin-order-card__header:focus-visible {
+        outline: 3px solid var(--sultana-admin-focus);
+        outline-offset: -3px;
     }
 
-    .sultana-admin-order-card p {
-        margin-top: 3px;
+    .sultana-admin-order-card__header:hover,
+    .sultana-admin-order-card__header:active {
+        background: transparent;
+    }
+
+    .sultana-admin-order-card__identity,
+    .sultana-admin-order-card__status-total {
+        display: grid;
+        min-width: 0;
+        gap: 5px;
+    }
+
+    .sultana-admin-order-card__status-total {
+        justify-items: end;
+    }
+
+    .sultana-admin-order-card__date {
+        color: var(--sultana-admin-muted);
+        font-size: var(--sultana-admin-font-size-sm);
+        line-height: var(--sultana-admin-line-height-tight);
         overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-order-card__total {
+        color: var(--sultana-admin-text);
+        font-size: var(--sultana-admin-font-size-sm);
+        font-weight: var(--sultana-admin-font-weight-semibold);
+        line-height: var(--sultana-admin-line-height-tight);
+    }
+
+    .sultana-admin-order-card__chevron {
+        color: var(--sultana-admin-muted);
+        width: 18px;
+        height: 18px;
+        transform: rotate(90deg);
+        transition: transform 140ms ease, color 140ms ease;
+    }
+
+    .sultana-admin-order-card__header[aria-expanded="true"] .sultana-admin-order-card__chevron {
+        color: var(--sultana-admin-primary);
+        transform: rotate(270deg);
+    }
+
+    .sultana-admin-order-card__panel {
+        display: grid;
+        gap: 10px;
+        border-top: 1px solid var(--sultana-admin-border);
+        padding: 10px 12px 12px;
+    }
+
+    .sultana-admin-order-card__panel[hidden] {
+        display: none;
     }
 
     .sultana-admin-order-card dl {
@@ -302,9 +442,14 @@
     .sultana-admin-order-card dl div {
         display: flex;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
         border-top: 1px solid var(--sultana-admin-border);
-        padding-top: 8px;
+        padding-top: 6px;
+    }
+
+    .sultana-admin-order-card dl div:first-child {
+        border-top: 0;
+        padding-top: 0;
     }
 
     .sultana-admin-order-card dt {
@@ -315,10 +460,19 @@
     .sultana-admin-order-card dd {
         margin: 0;
         text-align: right;
+        overflow-wrap: anywhere;
     }
 
-    .sultana-admin-order-card > .sultana-admin-icon-button {
+    .sultana-admin-order-card__panel > .sultana-admin-order-view-action {
+        width: auto;
+        min-width: 0;
+        min-height: 38px;
+        padding: 8px 12px;
         justify-self: end;
+    }
+
+    .sultana-admin-order-view-action__text {
+        display: inline;
     }
 
     .sultana-admin-order-detail-grid {

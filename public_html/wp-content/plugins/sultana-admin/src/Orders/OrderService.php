@@ -331,6 +331,7 @@ class OrderService
             'number'          => $order->get_order_number(),
             'customer'        => '' !== $customer ? $customer : __( 'Cliente', 'sultana-admin' ),
             'date'            => $date_created ? wc_format_datetime( $date_created ) : __( 'Sin fecha', 'sultana-admin' ),
+            'date_time'       => $date_created ? wc_format_datetime( $date_created, wc_date_format() . ' · ' . wc_time_format() ) : __( 'Sin fecha', 'sultana-admin' ),
             'status'          => $status,
             'status_label'    => function_exists( 'wc_get_order_status_name' ) ? wc_get_order_status_name( $status ) : $status,
             'total'           => wc_price( (float) $order->get_total(), [ 'currency' => $order->get_currency() ] ),
