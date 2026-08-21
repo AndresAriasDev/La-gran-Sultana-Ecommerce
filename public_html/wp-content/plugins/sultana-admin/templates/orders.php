@@ -8,6 +8,10 @@ $orders         = $screen_data['orders'] ?? [];
 $search         = $screen_data['search'] ?? '';
 $status         = $screen_data['status'] ?? '';
 $status_options = $screen_data['status_options'] ?? [];
+$filter_status_options = array_intersect_key(
+    $status_options,
+    array_flip( [ 'pending', 'processing', 'on-hold', 'completed', 'cancelled' ] )
+);
 $page           = absint( $screen_data['page'] ?? 1 );
 $total          = absint( $screen_data['total'] ?? 0 );
 $total_pages    = absint( $screen_data['total_pages'] ?? 1 );
@@ -29,8 +33,8 @@ $icon_url       = static fn( string $name ): string => \Sultana\Admin\Core\Icons
                 placeholder="<?php esc_attr_e( 'ID o email exacto', 'sultana-admin' ); ?>"
             >
             <select name="status" aria-label="<?php esc_attr_e( 'Filtrar por estado', 'sultana-admin' ); ?>">
-                <option value=""><?php esc_html_e( 'Todos los estados', 'sultana-admin' ); ?></option>
-                <?php foreach ( $status_options as $status_key => $status_label ) : ?>
+                <option value=""><?php esc_html_e( 'Estados', 'sultana-admin' ); ?></option>
+                <?php foreach ( $filter_status_options as $status_key => $status_label ) : ?>
                     <option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $status, $status_key ); ?>>
                         <?php echo esc_html( $status_label ); ?>
                     </option>
@@ -124,11 +128,10 @@ $icon_url       = static fn( string $name ): string => \Sultana\Admin\Core\Icons
                             <span class="sultana-admin-order-id-pill">#<?php echo esc_html( $order['number'] ); ?></span>
                             <span class="sultana-admin-order-card__date"><?php echo esc_html( $order['date_time'] ?? $order['date'] ); ?></span>
                         </span>
-                        <span class="sultana-admin-order-card__status-total">
-                        <span class="sultana-admin-status-pill sultana-admin-status-pill--<?php echo esc_attr( sanitize_html_class( $order['status'] ) ); ?>">
-                            <?php echo esc_html( $order['status_label'] ); ?>
-                        </span>
-                            <span class="sultana-admin-order-card__total"><?php echo wp_kses_post( $order['total'] ); ?></span>
+                        <span class="sultana-admin-order-card__status">
+                            <span class="sultana-admin-status-pill sultana-admin-status-pill--<?php echo esc_attr( sanitize_html_class( $order['status'] ) ); ?>">
+                                <?php echo esc_html( $order['status_label'] ); ?>
+                            </span>
                         </span>
                         <span class="sultana-admin-order-card__chevron sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span>
                     </button>
@@ -143,17 +146,23 @@ $icon_url       = static fn( string $name ): string => \Sultana\Admin\Core\Icons
                             <dd><?php echo esc_html( $order['shipping_method'] ); ?></dd>
                         </div>
                     </dl>
-                    <?php if ( ! empty( $order['can_view'] ) ) : ?>
-                        <a class="sultana-admin-icon-button sultana-admin-order-view-action" href="<?php echo esc_url( $order['view_url'] ); ?>" aria-label="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>">
-                            <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'package-check' ) ); ?>');" aria-hidden="true"></span>
-                            <span class="sultana-admin-order-view-action__text"><?php esc_html_e( 'Ver', 'sultana-admin' ); ?></span>
-                        </a>
-                    <?php else : ?>
-                        <button class="sultana-admin-icon-button sultana-admin-order-view-action" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>">
-                            <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'package-check' ) ); ?>');" aria-hidden="true"></span>
-                            <span class="sultana-admin-order-view-action__text"><?php esc_html_e( 'Ver', 'sultana-admin' ); ?></span>
-                        </button>
-                    <?php endif; ?>
+                    <div class="sultana-admin-order-card__actions">
+                        <div class="sultana-admin-order-card__total-summary">
+                            <span><?php esc_html_e( 'Total', 'sultana-admin' ); ?></span>
+                            <strong><?php echo wp_kses_post( $order['total'] ); ?></strong>
+                        </div>
+                        <?php if ( ! empty( $order['can_view'] ) ) : ?>
+                            <a class="sultana-admin-icon-button sultana-admin-order-view-action" href="<?php echo esc_url( $order['view_url'] ); ?>" aria-label="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>">
+                                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'package-check' ) ); ?>');" aria-hidden="true"></span>
+                                <span class="sultana-admin-order-view-action__text"><?php esc_html_e( 'Ver', 'sultana-admin' ); ?></span>
+                            </a>
+                        <?php else : ?>
+                            <button class="sultana-admin-icon-button sultana-admin-order-view-action" type="button" disabled aria-disabled="true" aria-label="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Ver', 'sultana-admin' ); ?>">
+                                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'package-check' ) ); ?>');" aria-hidden="true"></span>
+                                <span class="sultana-admin-order-view-action__text"><?php esc_html_e( 'Ver', 'sultana-admin' ); ?></span>
+                            </button>
+                        <?php endif; ?>
+                    </div>
                     </div>
                 </article>
             <?php endforeach; ?>
