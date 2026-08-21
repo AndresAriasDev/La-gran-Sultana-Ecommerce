@@ -238,6 +238,86 @@
     white-space: nowrap;
 }
 
+.sultana-admin-status-breakdown,
+.sultana-admin-best-customers {
+    display: grid;
+    gap: var(--sultana-admin-space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sultana-admin-status-breakdown li,
+.sultana-admin-best-customers li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--sultana-admin-space-3);
+    align-items: center;
+    min-width: 0;
+}
+
+.sultana-admin-status-breakdown span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sultana-admin-space-2);
+    min-width: 0;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+}
+
+.sultana-admin-status-breakdown strong,
+.sultana-admin-best-customers__total {
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.sultana-admin-status-breakdown__dot {
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: var(--sultana-admin-muted);
+}
+
+.sultana-admin-status-breakdown__dot--completed,
+.sultana-admin-status-breakdown__dot--processing {
+    background: var(--sultana-admin-success);
+}
+
+.sultana-admin-status-breakdown__dot--pending,
+.sultana-admin-status-breakdown__dot--on-hold {
+    background: var(--sultana-admin-warning);
+}
+
+.sultana-admin-status-breakdown__dot--cancelled {
+    background: var(--sultana-admin-danger);
+}
+
+.sultana-admin-best-customers__body {
+    display: grid;
+    gap: var(--sultana-admin-space-1);
+    min-width: 0;
+}
+
+.sultana-admin-best-customers__body strong {
+    overflow: hidden;
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-tight);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sultana-admin-best-customers__body small {
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-xs);
+    line-height: var(--sultana-admin-line-height-tight);
+}
+
 @media (max-width: 760px) {
     .sultana-admin-statistics {
         gap: var(--sultana-admin-space-4);
@@ -311,6 +391,10 @@
     }
 
     .sultana-admin-top-products__revenue {
+        font-size: var(--sultana-admin-font-size-xs);
+    }
+
+    .sultana-admin-best-customers__total {
         font-size: var(--sultana-admin-font-size-xs);
     }
 }

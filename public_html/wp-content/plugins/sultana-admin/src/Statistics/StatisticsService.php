@@ -7,6 +7,7 @@ use DateTimeZone;
 use Sultana\Admin\Customers\CustomerMetrics;
 use Sultana\Admin\Core\Router;
 use Throwable;
+use WP_User;
 use WP_User_Query;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -16,6 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class StatisticsService
 {
     private const PERIODS = [ 'today', 'week', 'month' ];
+    private const OPERATIONAL_ORDER_STATUSES = [ 'pending', 'processing', 'on-hold', 'completed', 'cancelled' ];
 
     public function dashboard( string $period ): array
     {
@@ -27,6 +29,8 @@ class StatisticsService
         $new_customers   = $this->registered_customers_for_range( $range['start'], $range['end'] );
         $sales_trend     = $this->sales_trend( $period, $range['start'], $range['end'] );
         $top_products    = $this->top_products( $range['start'], $range['end'] );
+        $order_statuses  = $this->order_status_distribution( $range['start'], $range['end'] );
+        $best_customers  = $this->best_customers( $range['start'], $range['end'] );
 
         return [
             'period'          => $period,
@@ -57,11 +61,15 @@ class StatisticsService
             ],
             'sales_trend'     => $sales_trend,
             'top_products'    => $top_products,
+            'order_statuses'  => $order_statuses,
+            'best_customers'  => $best_customers,
             'valid_statuses'  => CustomerMetrics::VALID_ORDER_STATUSES,
             'data_sources'    => [
                 'orders'    => $this->order_data_source(),
                 'trend'     => $this->order_data_source(),
                 'products'  => $this->product_data_source(),
+                'statuses'  => $this->order_data_source(),
+                'customers_rank' => $this->order_data_source() . '+WP_User',
                 'customers' => 'WP_User_Query:user_registered',
             ],
             'prepared_blocks' => [
@@ -550,6 +558,282 @@ class StatisticsService
         }
 
         return is_string( $url ) ? $url : '';
+    }
+
+    private function order_status_distribution( DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        $counts = array_fill_keys( self::OPERATIONAL_ORDER_STATUSES, 0 );
+        $rows   = $this->order_status_rows( $start, $end );
+
+        foreach ( $rows as $row ) {
+            $status = $this->normalize_order_status( (string) ( $row['status'] ?? '' ) );
+
+            if ( ! isset( $counts[ $status ] ) ) {
+                continue;
+            }
+
+            $counts[ $status ] = absint( $row['orders_count'] ?? 0 );
+        }
+
+        $items = [];
+
+        foreach ( self::OPERATIONAL_ORDER_STATUSES as $status ) {
+            $items[] = [
+                'status' => $status,
+                'label'  => $this->order_status_label( $status ),
+                'count'  => $counts[ $status ],
+            ];
+        }
+
+        return [
+            'items' => $items,
+            'empty' => array_sum( $counts ) <= 0,
+        ];
+    }
+
+    private function order_status_rows( DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, self::OPERATIONAL_ORDER_STATUSES );
+
+        try {
+            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
+                $table = $wpdb->prefix . 'wc_order_stats';
+
+                return $this->order_status_rows_from_sql(
+                    "SELECT status, COUNT(order_id) AS orders_count
+                    FROM {$table}
+                    WHERE status IN (%s)
+                    AND date_created_gmt >= %s
+                    AND date_created_gmt < %s
+                    GROUP BY status",
+                    $statuses,
+                    $start,
+                    $end
+                );
+            }
+
+            if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
+                $table = $wpdb->prefix . 'wc_orders';
+
+                return $this->order_status_rows_from_sql(
+                    "SELECT status, COUNT(id) AS orders_count
+                    FROM {$table}
+                    WHERE type = 'shop_order'
+                    AND status IN (%s)
+                    AND date_created_gmt >= %s
+                    AND date_created_gmt < %s
+                    GROUP BY status",
+                    $statuses,
+                    $start,
+                    $end
+                );
+            }
+
+            return $this->order_status_rows_from_posts( $statuses, $start, $end );
+        } catch ( Throwable $exception ) {
+            return [];
+        }
+    }
+
+    private function order_status_rows_from_sql( string $sql_template, array $statuses, DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $sql                 = str_replace( 'IN (%s)', 'IN (' . $status_placeholders . ')', $sql_template );
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                $sql,
+                array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+            ),
+            ARRAY_A
+        );
+    }
+
+    private function order_status_rows_from_posts( array $statuses, DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $sql                 = $wpdb->prepare(
+            "SELECT posts.post_status AS status, COUNT(posts.ID) AS orders_count
+            FROM {$wpdb->posts} posts
+            WHERE posts.post_type = 'shop_order'
+            AND posts.post_status IN ({$status_placeholders})
+            AND posts.post_date_gmt >= %s
+            AND posts.post_date_gmt < %s
+            GROUP BY posts.post_status",
+            array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+        );
+
+        return $wpdb->get_results( $sql, ARRAY_A );
+    }
+
+    private function best_customers( DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        $rows = $this->best_customer_rows( $start, $end );
+
+        if ( empty( $rows ) ) {
+            return [];
+        }
+
+        $customer_ids = array_values( array_unique( array_filter( array_map( static fn ( array $row ): int => absint( $row['customer_id'] ?? 0 ), $rows ) ) ) );
+
+        if ( empty( $customer_ids ) ) {
+            return [];
+        }
+
+        $users = get_users(
+            [
+                'include' => $customer_ids,
+                'fields'  => 'all',
+            ]
+        );
+        $user_map = [];
+
+        foreach ( $users as $user ) {
+            if ( $user instanceof WP_User ) {
+                $user_map[ $user->ID ] = $user;
+            }
+        }
+
+        $items = [];
+
+        foreach ( $rows as $row ) {
+            $customer_id = absint( $row['customer_id'] ?? 0 );
+            $user        = $user_map[ $customer_id ] ?? null;
+
+            if ( ! $user ) {
+                continue;
+            }
+
+            $orders_count = absint( $row['orders_count'] ?? 0 );
+            $items[]      = [
+                'name'        => $user->display_name ?: $user->user_login,
+                'orders'      => $orders_count,
+                'orders_text' => sprintf(
+                    /* translators: %s: order count. */
+                    _n( '%s pedido', '%s pedidos', $orders_count, 'sultana-admin' ),
+                    number_format_i18n( $orders_count )
+                ),
+                'total'       => $this->format_money( (float) ( $row['sales_total'] ?? 0 ) ),
+            ];
+        }
+
+        return $items;
+    }
+
+    private function best_customer_rows( DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, CustomerMetrics::VALID_ORDER_STATUSES );
+
+        try {
+            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
+                $table = $wpdb->prefix . 'wc_order_stats';
+
+                return $this->best_customer_rows_from_sql(
+                    "SELECT customer_id, COUNT(order_id) AS orders_count, COALESCE(SUM(total_sales), 0) AS sales_total
+                    FROM {$table}
+                    WHERE customer_id > 0
+                    AND status IN (%s)
+                    AND date_created_gmt >= %s
+                    AND date_created_gmt < %s
+                    GROUP BY customer_id
+                    ORDER BY sales_total DESC, orders_count DESC
+                    LIMIT 5",
+                    $statuses,
+                    $start,
+                    $end
+                );
+            }
+
+            if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
+                $table = $wpdb->prefix . 'wc_orders';
+
+                return $this->best_customer_rows_from_sql(
+                    "SELECT customer_id, COUNT(id) AS orders_count, COALESCE(SUM(total_amount), 0) AS sales_total
+                    FROM {$table}
+                    WHERE type = 'shop_order'
+                    AND customer_id > 0
+                    AND status IN (%s)
+                    AND date_created_gmt >= %s
+                    AND date_created_gmt < %s
+                    GROUP BY customer_id
+                    ORDER BY sales_total DESC, orders_count DESC
+                    LIMIT 5",
+                    $statuses,
+                    $start,
+                    $end
+                );
+            }
+
+            return $this->best_customer_rows_from_posts( $statuses, $start, $end );
+        } catch ( Throwable $exception ) {
+            return [];
+        }
+    }
+
+    private function best_customer_rows_from_sql( string $sql_template, array $statuses, DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $sql                 = str_replace( 'IN (%s)', 'IN (' . $status_placeholders . ')', $sql_template );
+
+        return $wpdb->get_results(
+            $wpdb->prepare(
+                $sql,
+                array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+            ),
+            ARRAY_A
+        );
+    }
+
+    private function best_customer_rows_from_posts( array $statuses, DateTimeImmutable $start, DateTimeImmutable $end ): array
+    {
+        global $wpdb;
+
+        $status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+        $sql                 = $wpdb->prepare(
+            "SELECT customer_meta.meta_value AS customer_id, COUNT(posts.ID) AS orders_count, COALESCE(SUM(total_meta.meta_value + 0), 0) AS sales_total
+            FROM {$wpdb->posts} posts
+            INNER JOIN {$wpdb->postmeta} customer_meta ON customer_meta.post_id = posts.ID AND customer_meta.meta_key = '_customer_user'
+            LEFT JOIN {$wpdb->postmeta} total_meta ON total_meta.post_id = posts.ID AND total_meta.meta_key = '_order_total'
+            WHERE posts.post_type = 'shop_order'
+            AND posts.post_status IN ({$status_placeholders})
+            AND posts.post_date_gmt >= %s
+            AND posts.post_date_gmt < %s
+            AND customer_meta.meta_value > 0
+            GROUP BY customer_meta.meta_value
+            ORDER BY sales_total DESC, orders_count DESC
+            LIMIT 5",
+            array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+        );
+
+        return $wpdb->get_results( $sql, ARRAY_A );
+    }
+
+    private function normalize_order_status( string $status ): string
+    {
+        return preg_replace( '/^wc-/', '', sanitize_key( $status ) );
+    }
+
+    private function order_status_label( string $status ): string
+    {
+        $labels = [
+            'pending'    => __( 'Pendiente', 'sultana-admin' ),
+            'processing' => __( 'Procesando', 'sultana-admin' ),
+            'on-hold'    => __( 'En espera', 'sultana-admin' ),
+            'completed'  => __( 'Completado', 'sultana-admin' ),
+            'cancelled'  => __( 'Cancelado', 'sultana-admin' ),
+        ];
+
+        return $labels[ $status ] ?? $status;
     }
 
     private function comparison_percent( float $current, float $previous ): ?array

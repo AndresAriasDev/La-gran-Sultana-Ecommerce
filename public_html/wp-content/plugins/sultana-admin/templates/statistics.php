@@ -8,6 +8,8 @@ $periods     = $screen_data['periods'] ?? [];
 $metrics     = $screen_data['metrics'] ?? [];
 $sales_trend = $screen_data['sales_trend'] ?? [ 'points' => [], 'max' => 0, 'empty' => true ];
 $top_products = $screen_data['top_products'] ?? [];
+$order_statuses = $screen_data['order_statuses'] ?? [ 'items' => [], 'empty' => true ];
+$best_customers = $screen_data['best_customers'] ?? [];
 $range_label = $screen_data['range_label'] ?? '';
 $error       = $screen_data['error'] ?? '';
 
@@ -137,6 +139,48 @@ foreach ( $sultana_admin_chart_points as $index => $point ) {
                                 <small><?php echo esc_html( $product['units_text'] ?? '' ); ?></small>
                             </span>
                             <span class="sultana-admin-top-products__revenue"><?php echo wp_kses_post( $product['revenue'] ?? '' ); ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            <?php endif; ?>
+        </article>
+    </div>
+
+    <div class="sultana-admin-statistics-grid">
+        <article class="sultana-admin-statistics-panel sultana-admin-statistics-panel--statuses">
+            <h2><?php esc_html_e( 'Estado de pedidos', 'sultana-admin' ); ?></h2>
+
+            <?php if ( ! empty( $order_statuses['empty'] ) ) : ?>
+                <p class="sultana-admin-statistics-empty"><?php esc_html_e( 'Sin pedidos en este periodo', 'sultana-admin' ); ?></p>
+            <?php else : ?>
+                <ul class="sultana-admin-status-breakdown">
+                    <?php foreach ( $order_statuses['items'] ?? [] as $status_item ) : ?>
+                        <li>
+                            <span>
+                                <i class="<?php echo esc_attr( 'sultana-admin-status-breakdown__dot sultana-admin-status-breakdown__dot--' . sanitize_html_class( $status_item['status'] ?? '' ) ); ?>" aria-hidden="true"></i>
+                                <?php echo esc_html( $status_item['label'] ?? '' ); ?>
+                            </span>
+                            <strong><?php echo esc_html( number_format_i18n( absint( $status_item['count'] ?? 0 ) ) ); ?></strong>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
+        </article>
+
+        <article class="sultana-admin-statistics-panel sultana-admin-statistics-panel--customers">
+            <h2><?php esc_html_e( 'Mejores clientes', 'sultana-admin' ); ?></h2>
+
+            <?php if ( empty( $best_customers ) ) : ?>
+                <p class="sultana-admin-statistics-empty"><?php esc_html_e( 'Sin compras en este periodo', 'sultana-admin' ); ?></p>
+            <?php else : ?>
+                <ol class="sultana-admin-best-customers">
+                    <?php foreach ( $best_customers as $customer ) : ?>
+                        <li>
+                            <span class="sultana-admin-best-customers__body">
+                                <strong><?php echo esc_html( $customer['name'] ?? '' ); ?></strong>
+                                <small><?php echo esc_html( $customer['orders_text'] ?? '' ); ?></small>
+                            </span>
+                            <span class="sultana-admin-best-customers__total"><?php echo wp_kses_post( $customer['total'] ?? '' ); ?></span>
                         </li>
                     <?php endforeach; ?>
                 </ol>
