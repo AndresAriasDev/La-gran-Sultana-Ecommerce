@@ -69,7 +69,7 @@ class StatisticsService
                 'trend'     => $this->order_data_source(),
                 'products'  => $this->product_data_source(),
                 'statuses'  => $this->order_data_source(),
-                'customers_rank' => $this->order_data_source() . '+WP_User',
+                'customers_rank' => $this->customer_rank_data_source(),
                 'customers' => 'WP_User_Query:user_registered',
             ],
             'prepared_blocks' => [
@@ -506,18 +506,22 @@ class StatisticsService
         }
 
         $product_ids = array_map( 'absint', wp_list_pluck( $rows, 'product_id' ) );
-        $products    = wc_get_products(
+        $product_posts = get_posts(
             [
-                'include' => $product_ids,
-                'limit'   => count( $product_ids ),
-                'status'  => [ 'publish', 'private', 'draft', 'pending' ],
-                'return'  => 'objects',
+                'post_type'      => 'product',
+                'post_status'    => [ 'publish', 'private', 'draft', 'pending', 'future', 'trash' ],
+                'post__in'       => $product_ids,
+                'posts_per_page' => count( $product_ids ),
+                'orderby'        => 'post__in',
+                'fields'         => 'ids',
             ]
         );
         $product_map = [];
 
-        foreach ( $products as $product ) {
-            if ( is_object( $product ) && method_exists( $product, 'get_id' ) ) {
+        foreach ( $product_posts as $product_id ) {
+            $product = wc_get_product( absint( $product_id ) );
+
+            if ( $product && method_exists( $product, 'get_id' ) ) {
                 $product_map[ $product->get_id() ] = $product;
             }
         }
@@ -734,16 +738,22 @@ class StatisticsService
 
         try {
             if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-                $table = $wpdb->prefix . 'wc_order_stats';
+                $table          = $wpdb->prefix . 'wc_order_stats';
+                $customer_table = $wpdb->prefix . 'wc_customer_lookup';
+
+                if ( ! $this->table_exists( $customer_table ) ) {
+                    return [];
+                }
 
                 return $this->best_customer_rows_from_sql(
-                    "SELECT customer_id, COUNT(order_id) AS orders_count, COALESCE(SUM(total_sales), 0) AS sales_total
-                    FROM {$table}
-                    WHERE customer_id > 0
-                    AND status IN (%s)
-                    AND date_created_gmt >= %s
-                    AND date_created_gmt < %s
-                    GROUP BY customer_id
+                    "SELECT customer.user_id AS customer_id, COUNT(stats.order_id) AS orders_count, COALESCE(SUM(stats.total_sales), 0) AS sales_total
+                    FROM {$table} stats
+                    INNER JOIN {$customer_table} customer ON customer.customer_id = stats.customer_id
+                    WHERE customer.user_id > 0
+                    AND stats.status IN (%s)
+                    AND stats.date_created_gmt >= %s
+                    AND stats.date_created_gmt < %s
+                    GROUP BY customer.user_id
                     ORDER BY sales_total DESC, orders_count DESC
                     LIMIT 5",
                     $statuses,
@@ -874,6 +884,21 @@ class StatisticsService
         }
 
         return 'unavailable';
+    }
+
+    private function customer_rank_data_source(): string
+    {
+        global $wpdb;
+
+        if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) && $this->table_exists( $wpdb->prefix . 'wc_customer_lookup' ) ) {
+            return 'woocommerce_lookup:wc_order_stats+wc_customer_lookup+wp_users';
+        }
+
+        if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
+            return 'woocommerce_hpos:wc_orders+wp_users';
+        }
+
+        return 'wordpress_legacy:posts/postmeta+wp_users';
     }
 
     private function mysql_gmt( DateTimeImmutable $date ): string
