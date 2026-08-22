@@ -29,6 +29,7 @@ $sultana_admin_nav_icons = [
     'orders'    => 'shelving-unit',
     'customers' => 'user',
     'coupons'   => 'tickets',
+    'reviews'   => 'heart',
 ];
 
 $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'orders' ];
@@ -117,10 +118,14 @@ $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'order
                             <?php $sultana_admin_icon_asset( 'tickets' ); ?>
                             <?php esc_html_e( 'Cupones', 'sultana-admin' ); ?>
                         </a>
-                        <button class="sultana-admin-mobile-menu__item is-disabled" type="button" disabled aria-disabled="true">
+                        <a
+                            class="<?php echo esc_attr( 'sultana-admin-mobile-menu__item' . ( 'reviews' === $active_route ? ' is-active' : '' ) ); ?>"
+                            href="<?php echo esc_url( \Sultana\Admin\Core\Router::reviews_url() ); ?>"
+                            <?php echo 'reviews' === $active_route ? 'aria-current="page"' : ''; ?>
+                        >
                             <?php $sultana_admin_icon_asset( 'heart' ); ?>
                             <?php esc_html_e( 'Reseñas', 'sultana-admin' ); ?>
-                        </button>
+                        </a>
                         <form method="post" action="<?php echo esc_url( $logout_url ); ?>">
                             <?php wp_nonce_field( \Sultana\Admin\Core\Auth::LOGOUT_NONCE_ACTION, 'sultana_admin_logout_nonce' ); ?>
                             <button class="sultana-admin-mobile-menu__item sultana-admin-mobile-menu__item--logout" type="submit">

@@ -37,6 +37,8 @@ require_once SULTANA_ADMIN_PATH . 'src/Statistics/StatisticsService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Statistics/StatisticsController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Coupons/CouponService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Coupons/CouponController.php';
+require_once SULTANA_ADMIN_PATH . 'src/Reviews/ReviewService.php';
+require_once SULTANA_ADMIN_PATH . 'src/Reviews/ReviewController.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Router.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Bootstrap.php';
 

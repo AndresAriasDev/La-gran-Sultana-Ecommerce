@@ -33,6 +33,7 @@ class Capabilities
     public const DELETE_PUBLISHED_COUPONS_CAPABILITY = 'delete_published_shop_coupons';
     public const PUBLISH_COUPONS_CAPABILITY = 'publish_shop_coupons';
     public const READ_PRIVATE_COUPONS_CAPABILITY = 'read_private_shop_coupons';
+    public const MANAGE_REVIEWS_CAPABILITY = 'moderate_comments';
 
     public static function activate(): void
     {
@@ -67,6 +68,7 @@ class Capabilities
             self::DELETE_PUBLISHED_COUPONS_CAPABILITY => true,
             self::PUBLISH_COUPONS_CAPABILITY => true,
             self::READ_PRIVATE_COUPONS_CAPABILITY => true,
+            self::MANAGE_REVIEWS_CAPABILITY => true,
         ];
 
         $role = get_role( self::ROLE );

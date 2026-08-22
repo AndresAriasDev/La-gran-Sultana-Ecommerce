@@ -14,6 +14,10 @@
         {
             root: document.querySelector('.sultana-admin-customer-cards'),
             header: '.sultana-admin-customer-card__header'
+        },
+        {
+            root: document.querySelector('.sultana-admin-review-cards'),
+            header: '.sultana-admin-review-card__header'
         }
     ];
 

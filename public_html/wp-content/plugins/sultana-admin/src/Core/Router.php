@@ -6,6 +6,7 @@ use Sultana\Admin\Coupons\CouponController;
 use Sultana\Admin\Customers\CustomerController;
 use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
+use Sultana\Admin\Reviews\ReviewController;
 use Sultana\Admin\Statistics\StatisticsController;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -15,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -32,6 +33,7 @@ class Router
         add_rewrite_rule( '^gestion/cupones/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=coupon_new', 'top' );
         add_rewrite_rule( '^gestion/cupones/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=coupon_edit&sultana_admin_coupon_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/cupones/?$', 'index.php?' . self::QUERY_VAR . '=coupons', 'top' );
+        add_rewrite_rule( '^gestion/resenas/?$', 'index.php?' . self::QUERY_VAR . '=reviews', 'top' );
         add_rewrite_rule( '^gestion/estadisticas/?$', 'index.php?' . self::QUERY_VAR . '=statistics', 'top' );
     }
 
@@ -98,6 +100,11 @@ class Router
         }
 
         if ( in_array( $route, [ 'coupons', 'coupon_new', 'coupon_edit' ], true ) && ! current_user_can( Capabilities::EDIT_COUPONS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( 'reviews' === $route && ! current_user_can( Capabilities::MANAGE_REVIEWS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -176,6 +183,11 @@ class Router
         return self::dashboard_url();
     }
 
+    public static function reviews_url(): string
+    {
+        return home_url( '/gestion/resenas/' );
+    }
+
     public static function is_admin_request(): bool
     {
         return self::is_valid_route( self::current_route() );
@@ -244,6 +256,11 @@ class Router
                 'url'   => self::coupons_url(),
                 'desktop_only' => true,
             ],
+            'reviews' => [
+                'label' => __( 'Reseñas', 'sultana-admin' ),
+                'url'   => self::reviews_url(),
+                'desktop_only' => true,
+            ],
         ];
     }
 
@@ -305,6 +322,11 @@ class Router
                 'subtitle' => __( 'Cupones', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/coupon-form.php',
             ],
+            'reviews' => [
+                'title'    => __( 'Reseñas', 'sultana-admin' ),
+                'subtitle' => __( 'Reseñas', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/reviews.php',
+            ],
             'statistics' => [
                 'title'    => __( 'Estadisticas', 'sultana-admin' ),
                 'subtitle' => __( 'Estadisticas', 'sultana-admin' ),
@@ -355,6 +377,10 @@ class Router
 
         if ( 'coupon_edit' === $route ) {
             return CouponController::prepare_edit_screen( self::current_coupon_id() );
+        }
+
+        if ( 'reviews' === $route ) {
+            return ReviewController::prepare_list_screen();
         }
 
         if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
