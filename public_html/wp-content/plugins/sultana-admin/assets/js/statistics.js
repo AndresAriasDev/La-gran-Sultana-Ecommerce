@@ -1,0 +1,104 @@
+(function () {
+    'use strict';
+
+    document.querySelectorAll('[data-statistics-chart]').forEach(function (chart) {
+        var svg = chart.querySelector('svg');
+        var activePoint = chart.querySelector('.sultana-admin-sales-chart__active-point');
+        var tooltip = chart.querySelector('.sultana-admin-sales-chart__tooltip');
+        var points = [];
+
+        try {
+            points = JSON.parse(chart.getAttribute('data-points') || '[]');
+        } catch (error) {
+            points = [];
+        }
+
+        if (!svg || !activePoint || !tooltip || !points.length) {
+            return;
+        }
+
+        svg.addEventListener('mousemove', function (event) {
+            showNearest(event.clientX);
+        });
+
+        svg.addEventListener('touchstart', function (event) {
+            if (event.touches.length) {
+                showNearest(event.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        svg.addEventListener('touchmove', function (event) {
+            if (event.touches.length) {
+                showNearest(event.touches[0].clientX);
+            }
+        }, { passive: true });
+
+        svg.addEventListener('mouseleave', hideTooltip);
+
+        function showNearest(clientX) {
+            var rect = svg.getBoundingClientRect();
+            var viewBox = svg.viewBox.baseVal;
+            var svgX = ((clientX - rect.left) / rect.width) * viewBox.width;
+            var point = nearestPoint(svgX);
+
+            if (!point) {
+                hideTooltip();
+                return;
+            }
+
+            activePoint.setAttribute('cx', String(point.x));
+            activePoint.setAttribute('cy', String(point.y));
+            tooltip.innerHTML = '<small>' + escapeHtml(point.label || '') + '</small>' + escapeHtml(point.formatted || '');
+            tooltip.hidden = false;
+            chart.classList.add('is-active');
+            positionTooltip(point, rect, viewBox);
+        }
+
+        function nearestPoint(svgX) {
+            return points.reduce(function (nearest, point) {
+                var distance = Math.abs(Number(point.x) - svgX);
+
+                if (!nearest || distance < nearest.distance) {
+                    return {
+                        distance: distance,
+                        x: Number(point.x),
+                        y: Number(point.y),
+                        label: point.label,
+                        formatted: point.formatted
+                    };
+                }
+
+                return nearest;
+            }, null);
+        }
+
+        function positionTooltip(point, rect, viewBox) {
+            var tooltipWidth = tooltip.offsetWidth || 120;
+            var pixelX = (Number(point.x) / viewBox.width) * rect.width;
+            var pixelY = (Number(point.y) / viewBox.height) * rect.height;
+            var halfWidth = tooltipWidth / 2;
+            var safeX = Math.max(halfWidth + 8, Math.min(rect.width - halfWidth - 8, pixelX));
+            var safeY = Math.max(38, pixelY);
+
+            tooltip.style.left = safeX + 'px';
+            tooltip.style.top = safeY + 'px';
+        }
+
+        function hideTooltip() {
+            chart.classList.remove('is-active');
+            tooltip.hidden = true;
+        }
+
+        function escapeHtml(value) {
+            return String(value).replace(/[&<>"']/g, function (character) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[character];
+            });
+        }
+    });
+}());

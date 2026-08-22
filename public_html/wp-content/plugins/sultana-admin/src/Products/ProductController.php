@@ -24,6 +24,7 @@ class ProductController
     {
         $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
         $search = substr( trim( $search ), 0, 120 );
+        $product_id = isset( $_GET['product_id'] ) ? absint( wp_unslash( $_GET['product_id'] ) ) : 0;
         $page   = isset( $_GET['product_page'] ) ? absint( wp_unslash( $_GET['product_page'] ) ) : 1;
         $page   = max( 1, min( 500, $page ) );
 
@@ -32,6 +33,7 @@ class ProductController
         $listing = $service->list_products(
             [
                 'search'   => $search,
+                'product_id' => $product_id,
                 'page'     => $page,
                 'per_page' => 20,
             ]
@@ -39,12 +41,13 @@ class ProductController
 
         return [
             'search'     => $search,
+            'product_id' => $product_id,
             'page'       => $listing['page'],
             'per_page'   => $listing['per_page'],
             'total'      => $listing['total'],
             'total_pages' => $listing['total_pages'],
             'products'   => $listing['products'],
-            'pagination' => self::pagination_links( $listing['page'], $listing['total_pages'], $search ),
+            'pagination' => self::pagination_links( $listing['page'], $listing['total_pages'], $search, $product_id ),
             'notice'     => self::list_notice(),
             'errors'     => $errors,
         ];
@@ -271,12 +274,16 @@ class ProductController
         );
     }
 
-    private static function pagination_links( int $page, int $total_pages, string $search ): array
+    private static function pagination_links( int $page, int $total_pages, string $search, int $product_id = 0 ): array
     {
         $base_args = [];
 
         if ( '' !== $search ) {
             $base_args['s'] = $search;
+        }
+
+        if ( $product_id > 0 ) {
+            $base_args['product_id'] = $product_id;
         }
 
         $page_url = static function ( int $target_page ) use ( $base_args ): string {

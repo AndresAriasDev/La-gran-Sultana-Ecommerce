@@ -65,22 +65,24 @@
 
 .sultana-admin-stat-card {
     display: grid;
-    align-content: start;
+    place-items: center;
+    align-content: center;
     gap: var(--sultana-admin-space-3);
     min-width: 0;
-    min-height: 150px;
+    min-height: 156px;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-lg);
     background: var(--sultana-admin-surface);
     box-shadow: var(--sultana-admin-shadow);
     padding: var(--sultana-admin-space-5);
+    text-align: center;
 }
 
 .sultana-admin-stat-card__icon {
     display: inline-grid;
     place-items: center;
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     border-radius: var(--sultana-admin-radius-pill);
     background: var(--sultana-admin-primary-soft);
     color: var(--sultana-admin-primary);
@@ -123,11 +125,17 @@
     color: var(--sultana-admin-danger);
 }
 
-.sultana-admin-statistics-grid {
+.sultana-admin-statistics-layout {
     display: grid;
     grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
     gap: var(--sultana-admin-space-5);
     align-items: start;
+}
+
+.sultana-admin-statistics-column {
+    display: grid;
+    gap: var(--sultana-admin-space-5);
+    min-width: 0;
 }
 
 .sultana-admin-statistics-panel {
@@ -155,6 +163,7 @@
 }
 
 .sultana-admin-sales-chart {
+    position: relative;
     min-width: 0;
 }
 
@@ -162,6 +171,12 @@
     display: block;
     width: 100%;
     height: auto;
+    touch-action: manipulation;
+}
+
+.sultana-admin-sales-chart__area {
+    fill: var(--sultana-admin-primary-soft);
+    opacity: 0.42;
 }
 
 .sultana-admin-sales-chart__line {
@@ -172,10 +187,16 @@
     stroke-width: 3;
 }
 
-.sultana-admin-sales-chart__point {
+.sultana-admin-sales-chart__active-point {
     fill: var(--sultana-admin-surface);
+    opacity: 0;
+    pointer-events: none;
     stroke: var(--sultana-admin-primary);
     stroke-width: 3;
+}
+
+.sultana-admin-sales-chart.is-active .sultana-admin-sales-chart__active-point {
+    opacity: 1;
 }
 
 .sultana-admin-sales-chart__label {
@@ -184,7 +205,34 @@
     text-anchor: middle;
 }
 
-.sultana-admin-top-products {
+.sultana-admin-sales-chart__tooltip {
+    position: absolute;
+    z-index: 1;
+    max-width: 150px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+    box-shadow: var(--sultana-admin-shadow);
+    color: var(--sultana-admin-text);
+    font-size: var(--sultana-admin-font-size-xs);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-tight);
+    padding: var(--sultana-admin-space-2) var(--sultana-admin-space-3);
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 10px));
+    white-space: nowrap;
+}
+
+.sultana-admin-sales-chart__tooltip small {
+    display: block;
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-xs);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-top-products,
+.sultana-admin-status-breakdown,
+.sultana-admin-best-customers {
     display: grid;
     gap: var(--sultana-admin-space-3);
     margin: 0;
@@ -194,7 +242,7 @@
 
 .sultana-admin-top-products li {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) auto;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto;
     gap: var(--sultana-admin-space-3);
     align-items: center;
     min-width: 0;
@@ -208,13 +256,15 @@
     object-fit: cover;
 }
 
-.sultana-admin-top-products__body {
+.sultana-admin-top-products__body,
+.sultana-admin-best-customers__body {
     display: grid;
     gap: var(--sultana-admin-space-1);
     min-width: 0;
 }
 
-.sultana-admin-top-products__body strong {
+.sultana-admin-top-products__body strong,
+.sultana-admin-best-customers__body strong {
     overflow: hidden;
     color: var(--sultana-admin-text);
     font-size: var(--sultana-admin-font-size-sm);
@@ -224,13 +274,16 @@
     white-space: nowrap;
 }
 
-.sultana-admin-top-products__body small {
+.sultana-admin-top-products__body small,
+.sultana-admin-best-customers__body small {
     color: var(--sultana-admin-muted);
     font-size: var(--sultana-admin-font-size-xs);
     line-height: var(--sultana-admin-line-height-tight);
 }
 
-.sultana-admin-top-products__revenue {
+.sultana-admin-top-products__revenue,
+.sultana-admin-best-customers__total,
+.sultana-admin-status-breakdown strong {
     color: var(--sultana-admin-text);
     font-size: var(--sultana-admin-font-size-sm);
     font-weight: var(--sultana-admin-font-weight-semibold);
@@ -238,19 +291,10 @@
     white-space: nowrap;
 }
 
-.sultana-admin-status-breakdown,
-.sultana-admin-best-customers {
-    display: grid;
-    gap: var(--sultana-admin-space-3);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
 .sultana-admin-status-breakdown li,
 .sultana-admin-best-customers li {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: var(--sultana-admin-space-3);
     align-items: center;
     min-width: 0;
@@ -263,15 +307,6 @@
     min-width: 0;
     color: var(--sultana-admin-text);
     font-size: var(--sultana-admin-font-size-sm);
-}
-
-.sultana-admin-status-breakdown strong,
-.sultana-admin-best-customers__total {
-    color: var(--sultana-admin-text);
-    font-size: var(--sultana-admin-font-size-sm);
-    font-weight: var(--sultana-admin-font-weight-semibold);
-    text-align: right;
-    white-space: nowrap;
 }
 
 .sultana-admin-status-breakdown__dot {
@@ -296,26 +331,40 @@
     background: var(--sultana-admin-danger);
 }
 
-.sultana-admin-best-customers__body {
-    display: grid;
+.sultana-admin-statistics-view-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: var(--sultana-admin-space-1);
-    min-width: 0;
-}
-
-.sultana-admin-best-customers__body strong {
-    overflow: hidden;
+    min-height: 36px;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
     color: var(--sultana-admin-text);
     font-size: var(--sultana-admin-font-size-sm);
     font-weight: var(--sultana-admin-font-weight-semibold);
-    line-height: var(--sultana-admin-line-height-tight);
-    text-overflow: ellipsis;
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 0 var(--sultana-admin-space-3);
+    text-decoration: none;
     white-space: nowrap;
 }
 
-.sultana-admin-best-customers__body small {
-    color: var(--sultana-admin-muted);
-    font-size: var(--sultana-admin-font-size-xs);
-    line-height: var(--sultana-admin-line-height-tight);
+.sultana-admin-statistics-view-link:hover,
+.sultana-admin-statistics-view-link:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary-soft);
+    color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-statistics-view-link:focus-visible {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-statistics-view-link .sultana-admin-icon {
+    width: 16px;
+    height: 16px;
 }
 
 @media (max-width: 760px) {
@@ -338,13 +387,26 @@
     }
 
     .sultana-admin-statistics-metrics {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--sultana-admin-space-3);
     }
 
     .sultana-admin-stat-card {
-        min-height: 128px;
+        min-height: 132px;
         padding: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-stat-card--orders {
+        order: 1;
+    }
+
+    .sultana-admin-stat-card--customers {
+        order: 2;
+    }
+
+    .sultana-admin-stat-card--sales {
+        grid-column: 1 / -1;
+        order: 3;
     }
 
     .sultana-admin-stat-card__icon {
@@ -361,27 +423,39 @@
         font-size: var(--sultana-admin-font-size-lg);
     }
 
-    .sultana-admin-statistics-grid {
+    .sultana-admin-statistics-layout,
+    .sultana-admin-statistics-column {
         grid-template-columns: 1fr;
         gap: var(--sultana-admin-space-4);
+    }
+
+    .sultana-admin-statistics-column--main,
+    .sultana-admin-statistics-column--side {
+        display: contents;
     }
 
     .sultana-admin-statistics-panel {
         padding: var(--sultana-admin-space-4);
     }
-}
 
-@media (max-width: 430px) {
-    .sultana-admin-statistics-metrics {
-        grid-template-columns: 1fr;
+    .sultana-admin-statistics-panel--trend {
+        order: 1;
     }
 
-    .sultana-admin-stat-card {
-        min-height: 0;
+    .sultana-admin-statistics-panel--products {
+        order: 2;
+    }
+
+    .sultana-admin-statistics-panel--statuses {
+        order: 3;
+    }
+
+    .sultana-admin-statistics-panel--customers {
+        order: 4;
     }
 
     .sultana-admin-top-products li {
-        grid-template-columns: 40px minmax(0, 1fr) auto;
+        grid-template-columns: 40px minmax(0, 1fr) auto auto;
         gap: var(--sultana-admin-space-2);
     }
 
@@ -390,11 +464,44 @@
         height: 40px;
     }
 
-    .sultana-admin-top-products__revenue {
+    .sultana-admin-status-breakdown li,
+    .sultana-admin-best-customers li {
+        gap: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-statistics-view-link {
+        min-height: 38px;
+        padding: 0 var(--sultana-admin-space-2);
+    }
+}
+
+@media (max-width: 430px) {
+    .sultana-admin-stat-card {
+        min-height: 126px;
+    }
+
+    .sultana-admin-top-products__revenue,
+    .sultana-admin-best-customers__total,
+    .sultana-admin-status-breakdown strong {
         font-size: var(--sultana-admin-font-size-xs);
     }
 
-    .sultana-admin-best-customers__total {
+    .sultana-admin-statistics-view-link {
         font-size: var(--sultana-admin-font-size-xs);
+    }
+}
+
+@media (max-width: 380px) {
+    .sultana-admin-top-products li {
+        grid-template-columns: 38px minmax(0, 1fr) auto;
+    }
+
+    .sultana-admin-top-products__revenue {
+        justify-self: start;
+    }
+
+    .sultana-admin-top-products .sultana-admin-statistics-view-link {
+        grid-column: 3;
+        grid-row: 1 / span 2;
     }
 }

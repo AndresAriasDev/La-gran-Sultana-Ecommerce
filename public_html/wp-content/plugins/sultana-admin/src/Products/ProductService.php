@@ -345,6 +345,7 @@ class ProductService
     public function list_products( array $args ): array
     {
         $search   = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
+        $product_id = isset( $args['product_id'] ) ? absint( $args['product_id'] ) : 0;
         $page     = isset( $args['page'] ) ? max( 1, absint( $args['page'] ) ) : 1;
         $per_page = isset( $args['per_page'] ) ? max( 1, min( 50, absint( $args['per_page'] ) ) ) : 20;
 
@@ -361,6 +362,13 @@ class ProductService
 
         if ( '' !== $search ) {
             $query_args['s'] = $search;
+        }
+
+        if ( $product_id > 0 ) {
+            $query_args['include'] = [ $product_id ];
+            $query_args['orderby'] = 'include';
+            $query_args['page']    = 1;
+            $search                = '';
         }
 
         $result      = wc_get_products( $query_args );

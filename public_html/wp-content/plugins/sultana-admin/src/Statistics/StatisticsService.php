@@ -537,6 +537,7 @@ class StatisticsService
             }
 
             $items[] = [
+                'id'         => $product_id,
                 'name'       => $product->get_name(),
                 'image'      => $this->product_image_url( $product ),
                 'units'      => (float) ( $row['units_sold'] ?? 0 ),
@@ -546,6 +547,7 @@ class StatisticsService
                     number_format_i18n( (float) ( $row['units_sold'] ?? 0 ) )
                 ),
                 'revenue'    => $this->format_money( (float) ( $row['revenue'] ?? 0 ) ),
+                'url'        => add_query_arg( 'product_id', $product_id, Router::products_url() ),
             ];
         }
 
@@ -716,6 +718,7 @@ class StatisticsService
 
             $orders_count = absint( $row['orders_count'] ?? 0 );
             $items[]      = [
+                'id'          => $customer_id,
                 'name'        => $user->display_name ?: $user->user_login,
                 'orders'      => $orders_count,
                 'orders_text' => sprintf(
@@ -724,6 +727,7 @@ class StatisticsService
                     number_format_i18n( $orders_count )
                 ),
                 'total'       => $this->format_money( (float) ( $row['sales_total'] ?? 0 ) ),
+                'url'         => Router::customer_url( $customer_id ),
             ];
         }
 

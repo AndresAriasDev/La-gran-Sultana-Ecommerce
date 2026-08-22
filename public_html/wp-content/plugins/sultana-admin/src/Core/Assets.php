@@ -92,6 +92,7 @@ class Assets
 
         if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
             self::enqueue_style( 'statistics', [ 'sultana-admin-shell' ] );
+            self::enqueue_statistics();
         }
 
         if ( in_array( $route, [ 'orders', 'customers', 'coupons' ], true ) ) {
@@ -239,6 +240,20 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-shell',
             SULTANA_ADMIN_URL . 'assets/js/shell.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_statistics(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/statistics.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-statistics',
+            SULTANA_ADMIN_URL . 'assets/js/statistics.js',
             [],
             $js_version,
             true
