@@ -70,7 +70,6 @@ class CouponService
             'email_restrictions'           => '',
             'usage_limit'                  => '',
             'usage_limit_per_user'         => '',
-            'limit_usage_to_x_items'       => '',
         ];
     }
 
@@ -93,7 +92,6 @@ class CouponService
             'email_restrictions'           => implode( "\n", $coupon->get_email_restrictions() ),
             'usage_limit'                  => $this->empty_zero( $coupon->get_usage_limit() ),
             'usage_limit_per_user'         => $this->empty_zero( $coupon->get_usage_limit_per_user() ),
-            'limit_usage_to_x_items'       => $this->empty_zero( $coupon->get_limit_usage_to_x_items() ),
         ];
     }
 
@@ -242,6 +240,55 @@ class CouponService
         );
     }
 
+    public function category_brand_relationships(): array
+    {
+        if ( '' === $this->brand_taxonomy() ) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT DISTINCT cat_tt.term_id AS category_id, brand_tt.term_id AS brand_id
+                FROM {$wpdb->posts} products
+                INNER JOIN {$wpdb->term_relationships} cat_rel
+                    ON cat_rel.object_id = products.ID
+                INNER JOIN {$wpdb->term_taxonomy} cat_tt
+                    ON cat_tt.term_taxonomy_id = cat_rel.term_taxonomy_id
+                    AND cat_tt.taxonomy = %s
+                INNER JOIN {$wpdb->term_relationships} brand_rel
+                    ON brand_rel.object_id = products.ID
+                INNER JOIN {$wpdb->term_taxonomy} brand_tt
+                    ON brand_tt.term_taxonomy_id = brand_rel.term_taxonomy_id
+                    AND brand_tt.taxonomy = %s
+                WHERE products.post_type = %s
+                    AND products.post_status IN ( 'publish', 'private' )",
+                'product_cat',
+                self::BRAND_TAXONOMY,
+                'product'
+            ),
+            ARRAY_A
+        );
+
+        if ( ! is_array( $rows ) ) {
+            return [];
+        }
+
+        return array_values(
+            array_map(
+                static fn ( array $row ): array => [
+                    'category_id' => absint( $row['category_id'] ?? 0 ),
+                    'brand_id'    => absint( $row['brand_id'] ?? 0 ),
+                ],
+                array_filter(
+                    $rows,
+                    static fn ( array $row ): bool => absint( $row['category_id'] ?? 0 ) > 0 && absint( $row['brand_id'] ?? 0 ) > 0
+                )
+            )
+        );
+    }
+
     private function save_coupon( int $coupon_id, array $data ): array
     {
         $errors = $this->validate_coupon_data( $data, $coupon_id );
@@ -326,6 +373,26 @@ class CouponService
             $errors[] = __( 'La fecha de vencimiento no es valida.', 'sultana-admin' );
         }
 
+        foreach ( $this->absint_list( $data['product_categories'] ?? [] ) as $category_id ) {
+            if ( ! term_exists( $category_id, 'product_cat' ) ) {
+                $errors[] = __( 'Selecciona categorias validas.', 'sultana-admin' );
+                break;
+            }
+        }
+
+        $brand_taxonomy = $this->brand_taxonomy();
+
+        foreach ( $this->absint_list( $data['product_brands'] ?? [] ) as $brand_id ) {
+            if ( '' === $brand_taxonomy || ! term_exists( $brand_id, $brand_taxonomy ) ) {
+                $errors[] = __( 'Selecciona marcas validas.', 'sultana-admin' );
+                break;
+            }
+        }
+
+        if ( ! $this->has_compatible_category_brand_selection( $data ) ) {
+            $errors[] = __( 'La combinacion de categorias y marcas no corresponde a productos existentes.', 'sultana-admin' );
+        }
+
         return $errors;
     }
 
@@ -344,7 +411,44 @@ class CouponService
         $coupon->set_email_restrictions( $this->email_list( (string) ( $data['email_restrictions'] ?? '' ) ) );
         $coupon->set_usage_limit( $this->positive_int_or_zero( $data['usage_limit'] ?? '' ) );
         $coupon->set_usage_limit_per_user( $this->positive_int_or_zero( $data['usage_limit_per_user'] ?? '' ) );
-        $coupon->set_limit_usage_to_x_items( $this->positive_int_or_zero( $data['limit_usage_to_x_items'] ?? '' ) );
+    }
+
+    private function has_compatible_category_brand_selection( array $data ): bool
+    {
+        $category_ids = $this->absint_list( $data['product_categories'] ?? [] );
+        $brand_ids    = $this->absint_list( $data['product_brands'] ?? [] );
+
+        if ( empty( $category_ids ) || empty( $brand_ids ) ) {
+            return true;
+        }
+
+        $pairs = $this->category_brand_relationships();
+
+        if ( empty( $pairs ) ) {
+            return false;
+        }
+
+        $compatible_categories = [];
+        $compatible_brands     = [];
+
+        foreach ( $pairs as $pair ) {
+            $category_id = absint( $pair['category_id'] ?? 0 );
+            $brand_id    = absint( $pair['brand_id'] ?? 0 );
+
+            if ( in_array( $brand_id, $brand_ids, true ) ) {
+                $compatible_categories[] = $category_id;
+            }
+
+            if ( in_array( $category_id, $category_ids, true ) ) {
+                $compatible_brands[] = $brand_id;
+            }
+        }
+
+        $compatible_categories = array_values( array_unique( $compatible_categories ) );
+        $compatible_brands     = array_values( array_unique( $compatible_brands ) );
+
+        return empty( array_diff( $category_ids, $compatible_categories ) )
+            && empty( array_diff( $brand_ids, $compatible_brands ) );
     }
 
     private function coupon_product_brands( WC_Coupon $coupon ): array

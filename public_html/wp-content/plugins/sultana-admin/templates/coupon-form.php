@@ -20,12 +20,18 @@ $discount_types    = $screen_data['discount_types'] ?? [];
 $categories        = $screen_data['categories'] ?? [];
 $brand_taxonomy    = $screen_data['brand_taxonomy'] ?? '';
 $brands            = $screen_data['brands'] ?? [];
+$category_brands   = $screen_data['category_brands'] ?? [];
 $form_action       = $screen_data['form_action'] ?? \Sultana\Admin\Core\Router::new_coupon_url();
 $form_nonce_action = $screen_data['form_nonce_action'] ?? \Sultana\Admin\Coupons\CouponController::CREATE_NONCE_ACTION;
 $submit_label      = empty( $screen_data['coupon_id'] ) ? __( 'Guardar cupon', 'sultana-admin' ) : __( 'Guardar cambios', 'sultana-admin' );
 $icon_url          = static fn ( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
 $selected_category_ids = array_map( 'absint', $form['product_categories'] ?? [] );
 $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
+$filter_data           = [
+    'categories' => array_map( static fn ( array $category ): int => absint( $category['id'] ?? 0 ), $categories ),
+    'brands'     => array_map( static fn ( array $brand ): int => absint( $brand['id'] ?? 0 ), $brands ),
+    'pairs'      => array_values( $category_brands ),
+];
 
 ?>
 <section class="sultana-admin-coupon-form-screen" aria-label="<?php esc_attr_e( 'Formulario de cupon', 'sultana-admin' ); ?>">
@@ -40,7 +46,7 @@ $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
         </div>
     <?php endif; ?>
 
-    <form class="sultana-admin-coupon-form" method="post" action="<?php echo esc_url( $form_action ); ?>">
+    <form class="sultana-admin-coupon-form" method="post" action="<?php echo esc_url( $form_action ); ?>" data-sultana-coupon-filter="<?php echo esc_attr( wp_json_encode( $filter_data ) ); ?>">
         <?php wp_nonce_field( $form_nonce_action, 'sultana_admin_coupon_nonce' ); ?>
 
         <div class="sultana-admin-coupon-editor-layout">
@@ -76,7 +82,7 @@ $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
                         </div>
                         <div class="sultana-admin-coupon-field">
                             <label for="sultana-admin-coupon-date-expires"><?php esc_html_e( 'Vencimiento', 'sultana-admin' ); ?></label>
-                        <input id="sultana-admin-coupon-date-expires" type="date" name="date_expires" value="<?php echo esc_attr( $form['date_expires'] ?? '' ); ?>">
+                            <input id="sultana-admin-coupon-date-expires" type="date" name="date_expires" value="<?php echo esc_attr( $form['date_expires'] ?? '' ); ?>">
                         </div>
                     </div>
                 </section>
@@ -114,11 +120,11 @@ $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
                 <section class="sultana-admin-coupon-card-section" aria-labelledby="sultana-admin-coupon-apply-title">
                     <h2 id="sultana-admin-coupon-apply-title"><?php esc_html_e( 'Aplicar a', 'sultana-admin' ); ?></h2>
                     <div class="sultana-admin-coupon-category-panels">
-                        <fieldset class="sultana-admin-coupon-category-group">
+                        <fieldset class="sultana-admin-coupon-category-group" data-coupon-filter-group="categories">
                             <legend><?php esc_html_e( 'Categorias', 'sultana-admin' ); ?></legend>
                             <div class="sultana-admin-coupon-category-list">
                                 <?php foreach ( $categories as $category ) : ?>
-                                    <label>
+                                    <label data-coupon-filter-option>
                                         <input type="checkbox" name="product_categories[]" value="<?php echo esc_attr( (string) $category['id'] ); ?>" <?php checked( in_array( $category['id'], $selected_category_ids, true ) ); ?>>
                                         <span><?php echo esc_html( $category['name'] ); ?></span>
                                     </label>
@@ -126,11 +132,11 @@ $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
                             </div>
                         </fieldset>
                         <?php if ( '' !== $brand_taxonomy && ! empty( $brands ) ) : ?>
-                            <fieldset class="sultana-admin-coupon-category-group">
+                            <fieldset class="sultana-admin-coupon-category-group" data-coupon-filter-group="brands">
                                 <legend><?php esc_html_e( 'Marcas', 'sultana-admin' ); ?></legend>
                                 <div class="sultana-admin-coupon-category-list">
                                     <?php foreach ( $brands as $brand ) : ?>
-                                        <label>
+                                        <label data-coupon-filter-option>
                                             <input type="checkbox" name="product_brands[]" value="<?php echo esc_attr( (string) $brand['id'] ); ?>" <?php checked( in_array( $brand['id'], $selected_brand_ids, true ) ); ?>>
                                             <span><?php echo esc_html( $brand['name'] ); ?></span>
                                         </label>
@@ -150,10 +156,6 @@ $selected_brand_ids    = array_map( 'absint', $form['product_brands'] ?? [] );
                     <div class="sultana-admin-coupon-field">
                         <label for="sultana-admin-coupon-usage-limit-user"><?php esc_html_e( 'Limite por usuario', 'sultana-admin' ); ?></label>
                         <input id="sultana-admin-coupon-usage-limit-user" type="number" name="usage_limit_per_user" value="<?php echo esc_attr( $form['usage_limit_per_user'] ?? '' ); ?>" min="0" step="1" inputmode="numeric">
-                    </div>
-                    <div class="sultana-admin-coupon-field">
-                        <label for="sultana-admin-coupon-limit-items"><?php esc_html_e( 'Limite de articulos', 'sultana-admin' ); ?></label>
-                        <input id="sultana-admin-coupon-limit-items" type="number" name="limit_usage_to_x_items" value="<?php echo esc_attr( $form['limit_usage_to_x_items'] ?? '' ); ?>" min="0" step="1" inputmode="numeric">
                     </div>
                 </section>
             </aside>

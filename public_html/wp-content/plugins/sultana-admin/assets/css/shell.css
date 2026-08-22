@@ -229,15 +229,117 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         height: 36px;
     }
 
-    .sultana-admin-mobile-header form {
+    .sultana-admin-mobile-menu {
+        position: static;
         flex: 0 0 auto;
     }
 
-    .sultana-admin-mobile-header .sultana-admin-mobile-logout {
+    .sultana-admin-mobile-menu__toggle {
         width: 42px;
         min-width: 42px;
         min-height: 42px;
+        border-color: var(--sultana-admin-border);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-text);
         padding: 0;
+    }
+
+    .sultana-admin-mobile-menu__toggle:hover,
+    .sultana-admin-mobile-menu__toggle:active,
+    .sultana-admin-mobile-menu__toggle:focus-visible,
+    .sultana-admin-mobile-menu.is-open .sultana-admin-mobile-menu__toggle {
+        border-color: var(--sultana-admin-border);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-text);
+    }
+
+    .sultana-admin-mobile-menu__toggle:focus-visible {
+        box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+    }
+
+    .sultana-admin-mobile-menu__toggle .sultana-admin-icon {
+        transform: rotate(90deg);
+        transition: transform 160ms ease;
+    }
+
+    .sultana-admin-mobile-menu.is-open .sultana-admin-mobile-menu__toggle .sultana-admin-icon {
+        transform: rotate(-90deg);
+    }
+
+    .sultana-admin-mobile-menu__panel {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: var(--sultana-admin-z-popover);
+        display: grid;
+        gap: var(--sultana-admin-space-3);
+        width: auto;
+        background: var(--sultana-admin-surface);
+        box-shadow: var(--sultana-admin-shadow);
+        padding: var(--sultana-admin-space-3) 14px var(--sultana-admin-space-4);
+        transform-origin: top right;
+        animation: sultana-admin-mobile-menu-in 140ms ease-out;
+    }
+
+    .sultana-admin-mobile-menu__panel[hidden] {
+        display: none;
+    }
+
+    .sultana-admin-mobile-menu__panel form {
+        display: flex;
+        justify-content: flex-end;
+        margin: 0;
+    }
+
+    .sultana-admin-mobile-menu__item {
+        display: flex;
+        align-items: center;
+        gap: var(--sultana-admin-space-2);
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: var(--sultana-admin-radius-md);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-text);
+        font-size: var(--sultana-admin-font-size-sm);
+        font-weight: var(--sultana-admin-font-weight-semibold);
+        line-height: var(--sultana-admin-line-height-control);
+        padding: 11px 13px;
+        text-align: left;
+        text-decoration: none;
+    }
+
+    .sultana-admin-mobile-menu__item:hover,
+    .sultana-admin-mobile-menu__item:focus-visible,
+    .sultana-admin-mobile-menu__item.is-active {
+        border-color: var(--sultana-admin-border);
+        background: var(--sultana-admin-primary-soft);
+        color: var(--sultana-admin-primary);
+    }
+
+    .sultana-admin-mobile-menu__item:focus-visible {
+        outline: 2px solid transparent;
+        outline-offset: -2px;
+        box-shadow: inset 0 0 0 2px var(--sultana-admin-primary-soft);
+    }
+
+    .sultana-admin-mobile-menu__item--logout {
+        width: 50%;
+        border-color: var(--sultana-admin-border);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-danger);
+        cursor: pointer;
+    }
+
+    .sultana-admin-mobile-menu__item--logout:hover,
+    .sultana-admin-mobile-menu__item--logout:active,
+    .sultana-admin-mobile-menu__item--logout:focus-visible {
+        border-color: var(--sultana-admin-border);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-danger);
     }
 
     .sultana-admin-content {
@@ -298,5 +400,16 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-mobile-nav__link.is-active::before {
         content: none;
     }
-}
 
+    @keyframes sultana-admin-mobile-menu-in {
+        from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}

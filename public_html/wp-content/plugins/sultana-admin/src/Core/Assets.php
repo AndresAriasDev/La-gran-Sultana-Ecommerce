@@ -63,6 +63,7 @@ class Assets
 
         if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'statistics' ], true ) ) {
             self::enqueue_style( 'shell', [ 'sultana-admin-components' ] );
+            self::enqueue_shell();
         }
 
         if ( 'products' === $route ) {
@@ -83,6 +84,10 @@ class Assets
 
         if ( in_array( $route, [ 'coupons', 'coupon_new', 'coupon_edit' ], true ) ) {
             self::enqueue_style( 'coupons', [ 'sultana-admin-shell' ] );
+        }
+
+        if ( in_array( $route, [ 'coupon_new', 'coupon_edit' ], true ) ) {
+            self::enqueue_coupon_form();
         }
 
         if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
@@ -220,6 +225,34 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-product-list',
             SULTANA_ADMIN_URL . 'assets/js/product-list.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_shell(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/shell.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-shell',
+            SULTANA_ADMIN_URL . 'assets/js/shell.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_coupon_form(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/coupon-form.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-coupon-form',
+            SULTANA_ADMIN_URL . 'assets/js/coupon-form.js',
             [],
             $js_version,
             true

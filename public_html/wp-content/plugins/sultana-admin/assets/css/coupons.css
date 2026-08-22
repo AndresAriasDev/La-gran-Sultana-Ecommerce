@@ -352,6 +352,10 @@
     padding: 6px;
 }
 
+.sultana-admin-coupon-category-group label[hidden] {
+    display: none;
+}
+
 .sultana-admin-coupon-category-group input {
     width: 16px;
     height: 16px;

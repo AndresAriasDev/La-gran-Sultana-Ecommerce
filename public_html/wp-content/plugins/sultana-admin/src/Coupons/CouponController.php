@@ -145,6 +145,7 @@ class CouponController
                 'categories'        => $service->product_categories(),
                 'brand_taxonomy'    => $service->brand_taxonomy(),
                 'brands'            => $service->product_brands(),
+                'category_brands'   => $service->category_brand_relationships(),
             ]
         );
     }
@@ -166,7 +167,6 @@ class CouponController
             'email_restrictions'           => isset( $_POST['email_restrictions'] ) ? sanitize_textarea_field( wp_unslash( $_POST['email_restrictions'] ) ) : '',
             'usage_limit'                  => isset( $_POST['usage_limit'] ) ? wc_clean( wp_unslash( $_POST['usage_limit'] ) ) : '',
             'usage_limit_per_user'         => isset( $_POST['usage_limit_per_user'] ) ? wc_clean( wp_unslash( $_POST['usage_limit_per_user'] ) ) : '',
-            'limit_usage_to_x_items'       => isset( $_POST['limit_usage_to_x_items'] ) ? wc_clean( wp_unslash( $_POST['limit_usage_to_x_items'] ) ) : '',
         ];
     }
 

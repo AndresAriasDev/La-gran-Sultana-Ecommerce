@@ -31,6 +31,8 @@ $sultana_admin_nav_icons = [
     'coupons'   => 'tickets',
 ];
 
+$sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'orders' ];
+
 ?>
 <!doctype html>
 <html <?php language_attributes(); ?>>
@@ -91,12 +93,35 @@ $sultana_admin_nav_icons = [
                         <small><?php echo esc_html( $shell_subtitle ); ?></small>
                     </span>
                 </a>
-                <form method="post" action="<?php echo esc_url( $logout_url ); ?>">
-                    <?php wp_nonce_field( \Sultana\Admin\Core\Auth::LOGOUT_NONCE_ACTION, 'sultana_admin_logout_nonce' ); ?>
-                    <button class="sultana-admin-icon-button sultana-admin-mobile-logout" type="submit" aria-label="<?php esc_attr_e( 'Cerrar sesión', 'sultana-admin' ); ?>">
-                        <?php $sultana_admin_icon_asset( 'log-out' ); ?>
+                <div class="sultana-admin-mobile-menu" data-sultana-mobile-menu>
+                    <button
+                        class="sultana-admin-icon-button sultana-admin-mobile-menu__toggle"
+                        type="button"
+                        aria-label="<?php esc_attr_e( 'Abrir opciones', 'sultana-admin' ); ?>"
+                        aria-expanded="false"
+                        aria-controls="sultana-admin-mobile-menu-panel"
+                        data-sultana-mobile-menu-toggle
+                    >
+                        <?php $sultana_admin_icon_asset( 'chevron-right' ); ?>
                     </button>
-                </form>
+                    <div class="sultana-admin-mobile-menu__panel" id="sultana-admin-mobile-menu-panel" hidden data-sultana-mobile-menu-panel>
+                        <a
+                            class="<?php echo esc_attr( 'sultana-admin-mobile-menu__item' . ( 'coupons' === $active_route ? ' is-active' : '' ) ); ?>"
+                            href="<?php echo esc_url( \Sultana\Admin\Core\Router::coupons_url() ); ?>"
+                            <?php echo 'coupons' === $active_route ? 'aria-current="page"' : ''; ?>
+                        >
+                            <?php $sultana_admin_icon_asset( 'tickets' ); ?>
+                            <?php esc_html_e( 'Cupones', 'sultana-admin' ); ?>
+                        </a>
+                        <form method="post" action="<?php echo esc_url( $logout_url ); ?>">
+                            <?php wp_nonce_field( \Sultana\Admin\Core\Auth::LOGOUT_NONCE_ACTION, 'sultana_admin_logout_nonce' ); ?>
+                            <button class="sultana-admin-mobile-menu__item sultana-admin-mobile-menu__item--logout" type="submit">
+                                <?php $sultana_admin_icon_asset( 'log-out' ); ?>
+                                <?php esc_html_e( 'Cerrar sesión', 'sultana-admin' ); ?>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </header>
 
             <main class="sultana-admin-content" id="sultana-admin-content" tabindex="-1">
@@ -105,10 +130,11 @@ $sultana_admin_nav_icons = [
         </div>
 
         <nav class="sultana-admin-mobile-nav" aria-label="<?php esc_attr_e( 'Navegación móvil principal', 'sultana-admin' ); ?>">
-            <?php foreach ( $nav_items as $route_key => $item ) : ?>
-                <?php if ( ! empty( $item['desktop_only'] ) ) : ?>
+            <?php foreach ( $sultana_admin_mobile_nav_order as $route_key ) : ?>
+                <?php if ( empty( $nav_items[ $route_key ] ) ) : ?>
                     <?php continue; ?>
                 <?php endif; ?>
+                <?php $item = $nav_items[ $route_key ]; ?>
                 <a
                     href="<?php echo esc_url( $item['url'] ); ?>"
                     class="<?php echo esc_attr( 'sultana-admin-mobile-nav__link' . ( $active_route === $route_key ? ' is-active' : '' ) ); ?>"
