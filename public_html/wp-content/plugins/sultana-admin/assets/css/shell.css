@@ -183,6 +183,10 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     display: none;
 }
 
+.sultana-admin-mobile-menu__overlay {
+    display: none;
+}
+
 @media (max-width: 760px) {
     /* MOBILE NAV */
     body.sultana-admin-body .sultana-admin-sidebar {
@@ -206,6 +210,16 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         background: rgba(255, 255, 255, 0.96);
         backdrop-filter: blur(10px);
         padding: 10px 14px;
+    }
+
+    body.sultana-admin-body.sultana-admin-mobile-menu-lock {
+        right: 0;
+        left: 0;
+        width: 100%;
+    }
+
+    body.sultana-admin-body.sultana-admin-mobile-menu-lock .sultana-admin-mobile-header {
+        z-index: calc(var(--sultana-admin-z-popover) + 2);
     }
 
     .sultana-admin-brand--compact {
@@ -273,7 +287,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         top: 100%;
         right: 0;
         left: 0;
-        z-index: var(--sultana-admin-z-popover);
+        z-index: calc(var(--sultana-admin-z-popover) + 1);
         display: grid;
         gap: var(--sultana-admin-space-3);
         width: auto;
@@ -281,7 +295,11 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         box-shadow: var(--sultana-admin-shadow);
         padding: var(--sultana-admin-space-3) 14px var(--sultana-admin-space-4);
         transform-origin: top right;
-        animation: sultana-admin-mobile-menu-in 140ms ease-out;
+        animation: sultana-admin-mobile-menu-in 180ms ease-out;
+    }
+
+    .sultana-admin-mobile-menu.is-closing .sultana-admin-mobile-menu__panel {
+        animation: sultana-admin-mobile-menu-out 160ms ease-in forwards;
     }
 
     .sultana-admin-mobile-menu__panel[hidden] {
@@ -297,6 +315,7 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
     .sultana-admin-mobile-menu__item {
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         gap: var(--sultana-admin-space-2);
         width: 100%;
         min-height: 44px;
@@ -326,6 +345,15 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         box-shadow: inset 0 0 0 2px var(--sultana-admin-primary-soft);
     }
 
+    .sultana-admin-mobile-menu__item.is-disabled,
+    .sultana-admin-mobile-menu__item:disabled {
+        justify-content: flex-start;
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-muted);
+        cursor: default;
+        opacity: 0.58;
+    }
+
     .sultana-admin-mobile-menu__item--logout {
         width: 50%;
         border-color: var(--sultana-admin-border);
@@ -340,6 +368,56 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
         border-color: var(--sultana-admin-border);
         background: var(--sultana-admin-surface);
         color: var(--sultana-admin-danger);
+    }
+
+    .sultana-admin-mobile-menu__overlay {
+        appearance: none;
+        -webkit-appearance: none;
+        position: fixed;
+        inset: var(--sultana-admin-mobile-menu-overlay-top, 112px) 0 0;
+        z-index: var(--sultana-admin-z-popover);
+        display: block;
+        border: 0;
+        border-radius: 0;
+        background: rgba(17, 24, 39, 0.52);
+        box-shadow: none;
+        color: transparent;
+        cursor: pointer;
+        backdrop-filter: blur(3px);
+        -webkit-backdrop-filter: blur(3px);
+        min-height: 0;
+        opacity: 0;
+        padding: 0;
+        pointer-events: none;
+        visibility: hidden;
+    }
+
+    .sultana-admin-mobile-menu__overlay.is-open {
+        opacity: 1;
+        pointer-events: auto;
+        visibility: visible;
+        animation: sultana-admin-mobile-overlay-in 180ms ease-out;
+    }
+
+    .sultana-admin-mobile-menu__overlay:hover,
+    .sultana-admin-mobile-menu__overlay:active,
+    .sultana-admin-mobile-menu__overlay:focus,
+    .sultana-admin-mobile-menu__overlay:focus-visible {
+        border: 0;
+        background: rgba(17, 24, 39, 0.52);
+        box-shadow: none;
+        color: transparent;
+        outline: 0;
+    }
+
+    .sultana-admin-mobile-menu__overlay[hidden] {
+        display: none;
+    }
+
+    .sultana-admin-mobile-menu__overlay.is-closing {
+        pointer-events: none;
+        visibility: visible;
+        animation: sultana-admin-mobile-overlay-out 160ms ease-in forwards;
     }
 
     .sultana-admin-content {
@@ -411,5 +489,50 @@ body.sultana-admin-body .sultana-admin-mobile-nav {
             opacity: 1;
             transform: translateY(0) scale(1);
         }
+    }
+
+    @keyframes sultana-admin-mobile-menu-out {
+        from {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        to {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.98);
+        }
+    }
+
+    @keyframes sultana-admin-mobile-overlay-in {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    @keyframes sultana-admin-mobile-overlay-out {
+        from {
+            opacity: 1;
+        }
+
+        to {
+            opacity: 0;
+        }
+    }
+}
+
+@media (max-width: 760px) and (prefers-reduced-motion: reduce) {
+    .sultana-admin-mobile-menu__toggle .sultana-admin-icon {
+        transition: none;
+    }
+
+    .sultana-admin-mobile-menu__panel,
+    .sultana-admin-mobile-menu__overlay,
+    .sultana-admin-mobile-menu.is-closing .sultana-admin-mobile-menu__panel,
+    .sultana-admin-mobile-menu__overlay.is-closing {
+        animation-duration: 1ms;
     }
 }

@@ -105,6 +105,10 @@ $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'order
                         <?php $sultana_admin_icon_asset( 'chevron-right' ); ?>
                     </button>
                     <div class="sultana-admin-mobile-menu__panel" id="sultana-admin-mobile-menu-panel" hidden data-sultana-mobile-menu-panel>
+                        <button class="sultana-admin-mobile-menu__item is-disabled" type="button" disabled aria-disabled="true">
+                            <?php $sultana_admin_icon_asset( 'images' ); ?>
+                            <?php esc_html_e( 'Banner', 'sultana-admin' ); ?>
+                        </button>
                         <a
                             class="<?php echo esc_attr( 'sultana-admin-mobile-menu__item' . ( 'coupons' === $active_route ? ' is-active' : '' ) ); ?>"
                             href="<?php echo esc_url( \Sultana\Admin\Core\Router::coupons_url() ); ?>"
@@ -113,6 +117,10 @@ $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'order
                             <?php $sultana_admin_icon_asset( 'tickets' ); ?>
                             <?php esc_html_e( 'Cupones', 'sultana-admin' ); ?>
                         </a>
+                        <button class="sultana-admin-mobile-menu__item is-disabled" type="button" disabled aria-disabled="true">
+                            <?php $sultana_admin_icon_asset( 'heart' ); ?>
+                            <?php esc_html_e( 'Reseñas', 'sultana-admin' ); ?>
+                        </button>
                         <form method="post" action="<?php echo esc_url( $logout_url ); ?>">
                             <?php wp_nonce_field( \Sultana\Admin\Core\Auth::LOGOUT_NONCE_ACTION, 'sultana_admin_logout_nonce' ); ?>
                             <button class="sultana-admin-mobile-menu__item sultana-admin-mobile-menu__item--logout" type="submit">
@@ -123,6 +131,7 @@ $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'order
                     </div>
                 </div>
             </header>
+            <button class="sultana-admin-mobile-menu__overlay" type="button" hidden aria-hidden="true" tabindex="-1" data-sultana-mobile-menu-overlay></button>
 
             <main class="sultana-admin-content" id="sultana-admin-content" tabindex="-1">
                 <?php require $screen['template']; ?>
