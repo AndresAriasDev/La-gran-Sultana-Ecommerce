@@ -1,6 +1,45 @@
 (function () {
     'use strict';
 
+    document.querySelectorAll('[data-statistics-period-filter]').forEach(function (root) {
+        var toggle = root.querySelector('[data-statistics-period-toggle]');
+        var panelId = toggle ? toggle.getAttribute('aria-controls') : '';
+        var panel = panelId ? document.getElementById(panelId) : null;
+
+        if (!toggle || !panel) {
+            return;
+        }
+
+        toggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+        });
+
+        panel.addEventListener('click', function (event) {
+            if (event.target.closest('a')) {
+                setOpen(false);
+            }
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!root.contains(event.target)) {
+                setOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+                setOpen(false);
+                toggle.focus();
+            }
+        });
+
+        function setOpen(open) {
+            root.classList.toggle('is-open', open);
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+    });
+
     document.querySelectorAll('[data-statistics-chart]').forEach(function (chart) {
         var svg = chart.querySelector('svg');
         var activePoint = chart.querySelector('.sultana-admin-sales-chart__active-point');

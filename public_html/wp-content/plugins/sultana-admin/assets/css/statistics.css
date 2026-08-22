@@ -10,9 +10,13 @@
     gap: var(--sultana-admin-space-4);
 }
 
-.sultana-admin-statistics__toolbar > span {
+.sultana-admin-statistics__range {
     color: var(--sultana-admin-muted);
     font-size: var(--sultana-admin-font-size-sm);
+}
+
+.sultana-admin-statistics-filter-toggle {
+    display: none;
 }
 
 .sultana-admin-period-switcher {
@@ -373,17 +377,81 @@
     }
 
     .sultana-admin-statistics__toolbar {
-        display: grid;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-statistics__range {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow-wrap: anywhere;
+    }
+
+    .sultana-admin-statistics-filter-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         gap: var(--sultana-admin-space-2);
+        flex: 0 0 auto;
+        min-height: 38px;
+        border: 1px solid var(--sultana-admin-border);
+        border-radius: var(--sultana-admin-radius-md);
+        background: var(--sultana-admin-surface);
+        color: var(--sultana-admin-text);
+        font-size: var(--sultana-admin-font-size-sm);
+        font-weight: var(--sultana-admin-font-weight-semibold);
+        line-height: var(--sultana-admin-line-height-control);
+        padding: 0 var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-statistics-filter-toggle:hover,
+    .sultana-admin-statistics-filter-toggle:focus-visible,
+    .sultana-admin-statistics__toolbar.is-open .sultana-admin-statistics-filter-toggle {
+        border-color: var(--sultana-admin-primary);
+        background: var(--sultana-admin-primary-soft);
+        color: var(--sultana-admin-primary);
+    }
+
+    .sultana-admin-statistics-filter-toggle:focus-visible {
+        outline: 2px solid transparent;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+    }
+
+    .sultana-admin-statistics-filter-toggle .sultana-admin-icon {
+        width: 16px;
+        height: 16px;
+        transform: rotate(90deg);
+        transition: transform var(--sultana-admin-transition-fast);
+    }
+
+    .sultana-admin-statistics__toolbar.is-open .sultana-admin-statistics-filter-toggle .sultana-admin-icon {
+        transform: rotate(-90deg);
     }
 
     .sultana-admin-period-switcher {
-        width: 100%;
+        position: absolute;
+        top: calc(100% + var(--sultana-admin-space-2));
+        right: 0;
+        z-index: var(--sultana-admin-z-popover);
+        display: none;
+        gap: var(--sultana-admin-space-2);
+        width: min(190px, 100%);
+        box-shadow: var(--sultana-admin-shadow);
+        padding: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-statistics__toolbar.is-open .sultana-admin-period-switcher {
+        display: grid;
     }
 
     .sultana-admin-period-switcher__item {
-        padding-right: var(--sultana-admin-space-2);
-        padding-left: var(--sultana-admin-space-2);
+        justify-content: center;
+        min-height: 44px;
+        padding: var(--sultana-admin-space-2) var(--sultana-admin-space-4);
     }
 
     .sultana-admin-statistics-metrics {

@@ -74,8 +74,8 @@ if ( ! empty( $sultana_admin_polyline ) ) {
 
 ?>
 <section class="sultana-admin-statistics" aria-label="<?php esc_attr_e( 'Estadisticas', 'sultana-admin' ); ?>">
-    <div class="sultana-admin-statistics__toolbar">
-        <nav class="sultana-admin-period-switcher" aria-label="<?php esc_attr_e( 'Periodo', 'sultana-admin' ); ?>">
+    <div class="sultana-admin-statistics__toolbar" data-statistics-period-filter>
+        <nav class="sultana-admin-period-switcher" id="sultana-admin-period-switcher" aria-label="<?php esc_attr_e( 'Periodo', 'sultana-admin' ); ?>">
             <?php foreach ( $periods as $period ) : ?>
                 <a
                     class="<?php echo esc_attr( 'sultana-admin-period-switcher__item' . ( ! empty( $period['is_active'] ) ? ' is-active' : '' ) ); ?>"
@@ -88,8 +88,18 @@ if ( ! empty( $sultana_admin_polyline ) ) {
         </nav>
 
         <?php if ( '' !== $range_label ) : ?>
-            <span><?php echo esc_html( $range_label ); ?></span>
+            <span class="sultana-admin-statistics__range"><?php echo esc_html( $range_label ); ?></span>
         <?php endif; ?>
+        <button
+            class="sultana-admin-statistics-filter-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="sultana-admin-period-switcher"
+            data-statistics-period-toggle
+        >
+            <?php esc_html_e( 'Filtrar', 'sultana-admin' ); ?>
+            <?php $sultana_admin_statistics_icon( 'chevron-right' ); ?>
+        </button>
     </div>
 
     <?php if ( '' !== $error ) : ?>
