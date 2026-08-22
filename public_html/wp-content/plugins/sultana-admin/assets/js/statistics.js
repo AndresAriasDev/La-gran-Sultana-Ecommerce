@@ -5,7 +5,12 @@
         var svg = chart.querySelector('svg');
         var activePoint = chart.querySelector('.sultana-admin-sales-chart__active-point');
         var tooltip = chart.querySelector('.sultana-admin-sales-chart__tooltip');
+        var tooltipLabel = document.createElement('small');
+        var tooltipAmount = document.createElement('span');
         var points = [];
+        var moneySettings = window.SultanaAdminStatistics && window.SultanaAdminStatistics.money
+            ? window.SultanaAdminStatistics.money
+            : {};
 
         try {
             points = JSON.parse(chart.getAttribute('data-points') || '[]');
@@ -16,6 +21,10 @@
         if (!svg || !activePoint || !tooltip || !points.length) {
             return;
         }
+
+        tooltip.textContent = '';
+        tooltip.appendChild(tooltipLabel);
+        tooltip.appendChild(tooltipAmount);
 
         svg.addEventListener('mousemove', function (event) {
             showNearest(event.clientX);
@@ -48,7 +57,8 @@
 
             activePoint.setAttribute('cx', String(point.x));
             activePoint.setAttribute('cy', String(point.y));
-            tooltip.innerHTML = '<small>' + escapeHtml(point.label || '') + '</small>' + escapeHtml(point.formatted || '');
+            tooltipLabel.textContent = point.label || '';
+            tooltipAmount.textContent = formatMoney(point.amount);
             tooltip.hidden = false;
             chart.classList.add('is-active');
             positionTooltip(point, rect, viewBox);
@@ -64,7 +74,7 @@
                         x: Number(point.x),
                         y: Number(point.y),
                         label: point.label,
-                        formatted: point.formatted
+                        amount: Number(point.amount || 0)
                     };
                 }
 
@@ -89,16 +99,27 @@
             tooltip.hidden = true;
         }
 
-        function escapeHtml(value) {
-            return String(value).replace(/[&<>"']/g, function (character) {
-                return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#039;'
-                }[character];
-            });
+        function formatMoney(amount) {
+            var decimals = Number(moneySettings.decimals);
+            var decimalSeparator = typeof moneySettings.decimalSeparator === 'string' ? moneySettings.decimalSeparator : '.';
+            var thousandSeparator = typeof moneySettings.thousandSeparator === 'string' ? moneySettings.thousandSeparator : ',';
+            var currencySymbol = typeof moneySettings.currencySymbol === 'string' ? moneySettings.currencySymbol : '';
+            var priceFormat = typeof moneySettings.priceFormat === 'string' ? moneySettings.priceFormat : '%1$s%2$s';
+            var normalizedAmount = Number.isFinite(Number(amount)) ? Number(amount) : 0;
+            var parts;
+            var integerPart;
+            var decimalPart;
+            var formattedNumber;
+
+            decimals = Number.isFinite(decimals) ? Math.max(0, decimals) : 2;
+            parts = normalizedAmount.toFixed(decimals).split('.');
+            integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, thousandSeparator);
+            decimalPart = parts[1] ? decimalSeparator + parts[1] : '';
+            formattedNumber = integerPart + decimalPart;
+
+            return priceFormat
+                .replace('%1$s', currencySymbol)
+                .replace('%2$s', formattedNumber);
         }
     });
 }());

@@ -289,7 +289,6 @@ class StatisticsService
                 'label'      => $bucket['labels'][ $index ] ?? '',
                 'axis_label' => $bucket['axis_labels'][ $index ] ?? '',
                 'value'      => $value,
-                'formatted'  => $this->format_money( $value ),
             ];
         }
 
@@ -309,7 +308,7 @@ class StatisticsService
         if ( 'today' === $period ) {
             for ( $index = 0; $index < 24; $index++ ) {
                 $point_time = $start->modify( '+' . $index . ' hours' );
-                $labels[]   = wp_date( 'g a', $point_time->getTimestamp(), $timezone );
+                $labels[]   = $this->compact_time_label( $point_time, $timezone );
                 $axis[]     = in_array( $index, [ 0, 6, 12, 18, 23 ], true ) ? wp_date( 'g a', $point_time->getTimestamp(), $timezone ) : '';
             }
 
@@ -325,7 +324,7 @@ class StatisticsService
 
         for ( $index = 0; $index < $days; $index++ ) {
             $point_time = $start->modify( '+' . $index . ' days' );
-            $labels[]   = wp_date( get_option( 'date_format' ), $point_time->getTimestamp(), $timezone );
+            $labels[]   = $this->compact_date_label( $point_time );
 
             if ( 'week' === $period ) {
                 $axis[] = wp_date( 'D', $point_time->getTimestamp(), $timezone );
@@ -913,6 +912,40 @@ class StatisticsService
     private function format_money( float $amount ): string
     {
         return function_exists( 'wc_price' ) ? wc_price( $amount ) : number_format_i18n( $amount, 2 );
+    }
+
+    private function compact_time_label( DateTimeImmutable $date, DateTimeZone $timezone ): string
+    {
+        $label = strtolower( wp_date( 'g:i a', $date->getTimestamp(), $timezone ) );
+
+        return str_replace( [ 'am', 'pm' ], [ 'a. m.', 'p. m.' ], $label );
+    }
+
+    private function compact_date_label( DateTimeImmutable $date ): string
+    {
+        $months = [
+            1  => __( 'ene.', 'sultana-admin' ),
+            2  => __( 'feb.', 'sultana-admin' ),
+            3  => __( 'mar.', 'sultana-admin' ),
+            4  => __( 'abr.', 'sultana-admin' ),
+            5  => __( 'may.', 'sultana-admin' ),
+            6  => __( 'jun.', 'sultana-admin' ),
+            7  => __( 'jul.', 'sultana-admin' ),
+            8  => __( 'ago.', 'sultana-admin' ),
+            9  => __( 'sept.', 'sultana-admin' ),
+            10 => __( 'oct.', 'sultana-admin' ),
+            11 => __( 'nov.', 'sultana-admin' ),
+            12 => __( 'dic.', 'sultana-admin' ),
+        ];
+
+        $month = (int) $date->format( 'n' );
+
+        return sprintf(
+            '%d %s %s',
+            (int) $date->format( 'j' ),
+            $months[ $month ] ?? $date->format( 'M' ),
+            $date->format( 'Y' )
+        );
     }
 
     private function table_exists( string $table ): bool

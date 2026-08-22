@@ -59,7 +59,7 @@ foreach ( $sultana_admin_chart_points as $index => $point ) {
         'y'          => $y,
         'label'      => (string) ( $point['label'] ?? '' ),
         'axis_label' => (string) ( $point['axis_label'] ?? '' ),
-        'formatted'  => (string) ( $point['formatted'] ?? '' ),
+        'amount'     => (float) ( $point['value'] ?? 0 ),
     ];
 }
 

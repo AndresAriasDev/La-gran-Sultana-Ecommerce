@@ -258,6 +258,20 @@ class Assets
             $js_version,
             true
         );
+
+        wp_localize_script(
+            'sultana-admin-statistics',
+            'SultanaAdminStatistics',
+            [
+                'money' => [
+                    'currencySymbol'    => function_exists( 'get_woocommerce_currency_symbol' ) ? html_entity_decode( get_woocommerce_currency_symbol(), ENT_QUOTES, get_bloginfo( 'charset' ) ) : '',
+                    'decimalSeparator'  => function_exists( 'wc_get_price_decimal_separator' ) ? wc_get_price_decimal_separator() : '.',
+                    'thousandSeparator' => function_exists( 'wc_get_price_thousand_separator' ) ? wc_get_price_thousand_separator() : ',',
+                    'decimals'          => function_exists( 'wc_get_price_decimals' ) ? wc_get_price_decimals() : 2,
+                    'priceFormat'       => function_exists( 'get_woocommerce_price_format' ) ? html_entity_decode( get_woocommerce_price_format(), ENT_QUOTES, get_bloginfo( 'charset' ) ) : '%1$s%2$s',
+                ],
+            ]
+        );
     }
 
     private static function enqueue_coupon_form(): void
