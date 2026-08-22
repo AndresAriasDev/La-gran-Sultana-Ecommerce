@@ -7,31 +7,18 @@
     grid-template-columns: minmax(0, 1fr) minmax(160px, 220px) auto;
 }
 
-.sultana-admin-review-filters select,
-.sultana-admin-review-edit-form input,
-.sultana-admin-review-edit-form select,
-.sultana-admin-review-edit-form textarea,
-.sultana-admin-review-reply-form textarea {
+.sultana-admin-review-filters select {
     width: 100%;
+    min-height: 44px;
     border: 1px solid var(--sultana-admin-border-strong);
     border-radius: var(--sultana-admin-radius-md);
     background: var(--sultana-admin-surface);
     color: var(--sultana-admin-text);
     font: inherit;
-    min-height: 44px;
     padding: 10px 12px;
 }
 
-.sultana-admin-review-edit-form textarea,
-.sultana-admin-review-reply-form textarea {
-    resize: vertical;
-}
-
-.sultana-admin-review-filters select:focus-visible,
-.sultana-admin-review-edit-form input:focus-visible,
-.sultana-admin-review-edit-form select:focus-visible,
-.sultana-admin-review-edit-form textarea:focus-visible,
-.sultana-admin-review-reply-form textarea:focus-visible {
+.sultana-admin-review-filters select:focus-visible {
     border-color: var(--sultana-admin-primary);
     box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
     outline: 0;
@@ -83,30 +70,31 @@
     display: flex;
     min-width: 0;
     align-items: center;
-    flex-wrap: wrap;
     gap: var(--sultana-admin-space-2);
 }
 
 .sultana-admin-review-card__topline strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-weight: var(--sultana-admin-font-weight-semibold);
-    overflow-wrap: anywhere;
 }
 
 .sultana-admin-review-rating {
+    flex: 0 0 auto;
     color: var(--sultana-admin-primary);
     font-size: var(--sultana-admin-font-size-sm);
     line-height: var(--sultana-admin-line-height-tight);
 }
 
 .sultana-admin-review-product,
-.sultana-admin-review-excerpt,
 .sultana-admin-review-card__meta {
     color: var(--sultana-admin-muted);
     font-size: var(--sultana-admin-font-size-sm);
 }
 
-.sultana-admin-review-product,
-.sultana-admin-review-excerpt {
+.sultana-admin-review-product {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -145,7 +133,6 @@
     color: var(--sultana-admin-warning);
 }
 
-.sultana-admin-review-status--spam,
 .sultana-admin-review-status--trash {
     border-color: var(--sultana-admin-danger);
     background: var(--sultana-admin-danger-soft);
@@ -176,12 +163,6 @@
     display: none;
 }
 
-.sultana-admin-review-detail-grid {
-    display: grid;
-    grid-template-columns: minmax(240px, 0.95fr) minmax(0, 1.4fr);
-    gap: var(--sultana-admin-space-4);
-}
-
 .sultana-admin-review-detail-list {
     display: grid;
     gap: var(--sultana-admin-space-2);
@@ -196,9 +177,7 @@
 }
 
 .sultana-admin-review-detail-list dt,
-.sultana-admin-review-content span,
-.sultana-admin-review-edit-form label,
-.sultana-admin-review-reply-form label {
+.sultana-admin-review-content span {
     color: var(--sultana-admin-muted);
     font-size: var(--sultana-admin-font-size-sm);
     font-weight: var(--sultana-admin-font-weight-semibold);
@@ -207,16 +186,6 @@
 .sultana-admin-review-detail-list dd {
     margin: 0;
     overflow-wrap: anywhere;
-}
-
-.sultana-admin-review-detail-list a {
-    color: var(--sultana-admin-primary-hover);
-    font-weight: var(--sultana-admin-font-weight-semibold);
-    text-decoration: none;
-}
-
-.sultana-admin-review-detail-list a:hover {
-    text-decoration: underline;
 }
 
 .sultana-admin-review-content {
@@ -245,7 +214,7 @@
     align-items: center;
     justify-content: center;
     gap: var(--sultana-admin-space-2);
-    min-height: 38px;
+    min-height: 40px;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-md);
     background: var(--sultana-admin-surface);
@@ -256,23 +225,23 @@
     text-decoration: none;
 }
 
-.sultana-admin-review-action .sultana-admin-icon,
-.sultana-admin-review-edit-form button .sultana-admin-icon,
-.sultana-admin-review-reply-form button .sultana-admin-icon {
+.sultana-admin-review-action .sultana-admin-icon {
     width: 16px;
     height: 16px;
 }
 
 .sultana-admin-review-action:hover,
-.sultana-admin-review-action:focus-visible {
+.sultana-admin-review-action:focus-visible,
+.sultana-admin-review-action--success {
     border-color: var(--sultana-admin-primary);
     background: var(--sultana-admin-primary);
     color: var(--sultana-admin-primary-contrast);
 }
 
-.sultana-admin-review-action--warning {
-    border-color: var(--sultana-admin-warning);
-    color: var(--sultana-admin-warning);
+.sultana-admin-review-action--success:hover,
+.sultana-admin-review-action--success:focus-visible {
+    border-color: var(--sultana-admin-primary-hover);
+    background: var(--sultana-admin-primary-hover);
 }
 
 .sultana-admin-review-action--danger {
@@ -285,26 +254,6 @@
     border-color: var(--sultana-admin-danger);
     background: var(--sultana-admin-danger);
     color: var(--sultana-admin-primary-contrast);
-}
-
-.sultana-admin-review-edit-form,
-.sultana-admin-review-reply-form {
-    display: grid;
-    gap: var(--sultana-admin-space-3);
-    border-top: 1px solid var(--sultana-admin-border);
-    padding-top: var(--sultana-admin-space-4);
-}
-
-.sultana-admin-review-edit-form label,
-.sultana-admin-review-reply-form label {
-    display: grid;
-    gap: var(--sultana-admin-space-2);
-}
-
-.sultana-admin-review-form-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--sultana-admin-space-3);
 }
 
 .sultana-admin-reviews > .sultana-admin-pagination--compact {
@@ -379,6 +328,9 @@
     .sultana-admin-review-card__meta {
         grid-column: 1 / 2;
         grid-row: 2;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: var(--sultana-admin-space-2);
+        align-items: center;
         justify-items: start;
         text-align: left;
     }
@@ -389,19 +341,9 @@
         align-self: center;
     }
 
-    .sultana-admin-review-product,
-    .sultana-admin-review-excerpt {
-        white-space: normal;
-    }
-
-    .sultana-admin-review-card__panel {
-        padding: var(--sultana-admin-space-3);
-    }
-
-    .sultana-admin-review-detail-grid,
-    .sultana-admin-review-detail-list div,
-    .sultana-admin-review-form-grid {
+    .sultana-admin-review-detail-list div {
         grid-template-columns: 1fr;
+        gap: var(--sultana-admin-space-1);
     }
 
     .sultana-admin-review-actions {

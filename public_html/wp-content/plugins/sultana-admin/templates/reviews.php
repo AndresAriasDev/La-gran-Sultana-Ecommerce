@@ -30,7 +30,7 @@ if ( $page > 1 ) {
     $form_args['review_page'] = $page;
 }
 
-$form_action = empty( $form_args ) ? \Sultana\Admin\Core\Router::reviews_url() : add_query_arg( $form_args, \Sultana\Admin\Core\Router::reviews_url() );
+$form_action  = empty( $form_args ) ? \Sultana\Admin\Core\Router::reviews_url() : add_query_arg( $form_args, \Sultana\Admin\Core\Router::reviews_url() );
 $status_class = static fn ( string $review_status ): string => 'sultana-admin-review-status sultana-admin-review-status--' . sanitize_html_class( $review_status );
 $rating_label = static fn ( int $rating ): string => sprintf(
     /* translators: %d: review rating. */
@@ -132,7 +132,6 @@ $render_action = static function ( array $review, string $action, string $label,
                                 </span>
                             </span>
                             <span class="sultana-admin-review-product"><?php echo esc_html( (string) ( $review['product_title'] ?? '' ) ); ?></span>
-                            <span class="sultana-admin-review-excerpt"><?php echo esc_html( (string) ( $review['excerpt'] ?? '' ) ); ?></span>
                         </span>
                         <span class="sultana-admin-review-card__meta">
                             <span class="<?php echo esc_attr( $status_class( (string) ( $review['status'] ?? '' ) ) ); ?>"><?php echo esc_html( (string) ( $review['status_label'] ?? '' ) ); ?></span>
@@ -142,54 +141,31 @@ $render_action = static function ( array $review, string $action, string $label,
                     </button>
 
                     <div id="<?php echo esc_attr( $panel_id ); ?>" class="sultana-admin-review-card__panel" hidden>
-                        <div class="sultana-admin-review-detail-grid">
-                            <dl class="sultana-admin-review-detail-list">
-                                <div>
-                                    <dt><?php esc_html_e( 'Cliente', 'sultana-admin' ); ?></dt>
-                                    <dd><?php echo esc_html( (string) ( $review['author'] ?? '' ) ); ?></dd>
-                                </div>
-                                <div>
-                                    <dt><?php esc_html_e( 'Email', 'sultana-admin' ); ?></dt>
-                                    <dd><?php echo esc_html( (string) ( $review['email'] ?? '' ) ); ?></dd>
-                                </div>
-                                <div>
-                                    <dt><?php esc_html_e( 'Producto', 'sultana-admin' ); ?></dt>
-                                    <dd><a href="<?php echo esc_url( (string) ( $review['product_url'] ?? '' ) ); ?>"><?php echo esc_html( (string) ( $review['product_title'] ?? '' ) ); ?></a></dd>
-                                </div>
-                                <div>
-                                    <dt><?php esc_html_e( 'Fecha', 'sultana-admin' ); ?></dt>
-                                    <dd><?php echo esc_html( (string) ( $review['date'] ?? '' ) ); ?></dd>
-                                </div>
-                            </dl>
-
-                            <div class="sultana-admin-review-content">
-                                <span><?php esc_html_e( 'Reseña', 'sultana-admin' ); ?></span>
-                                <p><?php echo nl2br( esc_html( (string) ( $review['content'] ?? '' ) ) ); ?></p>
+                        <dl class="sultana-admin-review-detail-list">
+                            <div>
+                                <dt><?php esc_html_e( 'Cliente', 'sultana-admin' ); ?></dt>
+                                <dd><?php echo esc_html( (string) ( $review['author'] ?? '' ) ); ?></dd>
                             </div>
+                            <div>
+                                <dt><?php esc_html_e( 'Email', 'sultana-admin' ); ?></dt>
+                                <dd><?php echo esc_html( (string) ( $review['email'] ?? '' ) ); ?></dd>
+                            </div>
+                        </dl>
+
+                        <div class="sultana-admin-review-content">
+                            <span><?php esc_html_e( 'Reseña', 'sultana-admin' ); ?></span>
+                            <p><?php echo nl2br( esc_html( (string) ( $review['content'] ?? '' ) ) ); ?></p>
                         </div>
 
                         <div class="sultana-admin-review-actions" aria-label="<?php esc_attr_e( 'Acciones de reseña', 'sultana-admin' ); ?>">
-                            <a class="sultana-admin-review-action" href="<?php echo esc_url( (string) ( $review['product_url'] ?? '' ) ); ?>">
-                                <?php $render_icon( 'eye' ); ?>
-                                <?php esc_html_e( 'Ver producto', 'sultana-admin' ); ?>
-                            </a>
                             <?php if ( ! empty( $review['can_approve'] ) ) : ?>
-                                <?php $render_action( $review, 'approve_review', __( 'Aprobar', 'sultana-admin' ), 'package-check' ); ?>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $review['can_hold'] ) ) : ?>
-                                <?php $render_action( $review, 'hold_review', __( 'Pendiente', 'sultana-admin' ), 'funnel' ); ?>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $review['can_spam'] ) ) : ?>
-                                <?php $render_action( $review, 'spam_review', __( 'Spam', 'sultana-admin' ), 'close', 'sultana-admin-review-action--warning' ); ?>
-                            <?php endif; ?>
-                            <?php if ( ! empty( $review['can_unspam'] ) ) : ?>
-                                <?php $render_action( $review, 'unspam_review', __( 'Quitar spam', 'sultana-admin' ), 'package-check' ); ?>
+                                <?php $render_action( $review, 'approve_review', __( 'Aprobar', 'sultana-admin' ), 'package-check', 'sultana-admin-review-action--success' ); ?>
                             <?php endif; ?>
                             <?php if ( ! empty( $review['can_trash'] ) ) : ?>
                                 <?php $render_action( $review, 'trash_review', __( 'Papelera', 'sultana-admin' ), 'trash', 'sultana-admin-review-action--danger' ); ?>
                             <?php endif; ?>
                             <?php if ( ! empty( $review['can_restore'] ) ) : ?>
-                                <?php $render_action( $review, 'restore_review', __( 'Restaurar', 'sultana-admin' ), 'package-check' ); ?>
+                                <?php $render_action( $review, 'restore_review', __( 'Restaurar', 'sultana-admin' ), 'package-check', 'sultana-admin-review-action--success' ); ?>
                             <?php endif; ?>
                             <?php if ( ! empty( $review['can_delete'] ) && 'trash' === ( $review['status'] ?? '' ) ) : ?>
                                 <form method="post" action="<?php echo esc_url( $form_action ); ?>" onsubmit="return confirm('<?php echo esc_js( __( 'Eliminar esta reseña permanentemente?', 'sultana-admin' ) ); ?>');">
@@ -203,58 +179,6 @@ $render_action = static function ( array $review, string $action, string $label,
                                 </form>
                             <?php endif; ?>
                         </div>
-
-                        <?php if ( ! empty( $review['can_edit'] ) ) : ?>
-                            <form class="sultana-admin-review-edit-form" method="post" action="<?php echo esc_url( $form_action ); ?>">
-                                <input type="hidden" name="sultana_admin_action" value="update_review">
-                                <input type="hidden" name="review_id" value="<?php echo esc_attr( (string) $review_id ); ?>">
-                                <?php wp_nonce_field( \Sultana\Admin\Reviews\ReviewController::ACTION_NONCE_ACTION, 'sultana_admin_review_nonce' ); ?>
-                                <div class="sultana-admin-review-form-grid">
-                                    <label>
-                                        <?php esc_html_e( 'Nombre', 'sultana-admin' ); ?>
-                                        <input type="text" name="review_author" value="<?php echo esc_attr( (string) ( $review['author'] ?? '' ) ); ?>" required>
-                                    </label>
-                                    <label>
-                                        <?php esc_html_e( 'Email', 'sultana-admin' ); ?>
-                                        <input type="email" name="review_email" value="<?php echo esc_attr( (string) ( $review['email'] ?? '' ) ); ?>">
-                                    </label>
-                                    <label>
-                                        <?php esc_html_e( 'Calificacion', 'sultana-admin' ); ?>
-                                        <select name="review_rating" required>
-                                            <?php for ( $rating = 1; $rating <= 5; $rating++ ) : ?>
-                                                <option value="<?php echo esc_attr( (string) $rating ); ?>" <?php selected( absint( $review['rating'] ?? 0 ), $rating ); ?>>
-                                                    <?php echo esc_html( $rating_label( $rating ) ); ?>
-                                                </option>
-                                            <?php endfor; ?>
-                                        </select>
-                                    </label>
-                                </div>
-                                <label>
-                                    <?php esc_html_e( 'Contenido', 'sultana-admin' ); ?>
-                                    <textarea name="review_content" rows="4" required><?php echo esc_textarea( (string) ( $review['content'] ?? '' ) ); ?></textarea>
-                                </label>
-                                <button class="sultana-admin-text-action" type="submit">
-                                    <?php $render_icon( 'save' ); ?>
-                                    <?php esc_html_e( 'Guardar cambios', 'sultana-admin' ); ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
-
-                        <?php if ( ! empty( $review['can_reply'] ) ) : ?>
-                            <form class="sultana-admin-review-reply-form" method="post" action="<?php echo esc_url( $form_action ); ?>">
-                                <input type="hidden" name="sultana_admin_action" value="reply_review">
-                                <input type="hidden" name="review_id" value="<?php echo esc_attr( (string) $review_id ); ?>">
-                                <?php wp_nonce_field( \Sultana\Admin\Reviews\ReviewController::ACTION_NONCE_ACTION, 'sultana_admin_review_nonce' ); ?>
-                                <label>
-                                    <?php esc_html_e( 'Responder', 'sultana-admin' ); ?>
-                                    <textarea name="reply_content" rows="3" placeholder="<?php esc_attr_e( 'Escribe una respuesta publica...', 'sultana-admin' ); ?>"></textarea>
-                                </label>
-                                <button class="sultana-admin-secondary-action" type="submit">
-                                    <?php $render_icon( 'heart' ); ?>
-                                    <?php esc_html_e( 'Publicar respuesta', 'sultana-admin' ); ?>
-                                </button>
-                            </form>
-                        <?php endif; ?>
                     </div>
                 </article>
             <?php endforeach; ?>

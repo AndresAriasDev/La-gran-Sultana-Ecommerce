@@ -2,7 +2,6 @@
 
 namespace Sultana\Admin\Reviews;
 
-use Sultana\Admin\Core\Router;
 use WP_Comment;
 use WP_Comment_Query;
 
@@ -18,7 +17,6 @@ class ReviewService
         ''         => 'all',
         'pending'  => 'hold',
         'approved' => 'approve',
-        'spam'     => 'spam',
         'trash'    => 'trash',
     ];
 
@@ -28,7 +26,6 @@ class ReviewService
             ''         => __( 'Todas', 'sultana-admin' ),
             'pending'  => __( 'Pendientes', 'sultana-admin' ),
             'approved' => __( 'Aprobadas', 'sultana-admin' ),
-            'spam'     => __( 'Spam', 'sultana-admin' ),
             'trash'    => __( 'Papelera', 'sultana-admin' ),
         ];
     }
@@ -47,11 +44,11 @@ class ReviewService
         $page     = isset( $args['page'] ) ? max( 1, absint( $args['page'] ) ) : 1;
         $per_page = isset( $args['per_page'] ) ? max( 1, min( 50, absint( $args['per_page'] ) ) ) : self::PER_PAGE;
         $base     = [
-            'type'       => 'review',
-            'post_type'  => 'product',
-            'status'     => self::FILTER_STATUS_MAP[ $status ],
-            'orderby'    => 'comment_date_gmt',
-            'order'      => 'DESC',
+            'type'         => 'review',
+            'post_type'    => 'product',
+            'status'       => self::FILTER_STATUS_MAP[ $status ],
+            'orderby'      => 'comment_date_gmt',
+            'order'        => 'DESC',
             'hierarchical' => false,
         ];
 
@@ -83,7 +80,7 @@ class ReviewService
 
         return [
             'reviews'     => array_map( fn ( WP_Comment $comment ): array => $this->review_row( $comment, $product_titles ), $comments ),
-            'page'        => min( $page, $total_pages ),
+            'page'        => $page,
             'per_page'    => $per_page,
             'total'       => $total,
             'total_pages' => $total_pages,
@@ -93,21 +90,6 @@ class ReviewService
     public function approve_review( int $review_id ): array
     {
         return $this->set_status( $review_id, 'approve', __( 'Reseña aprobada correctamente.', 'sultana-admin' ) );
-    }
-
-    public function hold_review( int $review_id ): array
-    {
-        return $this->set_status( $review_id, 'hold', __( 'Reseña marcada como pendiente.', 'sultana-admin' ) );
-    }
-
-    public function spam_review( int $review_id ): array
-    {
-        return $this->call_comment_action( $review_id, 'wp_spam_comment', __( 'Reseña marcada como spam.', 'sultana-admin' ) );
-    }
-
-    public function unspam_review( int $review_id ): array
-    {
-        return $this->call_comment_action( $review_id, 'wp_unspam_comment', __( 'Reseña restaurada desde spam.', 'sultana-admin' ) );
     }
 
     public function trash_review( int $review_id ): array
@@ -144,107 +126,6 @@ class ReviewService
         return $this->success_result( __( 'Reseña eliminada permanentemente.', 'sultana-admin' ) );
     }
 
-    public function update_review( int $review_id, array $data ): array
-    {
-        $review = $this->get_product_review( $review_id );
-
-        if ( ! $review ) {
-            return $this->error_result( __( 'La reseña no existe.', 'sultana-admin' ) );
-        }
-
-        if ( ! $this->can_edit_review( $review ) ) {
-            return $this->error_result( __( 'No tienes permisos para editar esta reseña.', 'sultana-admin' ) );
-        }
-
-        $author  = trim( sanitize_text_field( (string) ( $data['author'] ?? '' ) ) );
-        $email   = sanitize_email( (string) ( $data['email'] ?? '' ) );
-        $content = trim( sanitize_textarea_field( (string) ( $data['content'] ?? '' ) ) );
-        $rating  = absint( $data['rating'] ?? 0 );
-        $errors  = [];
-
-        if ( '' === $author ) {
-            $errors[] = __( 'El nombre de la reseña es obligatorio.', 'sultana-admin' );
-        }
-
-        if ( '' !== $email && ! is_email( $email ) ) {
-            $errors[] = __( 'El email de la reseña no es válido.', 'sultana-admin' );
-        }
-
-        if ( '' === $content ) {
-            $errors[] = __( 'El contenido de la reseña es obligatorio.', 'sultana-admin' );
-        }
-
-        if ( $rating < 1 || $rating > 5 ) {
-            $errors[] = __( 'La calificación debe estar entre 1 y 5.', 'sultana-admin' );
-        }
-
-        if ( ! empty( $errors ) ) {
-            return $this->error_result( implode( ' ', $errors ) );
-        }
-
-        $updated = wp_update_comment(
-            [
-                'comment_ID'           => $review->comment_ID,
-                'comment_author'       => $author,
-                'comment_author_email' => $email,
-                'comment_content'      => $content,
-            ],
-            true
-        );
-
-        if ( is_wp_error( $updated ) || false === $updated ) {
-            return $this->error_result( __( 'No se pudo actualizar la reseña.', 'sultana-admin' ) );
-        }
-
-        update_comment_meta( $review->comment_ID, 'rating', $rating );
-        $this->clear_product_review_cache( absint( $review->comment_post_ID ) );
-
-        return $this->success_result( __( 'Reseña actualizada correctamente.', 'sultana-admin' ) );
-    }
-
-    public function reply_review( int $review_id, string $content ): array
-    {
-        $review = $this->get_product_review( $review_id );
-
-        if ( ! $review ) {
-            return $this->error_result( __( 'La reseña no existe.', 'sultana-admin' ) );
-        }
-
-        if ( ! $this->can_moderate_reviews() ) {
-            return $this->error_result( __( 'No tienes permisos para responder reseñas.', 'sultana-admin' ) );
-        }
-
-        $content = trim( sanitize_textarea_field( $content ) );
-
-        if ( '' === $content ) {
-            return $this->error_result( __( 'La respuesta no puede estar vacía.', 'sultana-admin' ) );
-        }
-
-        $user       = wp_get_current_user();
-        $comment_id = wp_insert_comment(
-            [
-                'comment_post_ID'      => absint( $review->comment_post_ID ),
-                'comment_parent'       => absint( $review->comment_ID ),
-                'comment_author'       => $user->display_name ?: $user->user_login,
-                'comment_author_email' => $user->user_email,
-                'comment_content'      => $content,
-                'comment_type'         => 'comment',
-                'comment_approved'     => 1,
-                'user_id'              => absint( $user->ID ),
-                'comment_date'         => current_time( 'mysql' ),
-                'comment_date_gmt'     => current_time( 'mysql', true ),
-            ]
-        );
-
-        if ( ! $comment_id ) {
-            return $this->error_result( __( 'No se pudo guardar la respuesta.', 'sultana-admin' ) );
-        }
-
-        $this->clear_product_review_cache( absint( $review->comment_post_ID ) );
-
-        return $this->success_result( __( 'Respuesta publicada correctamente.', 'sultana-admin' ) );
-    }
-
     private function review_row( WP_Comment $comment, array $product_titles ): array
     {
         $review_id     = absint( $comment->comment_ID );
@@ -254,27 +135,20 @@ class ReviewService
         $product_title = $product_titles[ $product_id ] ?? __( 'Producto eliminado', 'sultana-admin' );
 
         return [
-            'id'             => $review_id,
-            'product_id'     => $product_id,
-            'product_title'  => $product_title,
-            'product_url'    => add_query_arg( 'product_id', $product_id, Router::products_url() ),
-            'author'         => (string) $comment->comment_author,
-            'email'          => (string) $comment->comment_author_email,
-            'content'        => (string) $comment->comment_content,
-            'excerpt'        => wp_trim_words( wp_strip_all_tags( (string) $comment->comment_content ), 20, '...' ),
-            'rating'         => $rating,
-            'date'           => $this->format_comment_date( $comment ),
-            'status'         => $status,
-            'status_label'   => $this->status_label( $status ),
-            'can_approve'    => $this->can_moderate_reviews() && 'approved' !== $status,
-            'can_hold'       => $this->can_moderate_reviews() && 'pending' !== $status && ! in_array( $status, [ 'spam', 'trash' ], true ),
-            'can_spam'       => $this->can_moderate_reviews() && 'spam' !== $status && 'trash' !== $status,
-            'can_unspam'     => $this->can_moderate_reviews() && 'spam' === $status,
-            'can_trash'      => $this->can_moderate_reviews() && 'trash' !== $status,
-            'can_restore'    => $this->can_moderate_reviews() && 'trash' === $status,
-            'can_delete'     => $this->can_delete_review( $comment ),
-            'can_edit'       => $this->can_edit_review( $comment ),
-            'can_reply'      => $this->can_moderate_reviews(),
+            'id'            => $review_id,
+            'product_id'    => $product_id,
+            'product_title' => $product_title,
+            'author'        => (string) $comment->comment_author,
+            'email'         => (string) $comment->comment_author_email,
+            'content'       => (string) $comment->comment_content,
+            'rating'        => $rating,
+            'date'          => $this->format_comment_date( $comment ),
+            'status'        => $status,
+            'status_label'  => $this->status_label( $status ),
+            'can_approve'   => $this->can_moderate_reviews() && 'pending' === $status,
+            'can_trash'     => $this->can_moderate_reviews() && 'trash' !== $status,
+            'can_restore'   => $this->can_moderate_reviews() && 'trash' === $status,
+            'can_delete'    => $this->can_delete_review( $comment ),
         ];
     }
 
@@ -394,10 +268,6 @@ class ReviewService
             return 'pending';
         }
 
-        if ( 'spam' === $approved ) {
-            return 'spam';
-        }
-
         if ( 'trash' === $approved ) {
             return 'trash';
         }
@@ -410,7 +280,6 @@ class ReviewService
         $labels = [
             'approved' => __( 'Aprobada', 'sultana-admin' ),
             'pending'  => __( 'Pendiente', 'sultana-admin' ),
-            'spam'     => __( 'Spam', 'sultana-admin' ),
             'trash'    => __( 'Papelera', 'sultana-admin' ),
         ];
 
@@ -420,11 +289,6 @@ class ReviewService
     private function can_moderate_reviews(): bool
     {
         return current_user_can( 'moderate_comments' );
-    }
-
-    private function can_edit_review( WP_Comment $review ): bool
-    {
-        return current_user_can( 'edit_comment', $review->comment_ID ) || $this->can_moderate_reviews();
     }
 
     private function can_delete_review( WP_Comment $review ): bool

@@ -90,38 +90,17 @@ class ReviewController
         switch ( $action ) {
             case 'approve_review':
                 return $service->approve_review( $review_id );
-            case 'hold_review':
-                return $service->hold_review( $review_id );
-            case 'spam_review':
-                return $service->spam_review( $review_id );
-            case 'unspam_review':
-                return $service->unspam_review( $review_id );
             case 'trash_review':
                 return $service->trash_review( $review_id );
             case 'restore_review':
                 return $service->restore_review( $review_id );
             case 'delete_review':
                 return $service->delete_review( $review_id );
-            case 'update_review':
-                return $service->update_review( $review_id, self::posted_review_data() );
-            case 'reply_review':
-                $content = isset( $_POST['reply_content'] ) ? sanitize_textarea_field( wp_unslash( $_POST['reply_content'] ) ) : '';
-                return $service->reply_review( $review_id, $content );
         }
 
         return [
             'success' => false,
             'errors'  => [ __( 'Accion de reseña no valida.', 'sultana-admin' ) ],
-        ];
-    }
-
-    private static function posted_review_data(): array
-    {
-        return [
-            'author'  => isset( $_POST['review_author'] ) ? sanitize_text_field( wp_unslash( $_POST['review_author'] ) ) : '',
-            'email'   => isset( $_POST['review_email'] ) ? sanitize_email( wp_unslash( $_POST['review_email'] ) ) : '',
-            'content' => isset( $_POST['review_content'] ) ? sanitize_textarea_field( wp_unslash( $_POST['review_content'] ) ) : '',
-            'rating'  => isset( $_POST['review_rating'] ) ? absint( wp_unslash( $_POST['review_rating'] ) ) : 0,
         ];
     }
 
