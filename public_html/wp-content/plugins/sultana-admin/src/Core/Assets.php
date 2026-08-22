@@ -61,7 +61,7 @@ class Assets
         self::enqueue_style( 'admin' );
         self::enqueue_style( 'components', [ 'sultana-admin' ] );
 
-        if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'statistics' ], true ) ) {
+        if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'statistics' ], true ) ) {
             self::enqueue_style( 'shell', [ 'sultana-admin-components' ] );
         }
 
@@ -81,11 +81,15 @@ class Assets
             self::enqueue_style( 'customers', [ 'sultana-admin-shell' ] );
         }
 
+        if ( in_array( $route, [ 'coupons', 'coupon_new', 'coupon_edit' ], true ) ) {
+            self::enqueue_style( 'coupons', [ 'sultana-admin-shell' ] );
+        }
+
         if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
             self::enqueue_style( 'statistics', [ 'sultana-admin-shell' ] );
         }
 
-        if ( in_array( $route, [ 'orders', 'customers' ], true ) ) {
+        if ( in_array( $route, [ 'orders', 'customers', 'coupons' ], true ) ) {
             self::enqueue_product_list();
         }
 

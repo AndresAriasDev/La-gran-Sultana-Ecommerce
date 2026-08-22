@@ -28,6 +28,7 @@ $sultana_admin_nav_icons = [
     'products'  => 'box',
     'orders'    => 'shelving-unit',
     'customers' => 'user',
+    'coupons'   => 'tickets',
 ];
 
 ?>
@@ -53,6 +54,9 @@ $sultana_admin_nav_icons = [
 
             <nav class="sultana-admin-nav">
                 <?php foreach ( $nav_items as $route_key => $item ) : ?>
+                    <?php if ( ! empty( $item['mobile_only'] ) ) : ?>
+                        <?php continue; ?>
+                    <?php endif; ?>
                     <a
                         href="<?php echo esc_url( $item['url'] ); ?>"
                         class="<?php echo esc_attr( 'sultana-admin-nav__link' . ( $active_route === $route_key ? ' is-active' : '' ) ); ?>"
@@ -102,6 +106,9 @@ $sultana_admin_nav_icons = [
 
         <nav class="sultana-admin-mobile-nav" aria-label="<?php esc_attr_e( 'Navegación móvil principal', 'sultana-admin' ); ?>">
             <?php foreach ( $nav_items as $route_key => $item ) : ?>
+                <?php if ( ! empty( $item['desktop_only'] ) ) : ?>
+                    <?php continue; ?>
+                <?php endif; ?>
                 <a
                     href="<?php echo esc_url( $item['url'] ); ?>"
                     class="<?php echo esc_attr( 'sultana-admin-mobile-nav__link' . ( $active_route === $route_key ? ' is-active' : '' ) ); ?>"

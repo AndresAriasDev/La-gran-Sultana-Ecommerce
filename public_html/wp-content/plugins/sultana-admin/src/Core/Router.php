@@ -2,6 +2,7 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\Admin\Coupons\CouponController;
 use Sultana\Admin\Customers\CustomerController;
 use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
@@ -14,7 +15,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -28,6 +29,9 @@ class Router
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
         add_rewrite_rule( '^gestion/clientes/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=customer_view&sultana_admin_customer_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/clientes/?$', 'index.php?' . self::QUERY_VAR . '=customers', 'top' );
+        add_rewrite_rule( '^gestion/cupones/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=coupon_new', 'top' );
+        add_rewrite_rule( '^gestion/cupones/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=coupon_edit&sultana_admin_coupon_id=$matches[1]', 'top' );
+        add_rewrite_rule( '^gestion/cupones/?$', 'index.php?' . self::QUERY_VAR . '=coupons', 'top' );
         add_rewrite_rule( '^gestion/estadisticas/?$', 'index.php?' . self::QUERY_VAR . '=statistics', 'top' );
     }
 
@@ -37,6 +41,7 @@ class Router
         $vars[] = 'sultana_admin_product_id';
         $vars[] = 'sultana_admin_order_id';
         $vars[] = 'sultana_admin_customer_id';
+        $vars[] = 'sultana_admin_coupon_id';
 
         return $vars;
     }
@@ -88,6 +93,11 @@ class Router
         }
 
         if ( in_array( $route, [ 'dashboard', 'orders', 'order_view', 'customers', 'customer_view' ], true ) && ! current_user_can( Capabilities::READ_ORDERS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( in_array( $route, [ 'coupons', 'coupon_new', 'coupon_edit' ], true ) && ! current_user_can( Capabilities::EDIT_COUPONS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -146,6 +156,21 @@ class Router
         return home_url( '/gestion/clientes/' . absint( $customer_id ) . '/' );
     }
 
+    public static function coupons_url(): string
+    {
+        return home_url( '/gestion/cupones/' );
+    }
+
+    public static function new_coupon_url(): string
+    {
+        return home_url( '/gestion/cupones/nuevo/' );
+    }
+
+    public static function coupon_url( int $coupon_id ): string
+    {
+        return home_url( '/gestion/cupones/' . absint( $coupon_id ) . '/' );
+    }
+
     public static function statistics_url(): string
     {
         return self::dashboard_url();
@@ -177,6 +202,7 @@ class Router
         $active_route = in_array( $route, [ 'product_new', 'product_edit' ], true ) ? 'products' : $route;
         $active_route = 'order_view' === $active_route ? 'orders' : $active_route;
         $active_route = 'customer_view' === $active_route ? 'customers' : $active_route;
+        $active_route = in_array( $active_route, [ 'coupon_new', 'coupon_edit' ], true ) ? 'coupons' : $active_route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
@@ -212,6 +238,11 @@ class Router
             'customers' => [
                 'label' => __( 'Clientes', 'sultana-admin' ),
                 'url'   => self::customers_url(),
+            ],
+            'coupons' => [
+                'label' => __( 'Cupones', 'sultana-admin' ),
+                'url'   => self::coupons_url(),
+                'desktop_only' => true,
             ],
         ];
     }
@@ -259,6 +290,21 @@ class Router
                 'subtitle' => __( 'Cliente', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/customer-view.php',
             ],
+            'coupons' => [
+                'title'    => __( 'Cupones', 'sultana-admin' ),
+                'subtitle' => __( 'Cupones', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/coupons.php',
+            ],
+            'coupon_new' => [
+                'title'    => __( 'Nuevo cupon', 'sultana-admin' ),
+                'subtitle' => __( 'Cupones', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/coupon-form.php',
+            ],
+            'coupon_edit' => [
+                'title'    => __( 'Editar cupon', 'sultana-admin' ),
+                'subtitle' => __( 'Cupones', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/coupon-form.php',
+            ],
             'statistics' => [
                 'title'    => __( 'Estadisticas', 'sultana-admin' ),
                 'subtitle' => __( 'Estadisticas', 'sultana-admin' ),
@@ -299,6 +345,18 @@ class Router
             return CustomerController::prepare_view_screen( self::current_customer_id() );
         }
 
+        if ( 'coupons' === $route ) {
+            return CouponController::prepare_list_screen();
+        }
+
+        if ( 'coupon_new' === $route ) {
+            return CouponController::prepare_create_screen();
+        }
+
+        if ( 'coupon_edit' === $route ) {
+            return CouponController::prepare_edit_screen( self::current_coupon_id() );
+        }
+
         if ( in_array( $route, [ 'dashboard', 'statistics' ], true ) ) {
             return StatisticsController::prepare_screen();
         }
@@ -332,6 +390,11 @@ class Router
     private static function current_customer_id(): int
     {
         return absint( get_query_var( 'sultana_admin_customer_id' ) );
+    }
+
+    private static function current_coupon_id(): int
+    {
+        return absint( get_query_var( 'sultana_admin_coupon_id' ) );
     }
 
     private static function handle_login_request(): void

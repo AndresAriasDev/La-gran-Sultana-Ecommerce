@@ -25,6 +25,14 @@ class Capabilities
     public const EDIT_PRIVATE_ORDERS_CAPABILITY = 'edit_private_shop_orders';
     public const EDIT_PUBLISHED_ORDERS_CAPABILITY = 'edit_published_shop_orders';
     public const READ_PRIVATE_ORDERS_CAPABILITY = 'read_private_shop_orders';
+    public const EDIT_COUPONS_CAPABILITY = 'edit_shop_coupons';
+    public const EDIT_OTHERS_COUPONS_CAPABILITY = 'edit_others_shop_coupons';
+    public const EDIT_PUBLISHED_COUPONS_CAPABILITY = 'edit_published_shop_coupons';
+    public const DELETE_COUPONS_CAPABILITY = 'delete_shop_coupons';
+    public const DELETE_OTHERS_COUPONS_CAPABILITY = 'delete_others_shop_coupons';
+    public const DELETE_PUBLISHED_COUPONS_CAPABILITY = 'delete_published_shop_coupons';
+    public const PUBLISH_COUPONS_CAPABILITY = 'publish_shop_coupons';
+    public const READ_PRIVATE_COUPONS_CAPABILITY = 'read_private_shop_coupons';
 
     public static function activate(): void
     {
@@ -51,6 +59,14 @@ class Capabilities
             self::EDIT_PRIVATE_ORDERS_CAPABILITY => true,
             self::EDIT_PUBLISHED_ORDERS_CAPABILITY => true,
             self::READ_PRIVATE_ORDERS_CAPABILITY => true,
+            self::EDIT_COUPONS_CAPABILITY => true,
+            self::EDIT_OTHERS_COUPONS_CAPABILITY => true,
+            self::EDIT_PUBLISHED_COUPONS_CAPABILITY => true,
+            self::DELETE_COUPONS_CAPABILITY => true,
+            self::DELETE_OTHERS_COUPONS_CAPABILITY => true,
+            self::DELETE_PUBLISHED_COUPONS_CAPABILITY => true,
+            self::PUBLISH_COUPONS_CAPABILITY => true,
+            self::READ_PRIVATE_COUPONS_CAPABILITY => true,
         ];
 
         $role = get_role( self::ROLE );
