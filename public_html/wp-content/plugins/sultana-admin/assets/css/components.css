@@ -194,8 +194,8 @@ button:active,
 }
 
 .sultana-admin-login {
-    display: grid;
-    align-items: start;
+    display: flex;
+    align-items: center;
     width: min(100% - 32px, 420px);
     min-height: 100vh;
     min-height: 100dvh;
