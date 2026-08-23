@@ -159,24 +159,10 @@ class StatisticsService
         $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, CustomerMetrics::VALID_ORDER_STATUSES );
 
         try {
-            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-                $table = $wpdb->prefix . 'wc_order_stats';
-
-                return $this->order_totals_from_sql(
-                    "SELECT COUNT(order_id) AS orders_count, COALESCE(SUM(total_sales), 0) AS sales_total
-                    FROM {$table}
-                    WHERE status IN (%s)
-                    AND date_created_gmt >= %s
-                    AND date_created_gmt < %s",
-                    $statuses,
-                    $start,
-                    $end
-                );
-            }
-
             if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
                 $table = $wpdb->prefix . 'wc_orders';
 
+                // HPOS is authoritative when enabled; WooCommerce Analytics lookup tables can lag behind it.
                 return $this->order_totals_from_sql(
                     "SELECT COUNT(id) AS orders_count, COALESCE(SUM(total_amount), 0) AS sales_total
                     FROM {$table}
@@ -348,23 +334,6 @@ class StatisticsService
         $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, CustomerMetrics::VALID_ORDER_STATUSES );
 
         try {
-            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-                $table = $wpdb->prefix . 'wc_order_stats';
-
-                return $this->bucketed_sales_from_sql(
-                    "SELECT FLOOR((UNIX_TIMESTAMP(date_created_gmt) - UNIX_TIMESTAMP(%s)) / %d) AS bucket_index, COALESCE(SUM(total_sales), 0) AS sales_total
-                    FROM {$table}
-                    WHERE status IN (%s)
-                    AND date_created_gmt >= %s
-                    AND date_created_gmt < %s
-                    GROUP BY bucket_index",
-                    $statuses,
-                    $start,
-                    $end,
-                    $bucket_seconds
-                );
-            }
-
             if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
                 $table = $wpdb->prefix . 'wc_orders';
 
@@ -467,40 +436,78 @@ class StatisticsService
     {
         global $wpdb;
 
-        $lookup_table = $wpdb->prefix . 'wc_order_product_lookup';
-        $orders_table = $wpdb->prefix . 'wc_order_stats';
+        $items_table = $wpdb->prefix . 'woocommerce_order_items';
+        $meta_table  = $wpdb->prefix . 'woocommerce_order_itemmeta';
 
-        if ( ! $this->table_exists( $lookup_table ) || ! $this->table_exists( $orders_table ) ) {
+        if ( ! $this->table_exists( $items_table ) || ! $this->table_exists( $meta_table ) ) {
             return [];
         }
 
         $statuses            = array_map( static fn ( string $status ): string => 'wc-' . $status, CustomerMetrics::VALID_ORDER_STATUSES );
         $status_placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
-        $sql                 = $wpdb->prepare(
-            "SELECT
-                CASE
-                    WHEN variation_post.post_parent > 0 THEN variation_post.post_parent
-                    WHEN product_post.post_parent > 0 THEN product_post.post_parent
-                    ELSE lookup.product_id
-                END AS product_id,
-                COALESCE(SUM(lookup.product_qty), 0) AS units_sold,
-                COALESCE(SUM(lookup.product_net_revenue), 0) AS revenue
-            FROM {$lookup_table} lookup
-            INNER JOIN {$orders_table} stats ON stats.order_id = lookup.order_id
-            LEFT JOIN {$wpdb->posts} product_post ON product_post.ID = lookup.product_id
-            LEFT JOIN {$wpdb->posts} variation_post ON variation_post.ID = lookup.variation_id
-            WHERE lookup.product_id > 0
-            AND stats.status IN ({$status_placeholders})
-            AND stats.date_created_gmt >= %s
-            AND stats.date_created_gmt < %s
-            GROUP BY product_id
-            ORDER BY units_sold DESC, revenue DESC
-            LIMIT 5",
-            array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
-        );
-        $rows                = $wpdb->get_results( $sql, ARRAY_A );
 
-        if ( empty( $rows ) || ! function_exists( 'wc_get_products' ) ) {
+        if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
+            $orders_table = $wpdb->prefix . 'wc_orders';
+            $sql          = $wpdb->prepare(
+                "SELECT
+                    CASE
+                        WHEN variation_post.post_parent > 0 THEN variation_post.post_parent
+                        WHEN product_post.post_parent > 0 THEN product_post.post_parent
+                        ELSE product_meta.meta_value + 0
+                    END AS product_id,
+                    COALESCE(SUM(qty_meta.meta_value + 0), 0) AS units_sold,
+                    COALESCE(SUM(line_total_meta.meta_value + 0), 0) AS revenue
+                FROM {$orders_table} orders
+                INNER JOIN {$items_table} items ON items.order_id = orders.id AND items.order_item_type = 'line_item'
+                INNER JOIN {$meta_table} product_meta ON product_meta.order_item_id = items.order_item_id AND product_meta.meta_key = '_product_id'
+                LEFT JOIN {$meta_table} variation_meta ON variation_meta.order_item_id = items.order_item_id AND variation_meta.meta_key = '_variation_id'
+                LEFT JOIN {$meta_table} qty_meta ON qty_meta.order_item_id = items.order_item_id AND qty_meta.meta_key = '_qty'
+                LEFT JOIN {$meta_table} line_total_meta ON line_total_meta.order_item_id = items.order_item_id AND line_total_meta.meta_key = '_line_total'
+                LEFT JOIN {$wpdb->posts} product_post ON product_post.ID = product_meta.meta_value + 0
+                LEFT JOIN {$wpdb->posts} variation_post ON variation_post.ID = variation_meta.meta_value + 0
+                WHERE orders.type = 'shop_order'
+                AND orders.status IN ({$status_placeholders})
+                AND orders.date_created_gmt >= %s
+                AND orders.date_created_gmt < %s
+                AND product_meta.meta_value + 0 > 0
+                GROUP BY product_id
+                ORDER BY units_sold DESC, revenue DESC
+                LIMIT 5",
+                array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+            );
+        } else {
+            $sql = $wpdb->prepare(
+                "SELECT
+                    CASE
+                        WHEN variation_post.post_parent > 0 THEN variation_post.post_parent
+                        WHEN product_post.post_parent > 0 THEN product_post.post_parent
+                        ELSE product_meta.meta_value + 0
+                    END AS product_id,
+                    COALESCE(SUM(qty_meta.meta_value + 0), 0) AS units_sold,
+                    COALESCE(SUM(line_total_meta.meta_value + 0), 0) AS revenue
+                FROM {$wpdb->posts} orders
+                INNER JOIN {$items_table} items ON items.order_id = orders.ID AND items.order_item_type = 'line_item'
+                INNER JOIN {$meta_table} product_meta ON product_meta.order_item_id = items.order_item_id AND product_meta.meta_key = '_product_id'
+                LEFT JOIN {$meta_table} variation_meta ON variation_meta.order_item_id = items.order_item_id AND variation_meta.meta_key = '_variation_id'
+                LEFT JOIN {$meta_table} qty_meta ON qty_meta.order_item_id = items.order_item_id AND qty_meta.meta_key = '_qty'
+                LEFT JOIN {$meta_table} line_total_meta ON line_total_meta.order_item_id = items.order_item_id AND line_total_meta.meta_key = '_line_total'
+                LEFT JOIN {$wpdb->posts} product_post ON product_post.ID = product_meta.meta_value + 0
+                LEFT JOIN {$wpdb->posts} variation_post ON variation_post.ID = variation_meta.meta_value + 0
+                WHERE orders.post_type = 'shop_order'
+                AND orders.post_status IN ({$status_placeholders})
+                AND orders.post_date_gmt >= %s
+                AND orders.post_date_gmt < %s
+                AND product_meta.meta_value + 0 > 0
+                GROUP BY product_id
+                ORDER BY units_sold DESC, revenue DESC
+                LIMIT 5",
+                array_merge( $statuses, [ $this->mysql_gmt( $start ), $this->mysql_gmt( $end ) ] )
+            );
+        }
+
+        $rows = $wpdb->get_results( $sql, ARRAY_A );
+
+        if ( empty( $rows ) || ! function_exists( 'wc_get_product' ) ) {
             return [];
         }
 
@@ -603,22 +610,6 @@ class StatisticsService
         $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, self::OPERATIONAL_ORDER_STATUSES );
 
         try {
-            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-                $table = $wpdb->prefix . 'wc_order_stats';
-
-                return $this->order_status_rows_from_sql(
-                    "SELECT status, COUNT(order_id) AS orders_count
-                    FROM {$table}
-                    WHERE status IN (%s)
-                    AND date_created_gmt >= %s
-                    AND date_created_gmt < %s
-                    GROUP BY status",
-                    $statuses,
-                    $start,
-                    $end
-                );
-            }
-
             if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
                 $table = $wpdb->prefix . 'wc_orders';
 
@@ -740,31 +731,6 @@ class StatisticsService
         $statuses = array_map( static fn ( string $status ): string => 'wc-' . $status, CustomerMetrics::VALID_ORDER_STATUSES );
 
         try {
-            if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-                $table          = $wpdb->prefix . 'wc_order_stats';
-                $customer_table = $wpdb->prefix . 'wc_customer_lookup';
-
-                if ( ! $this->table_exists( $customer_table ) ) {
-                    return [];
-                }
-
-                return $this->best_customer_rows_from_sql(
-                    "SELECT customer.user_id AS customer_id, COUNT(stats.order_id) AS orders_count, COALESCE(SUM(stats.total_sales), 0) AS sales_total
-                    FROM {$table} stats
-                    INNER JOIN {$customer_table} customer ON customer.customer_id = stats.customer_id
-                    WHERE customer.user_id > 0
-                    AND stats.status IN (%s)
-                    AND stats.date_created_gmt >= %s
-                    AND stats.date_created_gmt < %s
-                    GROUP BY customer.user_id
-                    ORDER BY sales_total DESC, orders_count DESC
-                    LIMIT 5",
-                    $statuses,
-                    $start,
-                    $end
-                );
-            }
-
             if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
                 $table = $wpdb->prefix . 'wc_orders';
 
@@ -867,10 +833,6 @@ class StatisticsService
     {
         global $wpdb;
 
-        if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-            return 'woocommerce_lookup:wc_order_stats';
-        }
-
         if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
             return 'woocommerce_hpos:wc_orders';
         }
@@ -882,8 +844,12 @@ class StatisticsService
     {
         global $wpdb;
 
-        if ( $this->table_exists( $wpdb->prefix . 'wc_order_product_lookup' ) && $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) ) {
-            return 'woocommerce_lookup:wc_order_product_lookup+wc_order_stats';
+        if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) && $this->table_exists( $wpdb->prefix . 'woocommerce_order_items' ) && $this->table_exists( $wpdb->prefix . 'woocommerce_order_itemmeta' ) ) {
+            return 'woocommerce_hpos:wc_orders+woocommerce_order_items+woocommerce_order_itemmeta';
+        }
+
+        if ( $this->table_exists( $wpdb->prefix . 'woocommerce_order_items' ) && $this->table_exists( $wpdb->prefix . 'woocommerce_order_itemmeta' ) ) {
+            return 'wordpress_legacy:posts+woocommerce_order_items+woocommerce_order_itemmeta';
         }
 
         return 'unavailable';
@@ -892,10 +858,6 @@ class StatisticsService
     private function customer_rank_data_source(): string
     {
         global $wpdb;
-
-        if ( $this->table_exists( $wpdb->prefix . 'wc_order_stats' ) && $this->table_exists( $wpdb->prefix . 'wc_customer_lookup' ) ) {
-            return 'woocommerce_lookup:wc_order_stats+wc_customer_lookup+wp_users';
-        }
 
         if ( $this->uses_hpos() && $this->table_exists( $wpdb->prefix . 'wc_orders' ) ) {
             return 'woocommerce_hpos:wc_orders+wp_users';
