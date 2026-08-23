@@ -2,6 +2,8 @@
 
 namespace Sultana\Admin\Core;
 
+use Sultana\CommerceCore\Modules\Emails\EmailRenderer;
+
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
@@ -232,13 +234,8 @@ class Auth
             __( 'Restablece tu acceso - %s', 'sultana-admin' ),
             $site_name
         );
-        $defaults['message'] = sprintf(
-            /* translators: 1: site name, 2: reset URL. */
-            __( "Recibimos una solicitud para restablecer tu acceso a Sultana Admin en %1\$s.\n\nPara crear una nueva contrasena, abre este enlace:\n\n%2\$s\n\nSi no solicitaste este cambio, puedes ignorar este correo.", 'sultana-admin' ),
-            $site_name,
-            $reset_url
-        );
-        $defaults['headers'] = [ 'Content-Type: text/plain; charset=UTF-8' ];
+        $defaults['message'] = self::admin_reset_email_body( $reset_url, $user_data );
+        $defaults['headers'] = EmailRenderer::html_headers( $defaults['headers'] ?? [] );
 
         return $defaults;
     }
@@ -287,6 +284,71 @@ class Auth
         ];
 
         return (bool) array_intersect( $expected_codes, $error->get_error_codes() );
+    }
+
+    private static function admin_reset_email_body( string $reset_url, \WP_User $user ): string
+    {
+        $name = trim( (string) $user->display_name );
+
+        if ( '' === $name ) {
+            $name = (string) $user->user_login;
+        }
+
+        ob_start();
+        ?>
+        <p style="margin:0 0 18px;color:#62566a;font-size:15px;line-height:1.6;">
+            <?php
+            echo esc_html(
+                sprintf(
+                    /* translators: %s: user display name. */
+                    __( 'Hola %s,', 'sultana-admin' ),
+                    $name
+                )
+            );
+            ?>
+        </p>
+        <p style="margin:0 0 22px;color:#62566a;font-size:15px;line-height:1.6;">
+            <?php esc_html_e( 'Recibimos una solicitud para restablecer la contraseña de tu acceso administrativo a La Gran Sultana.', 'sultana-admin' ); ?>
+        </p>
+        <?php
+
+        $content_html = (string) ob_get_clean();
+
+        ob_start();
+        ?>
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;background:#fff8fb;border:1px solid #f5deea;border-radius:5px;margin:0 0 18px;">
+            <tr>
+                <td style="padding:14px 16px;color:#62566a;font-size:13px;line-height:1.55;">
+                    <?php esc_html_e( 'Este enlace es personal y te permitirá crear una nueva contraseña. Si no solicitaste este cambio, puedes ignorar este correo.', 'sultana-admin' ); ?>
+                </td>
+            </tr>
+        </table>
+        <p style="margin:0;color:#8a7b86;font-size:12px;line-height:1.55;">
+            <?php esc_html_e( 'Si el botón no funciona, copia y pega este enlace en tu navegador:', 'sultana-admin' ); ?>
+        </p>
+        <p style="margin:6px 0 0;color:#8a7b86;font-size:12px;line-height:1.55;word-break:break-all;overflow-wrap:anywhere;">
+            <a href="<?php echo esc_url( $reset_url ); ?>" style="color:#8a7b86;text-decoration:underline;">
+                <?php echo esc_html( $reset_url ); ?>
+            </a>
+        </p>
+        <?php
+
+        $after_button_html = (string) ob_get_clean();
+
+        return EmailRenderer::render(
+            [
+                'title'             => __( 'Restablece tu contraseña', 'sultana-admin' ),
+                'eyebrow'           => __( 'Restablecer acceso', 'sultana-admin' ),
+                'content_html'      => $content_html,
+                'after_button_html' => $after_button_html,
+                'footer_text'       => __( 'La Gran Sultana - Granada, Nicaragua', 'sultana-admin' ),
+                'button'            => [
+                    'label' => __( 'Restablecer contraseña', 'sultana-admin' ),
+                    'url'   => $reset_url,
+                    'align' => 'left',
+                ],
+            ]
+        );
     }
 
     private static function invalid_password_reset_context( string $error_code ): array
