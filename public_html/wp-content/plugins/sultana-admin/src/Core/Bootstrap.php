@@ -14,6 +14,7 @@ class Bootstrap
     {
         add_action( 'init', [ Capabilities::class, 'ensure_role_capabilities' ], 5 );
         add_action( 'init', [ Router::class, 'register_rewrite_rules' ] );
+        add_action( 'init', [ self::class, 'maybe_flush_rewrite_rules' ], 20 );
         add_filter( 'query_vars', [ Router::class, 'register_query_vars' ] );
         add_action( 'template_redirect', [ Router::class, 'handle_request' ], 0 );
         add_action( 'wp_enqueue_scripts', [ Assets::class, 'dequeue_frontend_assets' ], 1000 );
@@ -36,6 +37,20 @@ class Bootstrap
         $status = self::dependencies_status();
 
         return ! in_array( false, $status, true );
+    }
+
+    public static function maybe_flush_rewrite_rules(): void
+    {
+        $option_key = 'sultana_admin_rewrite_rules_version';
+        $version    = ( defined( 'SULTANA_ADMIN_VERSION' ) ? SULTANA_ADMIN_VERSION : '1' ) . '-auth-reset-v1';
+
+        if ( get_option( $option_key ) === $version ) {
+            return;
+        }
+
+        Router::register_rewrite_rules();
+        flush_rewrite_rules();
+        update_option( $option_key, $version, false );
     }
 
     public static function redirect_store_managers_from_wp_admin(): void

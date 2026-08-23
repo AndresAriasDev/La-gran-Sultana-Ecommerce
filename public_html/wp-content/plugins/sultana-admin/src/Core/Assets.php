@@ -66,7 +66,7 @@ class Assets
             self::enqueue_shell();
         }
 
-        if ( 'login' === $route ) {
+        if ( in_array( $route, [ 'login', 'password_request', 'password_reset' ], true ) ) {
             self::enqueue_login();
         }
 

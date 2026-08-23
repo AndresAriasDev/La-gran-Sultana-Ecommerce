@@ -194,8 +194,8 @@ button:active,
 }
 
 .sultana-admin-login {
-    display: flex;
-    align-items: center;
+    display: grid;
+    place-items: center;
     width: min(100% - 32px, 420px);
     min-height: 100vh;
     min-height: 100dvh;
@@ -217,6 +217,13 @@ button:active,
 .sultana-admin-login form {
     gap: var(--sultana-admin-space-5);
     margin-top: var(--sultana-admin-space-7);
+}
+
+.sultana-admin-login .sultana-admin-login__intro {
+    margin-top: var(--sultana-admin-space-3);
+    color: var(--sultana-admin-text-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    line-height: var(--sultana-admin-line-height-base);
 }
 
 .sultana-admin-login__field {
@@ -248,6 +255,11 @@ button:active,
     transition: border-color var(--sultana-admin-transition-fast), box-shadow var(--sultana-admin-transition-fast), background-color var(--sultana-admin-transition-fast);
 }
 
+.sultana-admin-login__field--password input[type="password"],
+.sultana-admin-login__field--password input[type="text"] {
+    padding-right: 76px;
+}
+
 .sultana-admin-login input[type="text"]:focus,
 .sultana-admin-login input[type="password"]:focus,
 .sultana-admin-login input[type="text"]:focus-visible,
@@ -262,6 +274,62 @@ button:active,
     -webkit-text-fill-color: var(--sultana-admin-text);
     box-shadow: 0 0 0 1000px var(--sultana-admin-surface) inset;
     transition: background-color 9999s ease-out;
+}
+
+.sultana-admin-login .sultana-admin-login__password-toggle {
+    position: absolute;
+    top: 50%;
+    right: var(--sultana-admin-space-2);
+    display: inline-grid;
+    place-items: center;
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border: 0;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: transparent;
+    color: var(--sultana-admin-primary);
+    box-shadow: none;
+    opacity: 0;
+    padding: 0;
+    pointer-events: none;
+    transform: translateY(-50%);
+    visibility: hidden;
+}
+
+.sultana-admin-login .sultana-admin-login__password-toggle:hover,
+.sultana-admin-login .sultana-admin-login__password-toggle:focus,
+.sultana-admin-login .sultana-admin-login__password-toggle:active {
+    background: transparent;
+    box-shadow: none;
+    color: var(--sultana-admin-primary-hover);
+}
+
+.sultana-admin-login .sultana-admin-login__password-toggle:focus-visible {
+    background: transparent;
+    box-shadow: none;
+    outline: 2px solid color-mix(in srgb, var(--sultana-admin-primary) 42%, transparent);
+    outline-offset: 2px;
+}
+
+.sultana-admin-login__field--password.has-value .sultana-admin-login__password-toggle {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+.sultana-admin-login__field--password input:-webkit-autofill + .sultana-admin-login__password-toggle {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+.sultana-admin-login__password-toggle-icon {
+    width: 22px;
+    height: 22px;
+    background: currentColor;
+    -webkit-mask: url("../icons/eye.svg") center / contain no-repeat;
+    mask: url("../icons/eye.svg") center / contain no-repeat;
 }
 
 .sultana-admin-login__remember {
@@ -321,9 +389,62 @@ button:active,
     opacity: 0;
 }
 
+.sultana-admin-login__submit.is-loading-with-text .sultana-admin-login__submit-text {
+    opacity: 1;
+}
+
 .sultana-admin-login__submit.is-loading .sultana-admin-login__spinner {
     opacity: 1;
     animation: sultana-admin-login-spin 720ms linear infinite;
+}
+
+.sultana-admin-login__submit.is-loading-with-text .sultana-admin-login__spinner {
+    position: static;
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.sultana-admin-login__primary-link,
+.sultana-admin-login__secondary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--sultana-admin-radius-md);
+    color: var(--sultana-admin-primary);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: var(--sultana-admin-line-height-control);
+    text-align: center;
+    text-decoration: none;
+}
+
+.sultana-admin-login__primary-link {
+    width: 100%;
+    min-height: 48px;
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+    padding: 11px 16px;
+}
+
+.sultana-admin-login__primary-link:hover,
+.sultana-admin-login__primary-link:focus-visible {
+    background: var(--sultana-admin-primary-hover);
+    color: var(--sultana-admin-primary-contrast);
+}
+
+.sultana-admin-login__panel > .sultana-admin-login__primary-link,
+.sultana-admin-login__panel > .sultana-admin-login__secondary-link {
+    margin-top: var(--sultana-admin-space-6);
+}
+
+.sultana-admin-login__secondary-link {
+    justify-self: center;
+    width: 100%;
+}
+
+.sultana-admin-login__secondary-link:hover,
+.sultana-admin-login__secondary-link:focus-visible {
+    color: var(--sultana-admin-primary-hover);
 }
 
 @keyframes sultana-admin-login-spin {

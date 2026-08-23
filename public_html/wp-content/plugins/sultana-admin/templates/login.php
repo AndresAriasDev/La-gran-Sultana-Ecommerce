@@ -34,11 +34,14 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <input id="sultana-admin-login-user" type="text" name="log" autocomplete="username" required>
                 </div>
 
-                <div class="sultana-admin-login__field">
+                <div class="sultana-admin-login__field sultana-admin-login__field--password">
                     <label for="sultana-admin-login-password">
                         <?php esc_html_e( 'Contraseña', 'sultana-admin' ); ?>
                     </label>
                     <input id="sultana-admin-login-password" type="password" name="pwd" autocomplete="current-password" required>
+                    <button class="sultana-admin-login__password-toggle" type="button" data-password-toggle aria-label="<?php esc_attr_e( 'Mostrar contraseña', 'sultana-admin' ); ?>">
+                        <span class="sultana-admin-login__password-toggle-icon" aria-hidden="true"></span>
+                    </button>
                 </div>
 
                 <label class="sultana-admin-login__remember">
@@ -50,6 +53,10 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <span class="sultana-admin-login__submit-text"><?php esc_html_e( 'Iniciar sesión', 'sultana-admin' ); ?></span>
                     <span class="sultana-admin-login__spinner" aria-hidden="true"></span>
                 </button>
+
+                <a class="sultana-admin-login__secondary-link" href="<?php echo esc_url( \Sultana\Admin\Core\Router::password_request_url() ); ?>">
+                    <?php esc_html_e( '¿Has olvidado tu contraseña?', 'sultana-admin' ); ?>
+                </a>
             </form>
         </section>
     </main>

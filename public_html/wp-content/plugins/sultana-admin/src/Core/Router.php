@@ -16,12 +16,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
         add_rewrite_rule( '^gestion/?$', 'index.php?' . self::QUERY_VAR . '=dashboard', 'top' );
         add_rewrite_rule( '^gestion/login/?$', 'index.php?' . self::QUERY_VAR . '=login', 'top' );
+        add_rewrite_rule( '^gestion/recuperar-contrasena/?$', 'index.php?' . self::QUERY_VAR . '=password_request', 'top' );
+        add_rewrite_rule( '^gestion/restablecer-contrasena/?$', 'index.php?' . self::QUERY_VAR . '=password_reset', 'top' );
         add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
@@ -67,6 +69,16 @@ class Router
 
         if ( 'login' === $route ) {
             self::handle_login_request();
+            exit;
+        }
+
+        if ( 'password_request' === $route ) {
+            self::handle_password_request();
+            exit;
+        }
+
+        if ( 'password_reset' === $route ) {
+            self::handle_password_reset();
             exit;
         }
 
@@ -126,6 +138,24 @@ class Router
     public static function logout_url(): string
     {
         return home_url( '/gestion/logout/' );
+    }
+
+    public static function password_request_url(): string
+    {
+        return home_url( '/gestion/recuperar-contrasena/' );
+    }
+
+    public static function password_reset_url( string $key, string $login ): string
+    {
+        return esc_url_raw(
+            add_query_arg(
+                [
+                    'key'   => $key,
+                    'login' => $login,
+                ],
+                home_url( '/gestion/restablecer-contrasena/' )
+            )
+        );
     }
 
     public static function products_url(): string
@@ -442,6 +472,48 @@ class Router
         Assets::enqueue( 'login' );
 
         require SULTANA_ADMIN_PATH . 'templates/login.php';
+    }
+
+    private static function handle_password_request(): void
+    {
+        if ( is_user_logged_in() && current_user_can( Capabilities::ACCESS_CAPABILITY ) ) {
+            wp_safe_redirect( self::dashboard_url() );
+            exit;
+        }
+
+        $reset_state = Auth::handle_password_reset_request();
+
+        self::render_password_request( $reset_state );
+    }
+
+    private static function render_password_request( array $reset_state ): void
+    {
+        status_header( 200 );
+        nocache_headers();
+        Assets::enqueue( 'password_request' );
+
+        require SULTANA_ADMIN_PATH . 'templates/password-request.php';
+    }
+
+    private static function handle_password_reset(): void
+    {
+        if ( is_user_logged_in() && current_user_can( Capabilities::ACCESS_CAPABILITY ) ) {
+            wp_safe_redirect( self::dashboard_url() );
+            exit;
+        }
+
+        $reset_context = Auth::handle_password_reset_completion();
+
+        self::render_password_reset( $reset_context );
+    }
+
+    private static function render_password_reset( array $reset_context ): void
+    {
+        status_header( 200 );
+        nocache_headers();
+        Assets::enqueue( 'password_reset' );
+
+        require SULTANA_ADMIN_PATH . 'templates/password-reset.php';
     }
 
     private static function render_forbidden(): void
