@@ -66,6 +66,10 @@ class Assets
             self::enqueue_shell();
         }
 
+        if ( 'login' === $route ) {
+            self::enqueue_login();
+        }
+
         if ( 'products' === $route ) {
             self::enqueue_style( 'products', [ 'sultana-admin-shell' ] );
         }
@@ -234,6 +238,20 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-product-list',
             SULTANA_ADMIN_URL . 'assets/js/product-list.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_login(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/login.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-login',
+            SULTANA_ADMIN_URL . 'assets/js/login.js',
             [],
             $js_version,
             true

@@ -439,7 +439,7 @@ class Router
     {
         status_header( 200 );
         nocache_headers();
-        Assets::enqueue();
+        Assets::enqueue( 'login' );
 
         require SULTANA_ADMIN_PATH . 'templates/login.php';
     }

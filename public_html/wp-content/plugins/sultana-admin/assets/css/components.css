@@ -193,6 +193,145 @@ button:active,
     background: var(--sultana-admin-primary-active);
 }
 
+.sultana-admin-login {
+    display: grid;
+    align-items: start;
+    width: min(100% - 32px, 420px);
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding: clamp(32px, 9dvh, 72px) 0;
+}
+
+.sultana-admin-login__panel {
+    width: 100%;
+    padding: var(--sultana-admin-space-8);
+}
+
+.sultana-admin-login h1 {
+    font-size: var(--sultana-admin-font-size-xl);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    letter-spacing: 0;
+}
+
+.sultana-admin-login form {
+    gap: var(--sultana-admin-space-5);
+    margin-top: var(--sultana-admin-space-7);
+}
+
+.sultana-admin-login__field {
+    position: relative;
+    display: grid;
+}
+
+.sultana-admin-login__field label {
+    position: absolute;
+    z-index: 1;
+    top: 0;
+    left: 12px;
+    transform: translateY(-50%);
+    max-width: calc(100% - 24px);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-text-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-medium);
+    line-height: var(--sultana-admin-line-height-control);
+    padding: 0 var(--sultana-admin-space-1);
+}
+
+.sultana-admin-login input[type="text"],
+.sultana-admin-login input[type="password"] {
+    min-height: 52px;
+    border-color: var(--sultana-admin-border-strong);
+    border-radius: var(--sultana-admin-radius-lg);
+    padding: 15px 14px 13px;
+    transition: border-color var(--sultana-admin-transition-fast), box-shadow var(--sultana-admin-transition-fast), background-color var(--sultana-admin-transition-fast);
+}
+
+.sultana-admin-login input[type="text"]:focus,
+.sultana-admin-login input[type="password"]:focus,
+.sultana-admin-login input[type="text"]:focus-visible,
+.sultana-admin-login input[type="password"]:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sultana-admin-primary) 18%, transparent);
+    outline: 0;
+}
+
+.sultana-admin-login input[type="text"]:-webkit-autofill,
+.sultana-admin-login input[type="password"]:-webkit-autofill {
+    -webkit-text-fill-color: var(--sultana-admin-text);
+    box-shadow: 0 0 0 1000px var(--sultana-admin-surface) inset;
+    transition: background-color 9999s ease-out;
+}
+
+.sultana-admin-login__remember {
+    gap: var(--sultana-admin-space-2);
+    min-height: auto;
+    color: var(--sultana-admin-text-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-medium);
+}
+
+.sultana-admin-login__remember input {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: var(--sultana-admin-primary);
+}
+
+.sultana-admin-login__error {
+    margin-top: var(--sultana-admin-space-5);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-medium);
+    line-height: var(--sultana-admin-line-height-base);
+}
+
+.sultana-admin-login__submit {
+    position: relative;
+    width: 100%;
+    min-height: 48px;
+    overflow: hidden;
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-login__submit:disabled {
+    cursor: progress;
+    opacity: 1;
+}
+
+.sultana-admin-login__submit:focus-visible {
+    outline: 0;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sultana-admin-primary) 28%, transparent);
+}
+
+.sultana-admin-login__spinner {
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 18px;
+    height: 18px;
+    margin: -9px 0 0 -9px;
+    border: 2px solid color-mix(in srgb, var(--sultana-admin-primary-contrast) 42%, transparent);
+    border-top-color: var(--sultana-admin-primary-contrast);
+    border-radius: 50%;
+    opacity: 0;
+    transform: rotate(0deg);
+}
+
+.sultana-admin-login__submit.is-loading .sultana-admin-login__submit-text {
+    opacity: 0;
+}
+
+.sultana-admin-login__submit.is-loading .sultana-admin-login__spinner {
+    opacity: 1;
+    animation: sultana-admin-login-spin 720ms linear infinite;
+}
+
+@keyframes sultana-admin-login-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .sultana-admin-button--primary {
     background: var(--sultana-admin-primary);
     color: var(--sultana-admin-primary-contrast);
@@ -871,16 +1010,16 @@ button:active,
 
 @media (max-width: 380px) {
     .sultana-admin-login {
-        width: min(100% - 20px, 440px);
-        margin: 20px auto;
+        width: min(100% - 24px, 420px);
+        margin: 0 auto;
+        padding: 24px 0;
     }
 
     .sultana-admin-login__panel {
-        padding: 20px;
+        padding: var(--sultana-admin-space-6);
     }
 
-    .sultana-admin-login h1,
-    .sultana-admin-content h1 {
+    .sultana-admin-login h1 {
         font-size: 24px;
     }
 
