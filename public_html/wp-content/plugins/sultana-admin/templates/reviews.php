@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -57,7 +57,7 @@ $render_action = static function ( array $review, string $action, string $label,
 };
 
 ?>
-<section class="sultana-admin-reviews" aria-label="<?php esc_attr_e( 'Reseñas', 'sultana-admin' ); ?>">
+<section class="sultana-admin-reviews" aria-label="<?php esc_attr_e( 'reseñas', 'sultana-admin' ); ?>">
     <?php if ( '' !== $notice ) : ?>
         <div class="sultana-admin-notice" role="status"><?php echo esc_html( $notice ); ?></div>
     <?php endif; ?>
@@ -73,8 +73,17 @@ $render_action = static function ( array $review, string $action, string $label,
         </div>
     <?php endif; ?>
 
-    <form class="sultana-admin-search sultana-admin-review-filters" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::reviews_url() ); ?>" role="search" data-applied-search="<?php echo esc_attr( $search ); ?>" data-clear-url="<?php echo esc_url( \Sultana\Admin\Core\Router::reviews_url() ); ?>" data-mobile-clear-only="true">
-        <label for="sultana-admin-review-search"><?php esc_html_e( 'Buscar reseñas', 'sultana-admin' ); ?></label>
+    <form class="sultana-admin-search sultana-admin-review-filters" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::reviews_url() ); ?>" role="search" data-review-search data-applied-search="<?php echo esc_attr( $search ); ?>" data-applied-status="<?php echo esc_attr( $status ); ?>" data-default-status="" data-clear-url="<?php echo esc_url( \Sultana\Admin\Core\Router::reviews_url() ); ?>">
+        <div class="sultana-admin-section-header sultana-admin-search__header">
+            <label for="sultana-admin-review-search"><?php esc_html_e( 'Buscar reseñas', 'sultana-admin' ); ?></label>
+            <select name="status" aria-label="<?php esc_attr_e( 'Filtrar por estado', 'sultana-admin' ); ?>">
+                <?php foreach ( $status_options as $status_key => $status_label ) : ?>
+                    <option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $status, $status_key ); ?>>
+                        <?php echo esc_html( $status_label ); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
         <div class="sultana-admin-search__controls sultana-admin-review-filters__controls">
             <input
                 id="sultana-admin-review-search"
@@ -83,16 +92,8 @@ $render_action = static function ( array $review, string $action, string $label,
                 value="<?php echo esc_attr( $search ); ?>"
                 placeholder="<?php esc_attr_e( 'Cliente, email o texto', 'sultana-admin' ); ?>"
             >
-            <select name="status" aria-label="<?php esc_attr_e( 'Filtrar por estado', 'sultana-admin' ); ?>">
-                <?php foreach ( $status_options as $status_key => $status_label ) : ?>
-                    <option value="<?php echo esc_attr( $status_key ); ?>" <?php selected( $status, $status_key ); ?>>
-                        <?php echo esc_html( $status_label ); ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <button class="sultana-admin-search__button" type="submit" aria-label="<?php esc_attr_e( 'Filtrar reseñas', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Filtrar reseñas', 'sultana-admin' ); ?>" data-search-label="<?php esc_attr_e( 'Buscar reseñas', 'sultana-admin' ); ?>" data-clear-label="<?php esc_attr_e( 'Limpiar busqueda', 'sultana-admin' ); ?>" data-search-icon="<?php echo esc_url( $icon_url( 'search' ) ); ?>" data-clear-icon="<?php echo esc_url( $icon_url( 'close' ) ); ?>" data-desktop-icon="<?php echo esc_url( $icon_url( 'funnel' ) ); ?>" data-desktop-label="<?php esc_attr_e( 'Filtrar reseñas', 'sultana-admin' ); ?>">
-                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'funnel' ) ); ?>');" aria-hidden="true"></span>
-                <span class="sultana-admin-review-filter-button__text"><?php esc_html_e( 'Filtrar', 'sultana-admin' ); ?></span>
+            <button class="sultana-admin-icon-button sultana-admin-search__button" type="submit" aria-label="<?php esc_attr_e( 'Buscar reseñas', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Buscar reseñas', 'sultana-admin' ); ?>" data-search-label="<?php esc_attr_e( 'Buscar reseñas', 'sultana-admin' ); ?>" data-clear-label="<?php esc_attr_e( 'Limpiar busqueda', 'sultana-admin' ); ?>" data-search-icon="<?php echo esc_url( $icon_url( 'search' ) ); ?>" data-clear-icon="<?php echo esc_url( $icon_url( 'close' ) ); ?>">
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'search' ) ); ?>');" aria-hidden="true"></span>
             </button>
         </div>
     </form>

@@ -22,6 +22,10 @@
     ];
 
     document.querySelectorAll('.sultana-admin-search').forEach(function (searchForm) {
+        if (searchForm.hasAttribute('data-review-search')) {
+            return;
+        }
+
         var searchInput = searchForm.querySelector('input[type="search"][name="s"]');
         var searchButton = searchForm.querySelector('.sultana-admin-search__button');
         var searchIcon = searchButton ? searchButton.querySelector('.sultana-admin-icon') : null;

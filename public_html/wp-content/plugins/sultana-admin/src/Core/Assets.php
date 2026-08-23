@@ -103,6 +103,10 @@ class Assets
             self::enqueue_product_list();
         }
 
+        if ( 'reviews' === $route ) {
+            self::enqueue_reviews();
+        }
+
         if ( 'products' === $route ) {
             self::enqueue_product_list();
             return;
@@ -231,6 +235,20 @@ class Assets
             'sultana-admin-product-list',
             SULTANA_ADMIN_URL . 'assets/js/product-list.js',
             [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_reviews(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/reviews.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-reviews',
+            SULTANA_ADMIN_URL . 'assets/js/reviews.js',
+            [ 'sultana-admin-product-list' ],
             $js_version,
             true
         );
