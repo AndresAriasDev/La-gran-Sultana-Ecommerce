@@ -27,12 +27,13 @@ while ( have_posts() ) :
     $main_image_id     = $product->get_image_id();
     $gallery_image_ids = $product->get_gallery_image_ids();
     $image_ids         = array_values( array_filter( array_unique( array_merge( [ $main_image_id ], $gallery_image_ids ) ) ) );
+    $main_image_sizes  = '(max-width: 560px) calc(100vw - 20px), (max-width: 900px) calc(100vw - 32px), min(52vw, 615px)';
     $main_image_attrs  = [
         'class'         => 'single-product-gallery__main-image',
         'loading'       => 'eager',
         'fetchpriority' => 'high',
         'decoding'      => 'async',
-        'sizes'         => '(max-width: 560px) calc(100vw - 20px), (max-width: 900px) calc(100vw - 32px), min(52vw, 615px)',
+        'sizes'         => $main_image_sizes,
     ];
     $main_image_html   = $main_image_id ? wp_get_attachment_image( $main_image_id, 'woocommerce_single', false, $main_image_attrs ) : '';
     $main_image_html   = $main_image_html ?: wc_placeholder_img( 'woocommerce_single', $main_image_attrs );
@@ -188,15 +189,26 @@ while ( have_posts() ) :
                             <div class="single-product-gallery__thumbs" aria-label="<?php esc_attr_e( 'Miniaturas del producto', 'sultana-storefront' ); ?>">
                                 <?php foreach ( $image_ids as $index => $image_id ) : ?>
                                     <?php
-                                    $thumb_url = wp_get_attachment_image_url( $image_id, 'woocommerce_gallery_thumbnail' );
-                                    $large_url = wp_get_attachment_image_url( $image_id, 'large' );
-                                    $alt       = get_post_meta( $image_id, '_wp_attachment_image_alt', true ) ?: $product->get_name();
+                                    $thumb_url     = wp_get_attachment_image_url( $image_id, 'woocommerce_gallery_thumbnail' );
+                                    $large_url     = wp_get_attachment_image_url( $image_id, 'large' );
+                                    $display_image = wp_get_attachment_image_src( $image_id, 'woocommerce_single' );
+                                    $display_url    = is_array( $display_image ) ? (string) ( $display_image[0] ?? '' ) : '';
+                                    $display_width  = is_array( $display_image ) ? absint( $display_image[1] ?? 0 ) : 0;
+                                    $display_height = is_array( $display_image ) ? absint( $display_image[2] ?? 0 ) : 0;
+                                    $display_srcset = wp_get_attachment_image_srcset( $image_id, 'woocommerce_single' );
+                                    $display_url    = $display_url ?: $large_url;
+                                    $alt            = get_post_meta( $image_id, '_wp_attachment_image_alt', true );
                                     ?>
                                     <button
                                         class="single-product-gallery__thumb <?php echo 0 === $index ? 'is-active' : ''; ?>"
                                         type="button"
-                                        data-product-image="<?php echo esc_url( $large_url ); ?>"
+                                        data-product-image="<?php echo esc_url( $display_url ); ?>"
                                         data-product-image-alt="<?php echo esc_attr( $alt ); ?>"
+                                        data-product-image-srcset="<?php echo esc_attr( $display_srcset ?: '' ); ?>"
+                                        data-product-image-sizes="<?php echo esc_attr( $display_srcset ? $main_image_sizes : '' ); ?>"
+                                        data-product-image-width="<?php echo esc_attr( $display_width ); ?>"
+                                        data-product-image-height="<?php echo esc_attr( $display_height ); ?>"
+                                        data-product-zoom-image="<?php echo esc_url( $large_url ); ?>"
                                         aria-label="<?php echo esc_attr( sprintf( __( 'Ver imagen %d de %s', 'sultana-storefront' ), $index + 1, $product->get_name() ) ); ?>"
                                     >
                                         <img src="<?php echo esc_url( $thumb_url ); ?>" alt="" loading="lazy" decoding="async">

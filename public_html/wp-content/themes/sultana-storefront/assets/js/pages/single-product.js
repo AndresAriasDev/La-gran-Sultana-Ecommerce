@@ -258,6 +258,11 @@
           return {
             alt: thumb.dataset.productImageAlt || "",
             src: thumb.dataset.productImage || "",
+            srcset: thumb.dataset.productImageSrcset || "",
+            sizes: thumb.dataset.productImageSizes || "",
+            width: thumb.dataset.productImageWidth || "",
+            height: thumb.dataset.productImageHeight || "",
+            zoomSrc: thumb.dataset.productZoomImage || thumb.dataset.productImage || "",
           };
         }).filter(function (image) {
           return image.src;
@@ -266,6 +271,11 @@
           {
             alt: mainImage.alt || "",
             src: mainImage.currentSrc || mainImage.src || "",
+            srcset: mainImage.getAttribute("srcset") || "",
+            sizes: mainImage.getAttribute("sizes") || "",
+            width: mainImage.getAttribute("width") || "",
+            height: mainImage.getAttribute("height") || "",
+            zoomSrc: mainImage.currentSrc || mainImage.src || "",
           },
         ];
     let isAnimating = false;
@@ -303,6 +313,36 @@
       return;
     }
 
+    const setImageDimensionAttribute = function (image, name, value) {
+      const dimension = Number.parseInt(value, 10);
+
+      if (Number.isFinite(dimension) && dimension > 0) {
+        image.setAttribute(name, String(dimension));
+        return;
+      }
+
+      image.removeAttribute(name);
+    };
+
+    const applyResponsiveImageAttributes = function (image, imageData) {
+      image.alt = imageData.alt || "";
+      image.decoding = "async";
+      setImageDimensionAttribute(image, "width", imageData.width);
+      setImageDimensionAttribute(image, "height", imageData.height);
+
+      if (imageData.sizes) {
+        image.sizes = imageData.sizes;
+      } else {
+        image.removeAttribute("sizes");
+      }
+
+      if (imageData.srcset) {
+        image.srcset = imageData.srcset;
+      } else {
+        image.removeAttribute("srcset");
+      }
+    };
+
     const preloadImage = function (imageData) {
       if (!imageData || !imageData.src) {
         return Promise.resolve(null);
@@ -324,7 +364,7 @@
         }, { once: true });
       });
 
-      image.decoding = "async";
+      applyResponsiveImageAttributes(image, imageData);
       image.src = imageData.src;
       imageData.preloaded = image;
       preloadCache.set(imageData.src, {
@@ -413,8 +453,7 @@
 
         isAnimating = true;
         nextImage.className = "single-product-gallery__main-image single-product-gallery__main-image--incoming";
-        nextImage.alt = imageData.alt;
-        nextImage.decoding = "async";
+        applyResponsiveImageAttributes(nextImage, imageData);
 
         gallery.classList.add(direction === "prev" ? "is-sliding-prev" : "is-sliding-next");
         mainLink.appendChild(nextImage);
@@ -472,6 +511,11 @@
       images.push({
         alt: alt || mainImage.alt || "",
         src: imageSrc,
+        srcset: "",
+        sizes: "",
+        width: "",
+        height: "",
+        zoomSrc: imageSrc,
       });
 
       showImage(images.length - 1, "next");
