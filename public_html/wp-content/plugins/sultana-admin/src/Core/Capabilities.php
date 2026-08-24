@@ -34,6 +34,7 @@ class Capabilities
     public const PUBLISH_COUPONS_CAPABILITY = 'publish_shop_coupons';
     public const READ_PRIVATE_COUPONS_CAPABILITY = 'read_private_shop_coupons';
     public const MANAGE_REVIEWS_CAPABILITY = 'moderate_comments';
+    public const MANAGE_HOME_PROMOTIONS_CAPABILITY = 'manage_sultana_home_promotions';
 
     public static function activate(): void
     {
@@ -69,6 +70,7 @@ class Capabilities
             self::PUBLISH_COUPONS_CAPABILITY => true,
             self::READ_PRIVATE_COUPONS_CAPABILITY => true,
             self::MANAGE_REVIEWS_CAPABILITY => true,
+            self::MANAGE_HOME_PROMOTIONS_CAPABILITY => true,
         ];
 
         $role = get_role( self::ROLE );

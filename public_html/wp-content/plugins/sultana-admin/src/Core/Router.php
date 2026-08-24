@@ -6,6 +6,7 @@ use Sultana\Admin\Coupons\CouponController;
 use Sultana\Admin\Customers\CustomerController;
 use Sultana\Admin\Orders\OrderController;
 use Sultana\Admin\Products\ProductController;
+use Sultana\Admin\Promotions\PromotionController;
 use Sultana\Admin\Reviews\ReviewController;
 use Sultana\Admin\Statistics\StatisticsController;
 
@@ -16,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'banners', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -28,6 +29,7 @@ class Router
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
+        add_rewrite_rule( '^gestion/banners/?$', 'index.php?' . self::QUERY_VAR . '=banners', 'top' );
         add_rewrite_rule( '^gestion/pedidos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=order_view&sultana_admin_order_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
         add_rewrite_rule( '^gestion/clientes/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=customer_view&sultana_admin_customer_id=$matches[1]', 'top' );
@@ -117,6 +119,11 @@ class Router
         }
 
         if ( 'reviews' === $route && ! current_user_can( Capabilities::MANAGE_REVIEWS_CAPABILITY ) ) {
+            self::render_forbidden();
+            exit;
+        }
+
+        if ( 'banners' === $route && ! current_user_can( Capabilities::MANAGE_HOME_PROMOTIONS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -218,6 +225,11 @@ class Router
         return home_url( '/gestion/resenas/' );
     }
 
+    public static function banners_url(): string
+    {
+        return home_url( '/gestion/banners/' );
+    }
+
     public static function is_admin_request(): bool
     {
         return self::is_valid_route( self::current_route() );
@@ -307,6 +319,11 @@ class Router
                 'subtitle' => __( 'Productos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/products.php',
             ],
+            'banners' => [
+                'title'    => __( 'Banners', 'sultana-admin' ),
+                'subtitle' => __( 'Banners', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/banners.php',
+            ],
             'product_new' => [
                 'title'    => __( 'Nuevo producto', 'sultana-admin' ),
                 'subtitle' => __( 'Nuevo producto', 'sultana-admin' ),
@@ -379,6 +396,10 @@ class Router
 
         if ( 'product_edit' === $route ) {
             return ProductController::prepare_edit_screen( self::current_product_id() );
+        }
+
+        if ( 'banners' === $route ) {
+            return PromotionController::prepare_screen();
         }
 
         if ( 'orders' === $route ) {

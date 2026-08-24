@@ -3,6 +3,7 @@
 namespace Sultana\Admin\Core;
 
 use Sultana\Admin\Products\ProductController;
+use Sultana\Admin\Promotions\PromotionController;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -22,6 +23,8 @@ class Bootstrap
         add_action( 'wp_ajax_' . ProductController::IMAGE_UPLOAD_ACTION, [ ProductController::class, 'ajax_upload_product_image' ] );
         add_action( 'wp_ajax_' . ProductController::IMAGE_DELETE_ACTION, [ ProductController::class, 'ajax_delete_product_image' ] );
         add_action( 'wp_ajax_' . ProductController::COMBO_COMPONENT_SEARCH_ACTION, [ ProductController::class, 'ajax_search_combo_components' ] );
+        add_action( 'wp_ajax_' . PromotionController::IMAGE_UPLOAD_ACTION, [ PromotionController::class, 'ajax_upload_promotion_image' ] );
+        add_action( 'wp_ajax_' . PromotionController::IMAGE_DELETE_ACTION, [ PromotionController::class, 'ajax_delete_promotion_image' ] );
     }
 
     public static function dependencies_status(): array
@@ -42,7 +45,7 @@ class Bootstrap
     public static function maybe_flush_rewrite_rules(): void
     {
         $option_key = 'sultana_admin_rewrite_rules_version';
-        $version    = ( defined( 'SULTANA_ADMIN_VERSION' ) ? SULTANA_ADMIN_VERSION : '1' ) . '-auth-reset-v1';
+        $version    = ( defined( 'SULTANA_ADMIN_VERSION' ) ? SULTANA_ADMIN_VERSION : '1' ) . '-banners-route-v1';
 
         if ( get_option( $option_key ) === $version ) {
             return;

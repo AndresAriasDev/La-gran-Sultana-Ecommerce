@@ -1,0 +1,104 @@
+.sultana-admin-banners-layout {
+    display: grid;
+    grid-template-columns: minmax(260px, 0.75fr) minmax(320px, 1.25fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+.sultana-admin-banners-list,
+.sultana-admin-banner-form {
+    display: grid;
+    gap: 1rem;
+}
+
+.sultana-admin-banners-list h2,
+.sultana-admin-banner-form h2,
+.sultana-admin-banner-image h3 {
+    margin: 0;
+}
+
+.sultana-admin-banners-table {
+    display: grid;
+    gap: 0.7rem;
+}
+
+.sultana-admin-banner-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+}
+
+.sultana-admin-banner-row > div {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.sultana-admin-banner-row > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.sultana-admin-banner-row form {
+    margin: 0;
+}
+
+.sultana-admin-banner-image,
+.sultana-admin-banner-form .sultana-admin-form-section {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-surface);
+}
+
+.sultana-admin-banner-image__preview {
+    display: grid;
+    place-items: center;
+    min-height: 140px;
+    border: 1px dashed var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-md);
+    background: var(--sultana-admin-bg);
+    overflow: hidden;
+}
+
+.sultana-admin-banner-image__preview img {
+    display: block;
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+}
+
+.sultana-admin-banner-image__meta {
+    min-height: 1.2rem;
+    color: var(--sultana-admin-muted);
+    font-size: 0.88rem;
+}
+
+.sultana-admin-banner-image__actions {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.sultana-admin-banner-active {
+    align-self: end;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 42px;
+}
+
+@media (max-width: 900px) {
+    .sultana-admin-banners-layout {
+        grid-template-columns: 1fr;
+    }
+}

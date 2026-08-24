@@ -259,6 +259,200 @@ class HomePromotions
         );
     }
 
+    public static function list_admin_promotions(): array
+    {
+        $promotion_ids = get_posts(
+            [
+                'post_type'      => self::POST_TYPE,
+                'post_status'    => [ 'publish', 'draft', 'pending', 'private' ],
+                'posts_per_page' => 50,
+                'orderby'        => [
+                    'menu_order' => 'ASC',
+                    'date'       => 'DESC',
+                    'ID'         => 'ASC',
+                ],
+                'fields'         => 'ids',
+                'no_found_rows'  => true,
+            ]
+        );
+
+        return array_values(
+            array_filter(
+                array_map(
+                    static function ( $promotion_id ): array {
+                        return self::get_promotion( absint( $promotion_id ) ) ?: [];
+                    },
+                    $promotion_ids
+                )
+            )
+        );
+    }
+
+    public static function get_promotion( int $promotion_id ): ?array
+    {
+        $post = get_post( $promotion_id );
+
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return null;
+        }
+
+        $destination_type  = self::sanitize_destination_type( get_post_meta( $promotion_id, self::META_DESTINATION_TYPE, true ) );
+        $destination_value = (string) get_post_meta( $promotion_id, self::META_DESTINATION_VALUE, true );
+        $custom_url        = esc_url_raw( (string) get_post_meta( $promotion_id, self::META_CUSTOM_URL, true ) );
+
+        return [
+            'id'                => $promotion_id,
+            'name'              => get_the_title( $promotion_id ),
+            'desktop_image_id'  => absint( get_post_meta( $promotion_id, self::META_DESKTOP_IMAGE_ID, true ) ),
+            'mobile_image_id'   => absint( get_post_meta( $promotion_id, self::META_MOBILE_IMAGE_ID, true ) ),
+            'alt_text'          => (string) get_post_meta( $promotion_id, self::META_ALT_TEXT, true ),
+            'destination_type'  => $destination_type,
+            'destination_value' => $destination_value,
+            'custom_url'        => $custom_url,
+            'active'            => 'yes' === get_post_meta( $promotion_id, self::META_ACTIVE, true ),
+            'menu_order'        => (int) $post->menu_order,
+            'url'               => self::resolve_destination_url( $destination_type, $destination_value, $custom_url ),
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return int|\WP_Error
+     */
+    public static function create_promotion( array $data )
+    {
+        $clean = self::sanitize_admin_promotion_data( $data );
+
+        if ( is_wp_error( $clean ) ) {
+            return $clean;
+        }
+
+        $promotion_id = wp_insert_post(
+            [
+                'post_type'   => self::POST_TYPE,
+                'post_status' => 'publish',
+                'post_title'  => $clean['name'],
+                'menu_order'  => $clean['menu_order'],
+            ],
+            true
+        );
+
+        if ( is_wp_error( $promotion_id ) ) {
+            return $promotion_id;
+        }
+
+        self::update_promotion_meta( absint( $promotion_id ), $clean );
+
+        return absint( $promotion_id );
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return bool|\WP_Error
+     */
+    public static function update_promotion( int $promotion_id, array $data )
+    {
+        $post = get_post( $promotion_id );
+
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return new \WP_Error( 'scc_home_promotion_not_found', __( 'La promocion no existe.', 'sultana-commerce-core' ) );
+        }
+
+        $clean = self::sanitize_admin_promotion_data( $data );
+
+        if ( is_wp_error( $clean ) ) {
+            return $clean;
+        }
+
+        $updated = wp_update_post(
+            [
+                'ID'         => $promotion_id,
+                'post_title' => $clean['name'],
+                'menu_order' => $clean['menu_order'],
+            ],
+            true
+        );
+
+        if ( is_wp_error( $updated ) ) {
+            return $updated;
+        }
+
+        self::update_promotion_meta( $promotion_id, $clean );
+
+        return true;
+    }
+
+    /**
+     * @return bool|\WP_Error
+     */
+    public static function delete_promotion( int $promotion_id )
+    {
+        $post = get_post( $promotion_id );
+
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return new \WP_Error( 'scc_home_promotion_not_found', __( 'La promocion no existe.', 'sultana-commerce-core' ) );
+        }
+
+        $deleted = wp_trash_post( $promotion_id );
+
+        return $deleted ? true : new \WP_Error( 'scc_home_promotion_delete_failed', __( 'No se pudo eliminar la promocion.', 'sultana-commerce-core' ) );
+    }
+
+    /**
+     * @return bool|\WP_Error
+     */
+    public static function set_active( int $promotion_id, bool $active )
+    {
+        $post = get_post( $promotion_id );
+
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return new \WP_Error( 'scc_home_promotion_not_found', __( 'La promocion no existe.', 'sultana-commerce-core' ) );
+        }
+
+        if ( $active ) {
+            update_post_meta( $promotion_id, self::META_ACTIVE, 'yes' );
+        } else {
+            delete_post_meta( $promotion_id, self::META_ACTIVE );
+        }
+
+        return true;
+    }
+
+    /**
+     * @return bool|\WP_Error
+     */
+    public static function update_order( int $promotion_id, int $menu_order )
+    {
+        $post = get_post( $promotion_id );
+
+        if ( ! $post || self::POST_TYPE !== $post->post_type ) {
+            return new \WP_Error( 'scc_home_promotion_not_found', __( 'La promocion no existe.', 'sultana-commerce-core' ) );
+        }
+
+        $updated = wp_update_post(
+            [
+                'ID'         => $promotion_id,
+                'menu_order' => $menu_order,
+            ],
+            true
+        );
+
+        return is_wp_error( $updated ) ? $updated : true;
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    public static function destination_options(): array
+    {
+        return self::destination_type_options();
+    }
+
+    public static function promotion_brand_taxonomy(): string
+    {
+        return self::brand_taxonomy();
+    }
+
     private static function render_image_picker( string $slot, string $label, string $field_name, int $image_id, string $description ): void
     {
         $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
@@ -494,6 +688,82 @@ class HomePromotions
         $url = get_term_link( $term_id, $taxonomy );
 
         return is_wp_error( $url ) ? '' : esc_url_raw( $url );
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     * @return array<string,mixed>|\WP_Error
+     */
+    private static function sanitize_admin_promotion_data( array $data )
+    {
+        $name = trim( sanitize_text_field( (string) ( $data['name'] ?? '' ) ) );
+
+        if ( '' === $name ) {
+            return new \WP_Error( 'scc_home_promotion_missing_name', __( 'Ingresa el nombre interno de la promocion.', 'sultana-commerce-core' ) );
+        }
+
+        $destination_type = self::sanitize_destination_type( $data['destination_type'] ?? self::DESTINATION_NONE );
+        $custom_url       = self::DESTINATION_CUSTOM_URL === $destination_type ? esc_url_raw( (string) ( $data['custom_url'] ?? '' ) ) : '';
+
+        return [
+            'name'              => $name,
+            'desktop_image_id'  => self::sanitize_image_id( $data['desktop_image_id'] ?? 0 ),
+            'mobile_image_id'   => self::sanitize_image_id( $data['mobile_image_id'] ?? 0 ),
+            'alt_text'          => sanitize_text_field( (string) ( $data['alt_text'] ?? '' ) ),
+            'destination_type'  => $destination_type,
+            'destination_value' => self::sanitize_destination_value_from_data( $destination_type, $data ),
+            'custom_url'        => $custom_url,
+            'active'            => ! empty( $data['active'] ),
+            'menu_order'        => (int) ( $data['menu_order'] ?? 0 ),
+        ];
+    }
+
+    /**
+     * @param array<string,mixed> $data
+     */
+    private static function sanitize_destination_value_from_data( string $destination_type, array $data ): string
+    {
+        $object_id = absint( $data['destination_value'] ?? 0 );
+
+        if ( self::DESTINATION_PAGE === $destination_type ) {
+            return $object_id && 'page' === get_post_type( $object_id ) ? (string) $object_id : '';
+        }
+
+        if ( self::DESTINATION_PRODUCT_CATEGORY === $destination_type ) {
+            return $object_id && term_exists( $object_id, 'product_cat' ) ? (string) $object_id : '';
+        }
+
+        if ( self::DESTINATION_PRODUCT === $destination_type ) {
+            return $object_id && 'product' === get_post_type( $object_id ) ? (string) $object_id : '';
+        }
+
+        if ( self::DESTINATION_BRAND === $destination_type ) {
+            $brand_taxonomy = self::brand_taxonomy();
+
+            return $object_id && '' !== $brand_taxonomy && term_exists( $object_id, $brand_taxonomy ) ? (string) $object_id : '';
+        }
+
+        return '';
+    }
+
+    /**
+     * @param array<string,mixed> $clean
+     */
+    private static function update_promotion_meta( int $promotion_id, array $clean ): void
+    {
+        update_post_meta( $promotion_id, self::META_DESKTOP_IMAGE_ID, absint( $clean['desktop_image_id'] ?? 0 ) );
+        update_post_meta( $promotion_id, self::META_MOBILE_IMAGE_ID, absint( $clean['mobile_image_id'] ?? 0 ) );
+        update_post_meta( $promotion_id, self::META_ALT_TEXT, (string) ( $clean['alt_text'] ?? '' ) );
+        update_post_meta( $promotion_id, self::META_DESTINATION_TYPE, (string) ( $clean['destination_type'] ?? self::DESTINATION_NONE ) );
+        update_post_meta( $promotion_id, self::META_DESTINATION_VALUE, (string) ( $clean['destination_value'] ?? '' ) );
+        update_post_meta( $promotion_id, self::META_CUSTOM_URL, (string) ( $clean['custom_url'] ?? '' ) );
+
+        if ( ! empty( $clean['active'] ) ) {
+            update_post_meta( $promotion_id, self::META_ACTIVE, 'yes' );
+            return;
+        }
+
+        delete_post_meta( $promotion_id, self::META_ACTIVE );
     }
 
     private static function brand_taxonomy(): string

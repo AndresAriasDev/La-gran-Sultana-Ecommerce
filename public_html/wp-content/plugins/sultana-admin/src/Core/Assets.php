@@ -3,6 +3,7 @@
 namespace Sultana\Admin\Core;
 
 use Sultana\Admin\Products\ProductController;
+use Sultana\Admin\Promotions\PromotionController;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -61,7 +62,7 @@ class Assets
         self::enqueue_style( 'admin' );
         self::enqueue_style( 'components', [ 'sultana-admin' ] );
 
-        if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ], true ) ) {
+        if ( in_array( $route, [ 'dashboard', 'products', 'product_new', 'product_edit', 'banners', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ], true ) ) {
             self::enqueue_style( 'shell', [ 'sultana-admin-components' ] );
             self::enqueue_shell();
         }
@@ -72,6 +73,11 @@ class Assets
 
         if ( 'products' === $route ) {
             self::enqueue_style( 'products', [ 'sultana-admin-shell' ] );
+        }
+
+        if ( 'banners' === $route ) {
+            self::enqueue_style( 'banners', [ 'sultana-admin-shell' ] );
+            self::enqueue_banners();
         }
 
         if ( in_array( $route, [ 'product_new', 'product_edit' ], true ) ) {
@@ -339,6 +345,36 @@ class Assets
             [],
             $js_version,
             true
+        );
+    }
+
+    private static function enqueue_banners(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/banners.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-banners',
+            SULTANA_ADMIN_URL . 'assets/js/banners.js',
+            [],
+            $js_version,
+            true
+        );
+
+        wp_localize_script(
+            'sultana-admin-banners',
+            'SultanaAdminBanners',
+            [
+                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+                'nonce'        => wp_create_nonce( PromotionController::IMAGE_UPLOAD_NONCE_ACTION ),
+                'uploadAction' => PromotionController::IMAGE_UPLOAD_ACTION,
+                'deleteAction' => PromotionController::IMAGE_DELETE_ACTION,
+                'strings'      => [
+                    'uploading'   => __( 'Subiendo banner...', 'sultana-admin' ),
+                    'uploadError' => __( 'No se pudo subir el banner.', 'sultana-admin' ),
+                    'deleteError' => __( 'La imagen se quito de la seleccion, pero no se pudo eliminar el archivo temporal.', 'sultana-admin' ),
+                ],
+            ]
         );
     }
 
