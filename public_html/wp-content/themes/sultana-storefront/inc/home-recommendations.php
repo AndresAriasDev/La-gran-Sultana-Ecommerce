@@ -198,7 +198,13 @@ function variedadesexpress_home_for_you_card( WC_Product $product ): void
             'image_id'   => 0,
         ];
     $image_id      = ! empty( $sale_data['image_id'] ) ? absint( $sale_data['image_id'] ) : $product->get_image_id();
-    $image_url     = $image_id ? wp_get_attachment_image_url( $image_id, 'woocommerce_thumbnail' ) : wc_placeholder_img_src( 'woocommerce_thumbnail' );
+    $image_attrs   = [
+        'loading'  => 'lazy',
+        'decoding' => 'async',
+        'sizes'    => '(max-width: 640px) calc((100vw - 24px - 0.75rem) / 2), (max-width: 900px) calc((100vw - 32px - 1.6rem) / 3), min(20vw, 228px)',
+    ];
+    $image_html    = $image_id ? wp_get_attachment_image( $image_id, 'woocommerce_thumbnail', false, $image_attrs ) : '';
+    $image_html    = $image_html ?: wc_placeholder_img( 'woocommerce_thumbnail', $image_attrs );
     $regular_price = (string) ( $sale_data['regular'] ?? '' );
     $sale_price    = (string) ( $sale_data['sale'] ?? '' );
     $current_price = (string) ( $sale_data['current'] ?? '' );
@@ -208,12 +214,7 @@ function variedadesexpress_home_for_you_card( WC_Product $product ): void
         <a class="for-you-product-card__link" href="<?php echo esc_url( get_permalink( $product_id ) ); ?>">
             <span class="for-you-product-card__media js-image-skeleton">
                 <?php variedadesexpress_product_discount_badge( $product, 'for-you-product-card__discount-badge' ); ?>
-                <img
-                    src="<?php echo esc_url( $image_url ); ?>"
-                    alt="<?php echo esc_attr( $product->get_name() ); ?>"
-                    loading="lazy"
-                    decoding="async"
-                >
+                <?php echo $image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
             </span>
             <h3 class="for-you-product-card__title">
                 <?php echo esc_html( $product->get_name() ); ?>
