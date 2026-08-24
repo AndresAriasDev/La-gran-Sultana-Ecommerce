@@ -97,7 +97,7 @@ class ProductImageProcessor
         $temporary_paths = [];
 
         if ( 'image/jpeg' === $mime && $this->webp_is_supported() ) {
-            $candidate = $this->transform_image( $path, 'image/webp', $needs_resize );
+            $candidate = $this->transform_image( $path, 'image/webp', $needs_resize, $mime );
 
             if ( is_wp_error( $candidate ) ) {
                 if ( ! $needs_resize ) {
@@ -138,7 +138,7 @@ class ProductImageProcessor
             ];
         }
 
-        $candidate = $this->transform_image( $path, $mime, true );
+        $candidate = $this->transform_image( $path, $mime, true, $mime );
 
         if ( is_wp_error( $candidate ) ) {
             foreach ( $temporary_paths as $temporary_path ) {
@@ -179,7 +179,7 @@ class ProductImageProcessor
     /**
      * @return array{path:string,mime:string,extension:string,size:int}|WP_Error
      */
-    private function transform_image( string $source_path, string $target_mime, bool $resize )
+    private function transform_image( string $source_path, string $target_mime, bool $resize, string $source_mime )
     {
         if ( ! function_exists( 'wp_get_image_editor' ) ) {
             return new WP_Error( 'sultana_admin_image_editor_missing', __( 'El editor de imagenes no esta disponible.', 'sultana-admin' ) );
@@ -193,6 +193,14 @@ class ProductImageProcessor
 
         if ( method_exists( $editor, 'set_quality' ) ) {
             $editor->set_quality( self::WEBP_QUALITY );
+        }
+
+        if ( 'image/jpeg' === $source_mime && method_exists( $editor, 'maybe_exif_rotate' ) ) {
+            $rotated = $editor->maybe_exif_rotate();
+
+            if ( is_wp_error( $rotated ) ) {
+                return $rotated;
+            }
         }
 
         if ( $resize ) {
