@@ -210,7 +210,7 @@ class PromotionController
             'name'               => isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '',
             'desktop_image_id'   => isset( $_POST['desktop_image_id'] ) ? absint( wp_unslash( $_POST['desktop_image_id'] ) ) : 0,
             'mobile_image_id'    => isset( $_POST['mobile_image_id'] ) ? absint( wp_unslash( $_POST['mobile_image_id'] ) ) : 0,
-            'alt_text'           => isset( $_POST['alt_text'] ) ? sanitize_text_field( wp_unslash( $_POST['alt_text'] ) ) : '',
+            'alt_text'           => isset( $_POST['alt_text'] ) ? sanitize_text_field( wp_unslash( $_POST['alt_text'] ) ) : null,
             'destination_type'   => isset( $_POST['destination_type'] ) ? sanitize_key( wp_unslash( $_POST['destination_type'] ) ) : 'none',
             'destination_value'  => isset( $_POST['destination_value'] ) ? absint( wp_unslash( $_POST['destination_value'] ) ) : 0,
             'custom_url'         => isset( $_POST['custom_url'] ) ? esc_url_raw( wp_unslash( $_POST['custom_url'] ) ) : '',

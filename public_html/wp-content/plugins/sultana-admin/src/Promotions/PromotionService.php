@@ -111,11 +111,17 @@ class PromotionService
             ];
         }
 
+        $alt_text = $data['alt_text'] ?? null;
+
+        if ( null === $alt_text && $promotion_id > 0 ) {
+            $alt_text = (string) ( $this->form_data( $promotion_id )['alt_text'] ?? '' );
+        }
+
         $payload = [
             'name'              => $data['name'] ?? '',
             'desktop_image_id'  => $desktop_id,
             'mobile_image_id'   => $mobile_id,
-            'alt_text'          => $data['alt_text'] ?? '',
+            'alt_text'          => null === $alt_text ? '' : $alt_text,
             'destination_type'  => $data['destination_type'] ?? 'none',
             'destination_value' => $data['destination_value'] ?? '',
             'custom_url'        => $data['custom_url'] ?? '',
@@ -181,37 +187,41 @@ class PromotionService
     {
         $promotion_class = self::PROMOTION_CLASS;
         $brand_taxonomy = $this->core_ready() ? $promotion_class::promotion_brand_taxonomy() : '';
-
-        return [
-            'pages'      => get_pages(
+        $pages          = get_pages(
+            [
+                'sort_column' => 'post_title',
+                'sort_order'  => 'ASC',
+            ]
+        );
+        $categories     = get_terms(
+            [
+                'taxonomy'   => 'product_cat',
+                'hide_empty' => false,
+            ]
+        );
+        $brands         = '' !== $brand_taxonomy
+            ? get_terms(
                 [
-                    'sort_column' => 'post_title',
-                    'sort_order'  => 'ASC',
-                ]
-            ),
-            'categories' => get_terms(
-                [
-                    'taxonomy'   => 'product_cat',
+                    'taxonomy'   => $brand_taxonomy,
                     'hide_empty' => false,
                 ]
-            ),
-            'products'   => get_posts(
-                [
-                    'post_type'      => 'product',
-                    'post_status'    => [ 'publish', 'draft', 'private' ],
-                    'posts_per_page' => 100,
-                    'orderby'        => 'title',
-                    'order'          => 'ASC',
-                ]
-            ),
-            'brands'     => '' !== $brand_taxonomy
-                ? get_terms(
-                    [
-                        'taxonomy'   => $brand_taxonomy,
-                        'hide_empty' => false,
-                    ]
-                )
-                : [],
+            )
+            : [];
+        $products       = get_posts(
+            [
+                'post_type'      => 'product',
+                'post_status'    => [ 'publish', 'draft', 'private' ],
+                'posts_per_page' => 100,
+                'orderby'        => 'title',
+                'order'          => 'ASC',
+            ]
+        );
+
+        return [
+            'pages'      => is_wp_error( $pages ) || ! is_array( $pages ) ? [] : $pages,
+            'categories' => is_wp_error( $categories ) || ! is_array( $categories ) ? [] : $categories,
+            'products'   => is_wp_error( $products ) || ! is_array( $products ) ? [] : $products,
+            'brands'     => is_wp_error( $brands ) || ! is_array( $brands ) ? [] : $brands,
         ];
     }
 

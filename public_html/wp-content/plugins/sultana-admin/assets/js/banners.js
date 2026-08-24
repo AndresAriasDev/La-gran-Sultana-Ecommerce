@@ -8,12 +8,17 @@
 
     const strings = config.strings || {};
     const titleInput = screen.querySelector('[data-sultana-promotion-title]');
-    const destinationType = screen.querySelector('[data-sultana-promotion-destination-type]');
-    const destinationFields = Array.from(screen.querySelectorAll('[data-sultana-promotion-destination-field]'));
+    const destinationType = screen.querySelector('[data-destination-type]');
+    const destinationFields = Array.from(screen.querySelectorAll('[data-destination-field]'));
 
-    setupDestinationFields();
+    initDestinationFields();
+    initImageUploaders();
 
-    if (config.ajaxUrl) {
+    function initImageUploaders() {
+        if (!config.ajaxUrl) {
+            return;
+        }
+
         screen.querySelectorAll('[data-sultana-promotion-image]').forEach(setupImageField);
     }
 
@@ -186,16 +191,16 @@
         }
     }
 
-    function setupDestinationFields() {
+    function initDestinationFields() {
         if (!destinationType) {
             return;
         }
 
-        const sync = function () {
+        const syncDestinationFields = function () {
             const activeType = destinationType.value;
 
             destinationFields.forEach(function (field) {
-                const type = field.getAttribute('data-sultana-promotion-destination-field');
+                const type = field.dataset.destinationField || '';
                 const isActive = type === activeType;
                 field.hidden = !isActive;
                 Array.from(field.querySelectorAll('input, select, textarea')).forEach(function (control) {
@@ -204,8 +209,8 @@
             });
         };
 
-        destinationType.addEventListener('change', sync);
-        sync();
+        destinationType.addEventListener('change', syncDestinationFields);
+        syncDestinationFields();
     }
 
     function parseInitialImage(root) {
