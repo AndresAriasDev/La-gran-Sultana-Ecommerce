@@ -23,6 +23,7 @@ require_once SULTANA_ADMIN_PATH . 'src/Core/Capabilities.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Icons.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Assets.php';
 require_once SULTANA_ADMIN_PATH . 'src/Core/Auth.php';
+require_once SULTANA_ADMIN_PATH . 'src/Products/ProductImageProcessor.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductImageService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductService.php';
 require_once SULTANA_ADMIN_PATH . 'src/Products/ProductVariableService.php';

@@ -719,6 +719,8 @@
         formData.append('action', config.uploadAction);
         formData.append('nonce', config.nonce);
         formData.append('image', file);
+        formData.append('product_title', currentProductTitle());
+        formData.append('image_index', String(variationImageIndex(variation)));
 
         uploadCounter += 1;
         setStatus(strings.uploading || 'Subiendo imagen...', false);
@@ -1424,6 +1426,19 @@
         if (submit) {
             submit.disabled = uploadCounter > 0;
         }
+    }
+
+    function currentProductTitle() {
+        const form = editor.closest('form');
+        const titleInput = form ? form.querySelector('[name="name"]') : null;
+
+        return titleInput ? titleInput.value || '' : '';
+    }
+
+    function variationImageIndex(variation) {
+        const index = variations.indexOf(variation);
+
+        return index >= 0 ? index + 1 : 0;
     }
 
     function setVariationPanelState(toggle, panel, isOpen) {

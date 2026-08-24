@@ -17,7 +17,7 @@ class ProductImageService
 
     private const ALLOWED_IMAGE_MIMES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
 
-    public function upload_temporary_image( string $field ): array
+    public function upload_temporary_image( string $field, array $context = [] ): array
     {
         if ( ! $this->can_manage_images() ) {
             return [
@@ -26,7 +26,7 @@ class ProductImageService
             ];
         }
 
-        $upload = $this->upload_file_from_field( $field );
+        $upload = $this->upload_file_from_field( $field, $context );
 
         if ( is_wp_error( $upload ) ) {
             return [
@@ -287,7 +287,7 @@ class ProductImageService
         return get_current_user_id() === absint( get_post_meta( $attachment_id, self::TEMP_USER_META_KEY, true ) );
     }
 
-    private function upload_file_from_field( string $field )
+    private function upload_file_from_field( string $field, array $context = [] )
     {
         $file = $_FILES[ $field ] ?? null;
 
@@ -310,7 +310,32 @@ class ProductImageService
         require_once ABSPATH . 'wp-admin/includes/file.php';
         require_once ABSPATH . 'wp-admin/includes/media.php';
 
-        $attachment_id = media_handle_upload( $field, 0 );
+        $processor     = new ProductImageProcessor();
+        $prepared_file = $processor->prepare_for_media_handle_upload(
+            [
+                'name'     => (string) $file['name'],
+                'type'     => $type,
+                'tmp_name' => (string) $file['tmp_name'],
+                'error'    => (int) $file['error'],
+                'size'     => isset( $file['size'] ) ? (int) $file['size'] : 0,
+            ],
+            $context
+        );
+
+        if ( is_wp_error( $prepared_file ) ) {
+            return $prepared_file;
+        }
+
+        $original_file  = $_FILES[ $field ];
+        $temporary_paths = $prepared_file['temporary_paths'] ?? [];
+        $_FILES[ $field ] = $prepared_file['file'];
+
+        try {
+            $attachment_id = media_handle_upload( $field, 0 );
+        } finally {
+            $_FILES[ $field ] = $original_file;
+            $processor->cleanup_temporary_paths( $temporary_paths );
+        }
 
         if ( is_wp_error( $attachment_id ) ) {
             return new WP_Error( 'sultana_admin_media_upload_failed', __( 'No se pudo subir la imagen.', 'sultana-admin' ) );

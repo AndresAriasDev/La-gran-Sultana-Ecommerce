@@ -192,7 +192,7 @@ class ProductController
         }
 
         $service = new ProductImageService();
-        $result  = $service->upload_temporary_image( 'image' );
+        $result  = $service->upload_temporary_image( 'image', self::image_upload_context() );
 
         if ( empty( $result['success'] ) ) {
             wp_send_json_error(
@@ -595,6 +595,18 @@ class ProductController
             && current_user_can( Capabilities::ACCESS_CAPABILITY )
             && current_user_can( Capabilities::CREATE_PRODUCTS_CAPABILITY )
             && current_user_can( Capabilities::UPLOAD_FILES_CAPABILITY );
+    }
+
+    private static function image_upload_context(): array
+    {
+        return [
+            'product_title' => isset( $_POST['product_title'] )
+                ? sanitize_text_field( wp_unslash( $_POST['product_title'] ) )
+                : '',
+            'image_index'   => isset( $_POST['image_index'] )
+                ? absint( wp_unslash( $_POST['image_index'] ) )
+                : 0,
+        ];
     }
 
     private static function can_search_combo_components(): bool

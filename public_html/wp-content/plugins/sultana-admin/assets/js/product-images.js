@@ -34,7 +34,9 @@
             const files = Array.from(input.files || []);
             input.value = '';
 
-            files.forEach(uploadImage);
+            files.forEach(function (file, index) {
+                uploadImage(file, images.length + index + 1);
+            });
         });
     }
 
@@ -74,11 +76,13 @@
         };
     }
 
-    function uploadImage(file) {
+    function uploadImage(file, imageIndex) {
         const formData = new FormData();
         formData.append('action', config.uploadAction);
         formData.append('nonce', config.nonce);
         formData.append('image', file);
+        formData.append('product_title', currentProductTitle());
+        formData.append('image_index', String(imageIndex || 0));
 
         pendingUploads += 1;
         setStatus(strings.uploading || 'Subiendo imagenes...', false);
@@ -290,5 +294,11 @@
 
         status.textContent = message;
         status.classList.toggle('is-error', Boolean(isError));
+    }
+
+    function currentProductTitle() {
+        const titleInput = form ? form.querySelector('[name="name"]') : null;
+
+        return titleInput ? titleInput.value || '' : '';
     }
 }());
