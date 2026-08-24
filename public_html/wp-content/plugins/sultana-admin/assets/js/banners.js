@@ -2,7 +2,7 @@
     const config = window.SultanaAdminBanners || {};
     const screen = document.querySelector('[data-sultana-banners-screen]');
 
-    if (!screen || !config.ajaxUrl) {
+    if (!screen) {
         return;
     }
 
@@ -12,7 +12,10 @@
     const destinationFields = Array.from(screen.querySelectorAll('[data-sultana-promotion-destination-field]'));
 
     setupDestinationFields();
-    screen.querySelectorAll('[data-sultana-promotion-image]').forEach(setupImageField);
+
+    if (config.ajaxUrl) {
+        screen.querySelectorAll('[data-sultana-promotion-image]').forEach(setupImageField);
+    }
 
     function setupImageField(root) {
         const slot = root.getAttribute('data-sultana-promotion-image') || '';

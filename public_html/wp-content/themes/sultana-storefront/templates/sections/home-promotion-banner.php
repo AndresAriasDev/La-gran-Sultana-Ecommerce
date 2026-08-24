@@ -63,7 +63,7 @@ if ( ! function_exists( 'variedadesexpress_home_promotion_picture' ) ) {
             'src'      => $fallback['src'],
             'width'    => (string) $fallback['width'],
             'height'   => (string) $fallback['height'],
-            'alt'      => (string) ( $promotion['alt_text'] ?? '' ),
+            'alt'      => variedadesexpress_home_promotion_alt_text( $promotion, $fallback_id ),
             'loading'  => 0 === $index ? 'eager' : 'lazy',
             'decoding' => 'async',
             'sizes'    => $fallback['sizes'],
@@ -98,6 +98,21 @@ if ( ! function_exists( 'variedadesexpress_home_promotion_picture' ) ) {
         <?php
 
         return (string) ob_get_clean();
+    }
+}
+
+if ( ! function_exists( 'variedadesexpress_home_promotion_alt_text' ) ) {
+    function variedadesexpress_home_promotion_alt_text( array $promotion, int $fallback_id ): string
+    {
+        $promotion_alt = trim( (string) ( $promotion['alt_text'] ?? '' ) );
+
+        if ( '' !== $promotion_alt ) {
+            return $promotion_alt;
+        }
+
+        $attachment_alt = trim( (string) get_post_meta( $fallback_id, '_wp_attachment_image_alt', true ) );
+
+        return $attachment_alt;
     }
 }
 

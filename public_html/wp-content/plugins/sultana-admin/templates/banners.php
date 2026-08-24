@@ -94,7 +94,7 @@ $render_image_field = static function ( string $slot, string $label, string $rec
                 <?php esc_html_e( 'Quitar', 'sultana-admin' ); ?>
             </button>
         </div>
-        <input class="sultana-admin-visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" data-sultana-promotion-image-input>
+        <input class="sultana-admin-banner-upload-input" type="file" accept="image/jpeg,image/png,image/webp" data-sultana-promotion-image-input>
         <div class="sultana-admin-image-status" aria-live="polite" data-sultana-promotion-image-status></div>
     </section>
     <?php
@@ -326,7 +326,7 @@ $render_destination_options = static function ( string $type, string $current_va
                                 $render_image_field( 'mobile', __( 'Banner para móvil', 'sultana-admin' ), __( 'Recomendado: 750 × 375 px', 'sultana-admin' ), __( '2:1', 'sultana-admin' ) );
                                 ?>
                             </div>
-                            <div class="sultana-admin-banner-field">
+                            <div class="sultana-admin-banner-field sultana-admin-banner-field--alt">
                                 <label for="sultana-admin-banner-alt"><?php esc_html_e( 'Texto alternativo', 'sultana-admin' ); ?></label>
                                 <input id="sultana-admin-banner-alt" type="text" name="alt_text" value="<?php echo esc_attr( (string) ( $form['alt_text'] ?? '' ) ); ?>">
                                 <p><?php esc_html_e( 'Describe brevemente el banner para lectores de pantalla.', 'sultana-admin' ); ?></p>
@@ -336,9 +336,9 @@ $render_destination_options = static function ( string $type, string $current_va
 
                     <aside class="sultana-admin-banner-editor-sidebar">
                         <section class="sultana-admin-banner-card-section" aria-labelledby="sultana-admin-banner-destination-title">
-                            <h2 id="sultana-admin-banner-destination-title"><?php esc_html_e( 'Destino', 'sultana-admin' ); ?></h2>
+                            <h2 id="sultana-admin-banner-destination-title"><?php esc_html_e( 'Enlace del banner', 'sultana-admin' ); ?></h2>
                             <div class="sultana-admin-banner-field">
-                                <label for="sultana-admin-banner-destination-type"><?php esc_html_e( 'Tipo de destino', 'sultana-admin' ); ?></label>
+                                <label for="sultana-admin-banner-destination-type"><?php esc_html_e( 'Tipo de enlace', 'sultana-admin' ); ?></label>
                                 <select id="sultana-admin-banner-destination-type" name="destination_type" data-sultana-promotion-destination-type>
                                     <?php foreach ( $destination_options as $type => $label ) : ?>
                                         <?php $display_label = $destination_labels[ (string) $type ] ?? (string) $label; ?>

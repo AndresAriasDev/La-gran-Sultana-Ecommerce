@@ -225,18 +225,30 @@
     line-height: var(--sultana-admin-line-height-heading);
 }
 
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] {
+    grid-template-columns: minmax(0, 1fr) minmax(86px, 116px);
+    align-items: start;
+}
+
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > h2,
+.sultana-admin-banner-compact-row > .sultana-admin-banner-toggle {
+    grid-column: 1 / -1;
+}
+
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-images-title"] > h2,
+.sultana-admin-banner-field--alt {
+    display: none;
+}
+
 .sultana-admin-banner-grid,
 .sultana-admin-banner-upload-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--sultana-admin-space-4);
 }
 
 .sultana-admin-banner-compact-row {
-    display: grid;
-    grid-template-columns: minmax(86px, 116px) minmax(0, 220px);
-    align-items: start;
-    gap: var(--sultana-admin-space-3);
+    display: contents;
 }
 
 .sultana-admin-banner-field--order input[type="number"] {
@@ -264,6 +276,15 @@
     font-size: var(--sultana-admin-font-size-sm);
 }
 
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > .sultana-admin-banner-field > p,
+.sultana-admin-banner-field--order > p {
+    display: none;
+}
+
+.sultana-admin-banner-field[hidden] {
+    display: none;
+}
+
 .sultana-admin-banner-form input[type="text"],
 .sultana-admin-banner-form input[type="number"],
 .sultana-admin-banner-form input[type="url"],
@@ -276,6 +297,16 @@
     color: var(--sultana-admin-text);
     padding: 10px 12px;
     font: inherit;
+}
+
+.sultana-admin-banner-upload-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 
 .sultana-admin-banner-form input[type="text"]:hover,
@@ -301,8 +332,11 @@
 .sultana-admin-banner-toggle {
     display: flex;
     align-items: center;
+    justify-self: start;
     gap: var(--sultana-admin-space-2);
     min-height: 44px;
+    width: fit-content;
+    max-width: 100%;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-md);
     background: var(--sultana-admin-surface-soft);
@@ -517,6 +551,10 @@
         font-size: var(--sultana-admin-font-size-xs);
         line-height: var(--sultana-admin-line-height-control);
     }
+
+    .sultana-admin-banner-form-screen {
+        padding-bottom: calc(88px + env(safe-area-inset-bottom));
+    }
 }
 
 @media (max-width: 520px) {
@@ -553,8 +591,8 @@
 }
 
 @media (max-width: 380px) {
-    .sultana-admin-banner-compact-row {
-        grid-template-columns: minmax(78px, 108px) minmax(0, 1fr);
+    .sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] {
+        grid-template-columns: 1fr;
     }
 
     .sultana-admin-banner-toggle {
