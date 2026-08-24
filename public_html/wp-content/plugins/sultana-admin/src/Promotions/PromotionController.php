@@ -19,11 +19,63 @@ class PromotionController
 
     public static function prepare_screen(): array
     {
+        return self::prepare_list_screen();
+    }
+
+    public static function prepare_list_screen(): array
+    {
         $service      = new PromotionService();
         $errors       = [];
         $notice       = self::notice();
-        $promotion_id = isset( $_GET['promotion_id'] ) ? absint( wp_unslash( $_GET['promotion_id'] ) ) : 0;
-        $form         = $service->form_data( $promotion_id );
+
+        if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
+            $action = isset( $_POST['sultana_admin_action'] ) ? sanitize_key( wp_unslash( $_POST['sultana_admin_action'] ) ) : '';
+
+            if ( 'delete_promotion' === $action ) {
+                $result = self::handle_delete_request( $service );
+
+                if ( ! empty( $result['success'] ) ) {
+                    wp_safe_redirect( add_query_arg( 'notice', 'promotion_deleted', Router::banners_url() ) );
+                    exit;
+                }
+
+                $errors = $result['errors'];
+            }
+        }
+
+        return [
+            'mode'                => 'list',
+            'promotions'          => $service->list_promotions(),
+            'errors'              => $errors,
+            'notice'              => $notice,
+            'form_action'         => Router::banners_url(),
+            'delete_nonce_action' => self::DELETE_NONCE_ACTION,
+        ];
+    }
+
+    public static function prepare_create_screen(): array
+    {
+        return self::prepare_form_screen( 0 );
+    }
+
+    public static function prepare_edit_screen( int $promotion_id ): array
+    {
+        return self::prepare_form_screen( $promotion_id );
+    }
+
+    private static function prepare_form_screen( int $promotion_id ): array
+    {
+        $service = new PromotionService();
+        $errors  = [];
+        $form    = $service->form_data( $promotion_id );
+
+        if ( $promotion_id > 0 && empty( $form['id'] ) ) {
+            return [
+                'mode'      => 'form',
+                'not_found' => true,
+                'message'   => __( 'Banner no disponible.', 'sultana-admin' ),
+            ];
+        }
 
         if ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) ) {
             $action = isset( $_POST['sultana_admin_action'] ) ? sanitize_key( wp_unslash( $_POST['sultana_admin_action'] ) ) : '';
@@ -38,29 +90,18 @@ class PromotionController
 
                 $errors = $result['errors'];
                 $form   = self::posted_form_data();
-            } elseif ( 'delete_promotion' === $action ) {
-                $result = self::handle_delete_request( $service );
-
-                if ( ! empty( $result['success'] ) ) {
-                    wp_safe_redirect( add_query_arg( 'notice', 'promotion_deleted', Router::banners_url() ) );
-                    exit;
-                }
-
-                $errors = $result['errors'];
             }
         }
 
         return [
-            'promotions'          => $service->list_promotions(),
+            'mode'                => 'form',
             'form'                => $form,
             'selected_images'     => $service->image_items_for_form( $form ),
             'destination_options' => $service->destination_options(),
             'destination_choices' => $service->destination_choices(),
             'errors'              => $errors,
-            'notice'              => $notice,
-            'form_action'         => Router::banners_url(),
+            'form_action'         => $promotion_id > 0 ? Router::edit_banner_url( $promotion_id ) : Router::new_banner_url(),
             'form_nonce_action'   => self::SAVE_NONCE_ACTION,
-            'delete_nonce_action' => self::DELETE_NONCE_ACTION,
         ];
     }
 

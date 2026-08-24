@@ -30,6 +30,7 @@ $sultana_admin_nav_icons = [
     'customers' => 'user',
     'coupons'   => 'tickets',
     'reviews'   => 'heart',
+    'banners'   => 'images',
 ];
 
 $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'orders' ];
@@ -106,10 +107,14 @@ $sultana_admin_mobile_nav_order = [ 'customers', 'dashboard', 'products', 'order
                         <?php $sultana_admin_icon_asset( 'chevron-right' ); ?>
                     </button>
                     <div class="sultana-admin-mobile-menu__panel" id="sultana-admin-mobile-menu-panel" hidden data-sultana-mobile-menu-panel>
-                        <button class="sultana-admin-mobile-menu__item is-disabled" type="button" disabled aria-disabled="true">
+                        <a
+                            class="<?php echo esc_attr( 'sultana-admin-mobile-menu__item' . ( 'banners' === $active_route ? ' is-active' : '' ) ); ?>"
+                            href="<?php echo esc_url( \Sultana\Admin\Core\Router::banners_url() ); ?>"
+                            <?php echo 'banners' === $active_route ? 'aria-current="page"' : ''; ?>
+                        >
                             <?php $sultana_admin_icon_asset( 'images' ); ?>
-                            <?php esc_html_e( 'Banner', 'sultana-admin' ); ?>
-                        </button>
+                            <?php esc_html_e( 'Banners', 'sultana-admin' ); ?>
+                        </a>
                         <a
                             class="<?php echo esc_attr( 'sultana-admin-mobile-menu__item' . ( 'coupons' === $active_route ? ' is-active' : '' ) ); ?>"
                             href="<?php echo esc_url( \Sultana\Admin\Core\Router::coupons_url() ); ?>"

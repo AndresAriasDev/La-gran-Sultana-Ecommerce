@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'banners', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'banners', 'banner_new', 'banner_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -29,6 +29,8 @@ class Router
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
+        add_rewrite_rule( '^gestion/banners/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=banner_new', 'top' );
+        add_rewrite_rule( '^gestion/banners/editar/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=banner_edit&sultana_admin_promotion_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/banners/?$', 'index.php?' . self::QUERY_VAR . '=banners', 'top' );
         add_rewrite_rule( '^gestion/pedidos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=order_view&sultana_admin_order_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/pedidos/?$', 'index.php?' . self::QUERY_VAR . '=orders', 'top' );
@@ -48,6 +50,7 @@ class Router
         $vars[] = 'sultana_admin_order_id';
         $vars[] = 'sultana_admin_customer_id';
         $vars[] = 'sultana_admin_coupon_id';
+        $vars[] = 'sultana_admin_promotion_id';
 
         return $vars;
     }
@@ -123,7 +126,7 @@ class Router
             exit;
         }
 
-        if ( 'banners' === $route && ! current_user_can( Capabilities::MANAGE_HOME_PROMOTIONS_CAPABILITY ) ) {
+        if ( in_array( $route, [ 'banners', 'banner_new', 'banner_edit' ], true ) && ! current_user_can( Capabilities::MANAGE_HOME_PROMOTIONS_CAPABILITY ) ) {
             self::render_forbidden();
             exit;
         }
@@ -230,6 +233,16 @@ class Router
         return home_url( '/gestion/banners/' );
     }
 
+    public static function new_banner_url(): string
+    {
+        return home_url( '/gestion/banners/nuevo/' );
+    }
+
+    public static function edit_banner_url( int $promotion_id ): string
+    {
+        return home_url( '/gestion/banners/editar/' . absint( $promotion_id ) . '/' );
+    }
+
     public static function is_admin_request(): bool
     {
         return self::is_valid_route( self::current_route() );
@@ -257,6 +270,7 @@ class Router
         $active_route = 'order_view' === $active_route ? 'orders' : $active_route;
         $active_route = 'customer_view' === $active_route ? 'customers' : $active_route;
         $active_route = in_array( $active_route, [ 'coupon_new', 'coupon_edit' ], true ) ? 'coupons' : $active_route;
+        $active_route = in_array( $active_route, [ 'banner_new', 'banner_edit' ], true ) ? 'banners' : $active_route;
         $nav_items    = self::admin_nav_items();
         $screen       = self::screen_config( $route );
         $screen_data  = self::screen_data( $route );
@@ -303,6 +317,11 @@ class Router
                 'url'   => self::reviews_url(),
                 'desktop_only' => true,
             ],
+            'banners' => [
+                'label' => __( 'Banners', 'sultana-admin' ),
+                'url'   => self::banners_url(),
+                'desktop_only' => true,
+            ],
         ];
     }
 
@@ -321,6 +340,16 @@ class Router
             ],
             'banners' => [
                 'title'    => __( 'Banners', 'sultana-admin' ),
+                'subtitle' => __( 'Banners', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/banners.php',
+            ],
+            'banner_new' => [
+                'title'    => __( 'Nuevo banner', 'sultana-admin' ),
+                'subtitle' => __( 'Banners', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/banners.php',
+            ],
+            'banner_edit' => [
+                'title'    => __( 'Editar banner', 'sultana-admin' ),
                 'subtitle' => __( 'Banners', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/banners.php',
             ],
@@ -399,7 +428,15 @@ class Router
         }
 
         if ( 'banners' === $route ) {
-            return PromotionController::prepare_screen();
+            return PromotionController::prepare_list_screen();
+        }
+
+        if ( 'banner_new' === $route ) {
+            return PromotionController::prepare_create_screen();
+        }
+
+        if ( 'banner_edit' === $route ) {
+            return PromotionController::prepare_edit_screen( self::current_promotion_id() );
         }
 
         if ( 'orders' === $route ) {
@@ -472,6 +509,11 @@ class Router
     private static function current_coupon_id(): int
     {
         return absint( get_query_var( 'sultana_admin_coupon_id' ) );
+    }
+
+    private static function current_promotion_id(): int
+    {
+        return absint( get_query_var( 'sultana_admin_promotion_id' ) );
     }
 
     private static function handle_login_request(): void

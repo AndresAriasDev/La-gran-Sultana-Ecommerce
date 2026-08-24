@@ -24,6 +24,7 @@
         const preview = root.querySelector('[data-sultana-promotion-image-preview]');
         const meta = root.querySelector('[data-sultana-promotion-image-meta]');
         const status = root.querySelector('[data-sultana-promotion-image-status]');
+        const emptyLabel = root.querySelector('[data-sultana-promotion-image-empty-label]');
         let image = parseInitialImage(root);
         let pending = false;
 
@@ -150,6 +151,16 @@
 
             if (remove) {
                 remove.disabled = !id;
+            }
+
+            root.classList.toggle('has-image', Boolean(id));
+
+            if (emptyLabel) {
+                emptyLabel.textContent = id ? 'Cambiar imagen' : 'Subir imagen';
+            }
+
+            if (trigger) {
+                trigger.setAttribute('aria-label', id ? 'Cambiar imagen' : 'Subir imagen');
             }
         }
 

@@ -39,7 +39,7 @@ class PromotionService
 
         return array_map(
             static function ( array $promotion ) use ( $image_service ): array {
-                $promotion['edit_url'] = add_query_arg( 'promotion_id', absint( $promotion['id'] ?? 0 ), Router::banners_url() );
+                $promotion['edit_url'] = Router::edit_banner_url( absint( $promotion['id'] ?? 0 ) );
                 $promotion['desktop_image'] = ! empty( $promotion['desktop_image_id'] )
                     ? $image_service->format_image_item( absint( $promotion['desktop_image_id'] ), false )
                     : null;
