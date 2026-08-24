@@ -27,8 +27,15 @@ while ( have_posts() ) :
     $main_image_id     = $product->get_image_id();
     $gallery_image_ids = $product->get_gallery_image_ids();
     $image_ids         = array_values( array_filter( array_unique( array_merge( [ $main_image_id ], $gallery_image_ids ) ) ) );
-    $main_image_url    = $main_image_id ? wp_get_attachment_image_url( $main_image_id, 'large' ) : wc_placeholder_img_src( 'large' );
-    $main_image_alt    = $main_image_id ? get_post_meta( $main_image_id, '_wp_attachment_image_alt', true ) : $product->get_name();
+    $main_image_attrs  = [
+        'class'         => 'single-product-gallery__main-image',
+        'loading'       => 'eager',
+        'fetchpriority' => 'high',
+        'decoding'      => 'async',
+        'sizes'         => '(max-width: 560px) calc(100vw - 20px), (max-width: 900px) calc(100vw - 32px), min(52vw, 615px)',
+    ];
+    $main_image_html   = $main_image_id ? wp_get_attachment_image( $main_image_id, 'woocommerce_single', false, $main_image_attrs ) : '';
+    $main_image_html   = $main_image_html ?: wc_placeholder_img( 'woocommerce_single', $main_image_attrs );
     $short_description = apply_filters( 'woocommerce_short_description', $post->post_excerpt );
     $parent_sku        = $product->get_sku();
     $initial_sku       = $parent_sku;
@@ -199,13 +206,7 @@ while ( have_posts() ) :
                         <?php endif; ?>
 
                         <button class="single-product-gallery__main-link" type="button" aria-label="<?php esc_attr_e( 'Ampliar imagen del producto', 'sultana-storefront' ); ?>">
-                            <img
-                                class="single-product-gallery__main-image"
-                                src="<?php echo esc_url( $main_image_url ); ?>"
-                                alt="<?php echo esc_attr( $main_image_alt ?: $product->get_name() ); ?>"
-                                loading="eager"
-                                decoding="async"
-                            >
+                            <?php echo $main_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                         </button>
                     </div>
                 </section>
