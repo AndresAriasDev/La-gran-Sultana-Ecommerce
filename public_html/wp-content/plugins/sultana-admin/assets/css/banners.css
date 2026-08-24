@@ -11,6 +11,15 @@
     align-items: center;
 }
 
+.sultana-admin-banners-header > div {
+    min-width: 0;
+}
+
+.sultana-admin-banners-header .sultana-admin-secondary-action {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
 .sultana-admin-banners-header h1,
 .sultana-admin-editor-header h1 {
     font-weight: var(--sultana-admin-font-weight-semibold);
@@ -120,6 +129,23 @@
     font-size: var(--sultana-admin-font-size-sm);
 }
 
+.sultana-admin-banner-card__meta {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sultana-admin-space-2);
+    margin-top: 3px;
+}
+
+.sultana-admin-banner-card__meta small {
+    margin-top: 0;
+}
+
+.sultana-admin-banner-card__meta .sultana-admin-badge {
+    width: fit-content;
+    flex: 0 0 auto;
+}
+
 .sultana-admin-banner-thumb {
     display: grid;
     width: 104px;
@@ -175,19 +201,19 @@
 .sultana-admin-banner-editor-main,
 .sultana-admin-banner-editor-sidebar {
     display: grid;
-    gap: var(--sultana-admin-space-4);
+    gap: var(--sultana-admin-space-3);
     min-width: 0;
 }
 
 .sultana-admin-banner-card-section {
     display: grid;
-    gap: var(--sultana-admin-space-4);
+    gap: var(--sultana-admin-space-3);
     min-width: 0;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-lg);
     background: var(--sultana-admin-surface);
     box-shadow: var(--sultana-admin-shadow);
-    padding: var(--sultana-admin-space-5);
+    padding: var(--sultana-admin-space-4);
 }
 
 .sultana-admin-banner-card-section h2,
@@ -204,6 +230,17 @@
     display: grid;
     grid-template-columns: repeat(2, minmax(220px, 1fr));
     gap: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-banner-compact-row {
+    display: grid;
+    grid-template-columns: minmax(86px, 116px) minmax(0, 220px);
+    align-items: start;
+    gap: var(--sultana-admin-space-3);
+}
+
+.sultana-admin-banner-field--order input[type="number"] {
+    max-width: 116px;
 }
 
 .sultana-admin-banner-field {
@@ -265,12 +302,12 @@
     display: flex;
     align-items: center;
     gap: var(--sultana-admin-space-2);
-    min-height: 74px;
+    min-height: 44px;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-md);
     background: var(--sultana-admin-surface-soft);
     cursor: pointer;
-    padding: 11px 12px;
+    padding: 9px 10px;
 }
 
 .sultana-admin-banner-toggle input {
@@ -292,7 +329,7 @@
 
 .sultana-admin-banner-toggle small {
     color: var(--sultana-admin-muted);
-    font-size: var(--sultana-admin-font-size-sm);
+    font-size: var(--sultana-admin-font-size-xs);
 }
 
 .sultana-admin-banner-uploader {
@@ -424,7 +461,6 @@
 
 @media (max-width: 900px) {
     .sultana-admin-banner-editor-layout,
-    .sultana-admin-banner-grid,
     .sultana-admin-banner-upload-grid {
         grid-template-columns: 1fr;
     }
@@ -442,8 +478,9 @@
 
     .sultana-admin-banner-card {
         display: grid;
-        grid-template-columns: 96px minmax(0, 1fr) auto;
-        gap: var(--sultana-admin-space-3);
+        grid-template-columns: 96px minmax(0, 1fr);
+        column-gap: var(--sultana-admin-space-3);
+        row-gap: var(--sultana-admin-space-2);
         align-items: center;
         border: 1px solid var(--sultana-admin-border);
         border-radius: var(--sultana-admin-radius-lg);
@@ -457,7 +494,8 @@
     }
 
     .sultana-admin-banner-card .sultana-admin-card-actions {
-        grid-column: 2 / 4;
+        grid-column: 2 / 3;
+        align-self: start;
         justify-content: flex-end;
     }
 
@@ -467,28 +505,36 @@
         min-height: 38px;
     }
 
-    .sultana-admin-banner-card .sultana-admin-badge {
-        justify-self: end;
-    }
-
     .sultana-admin-banner-card .sultana-admin-banner-name {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
+    .sultana-admin-banner-card__meta .sultana-admin-badge {
+        min-height: 24px;
+        padding: 2px 7px;
+        font-size: var(--sultana-admin-font-size-xs);
+        line-height: var(--sultana-admin-line-height-control);
+    }
 }
 
 @media (max-width: 520px) {
-    .sultana-admin-banners-header,
-    .sultana-admin-banner-uploader__footer,
-    .sultana-admin-banner-actions {
+    .sultana-admin-banner-uploader__footer {
         align-items: stretch;
         flex-direction: column;
     }
 
-    .sultana-admin-banners-header .sultana-admin-secondary-action,
-    .sultana-admin-banner-actions > * {
-        width: 100%;
+    .sultana-admin-banner-actions {
+        justify-content: stretch;
+    }
+
+    .sultana-admin-banner-actions .sultana-admin-muted-action {
+        flex: 0 0 auto;
+    }
+
+    .sultana-admin-banner-actions button {
+        flex: 1 1 auto;
         justify-content: center;
     }
 
@@ -500,13 +546,18 @@
         width: 82px;
     }
 
-    .sultana-admin-banner-card .sultana-admin-badge,
     .sultana-admin-banner-card .sultana-admin-card-actions {
-        grid-column: 1 / 3;
-        justify-self: stretch;
+        grid-column: 2 / 3;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 380px) {
+    .sultana-admin-banner-compact-row {
+        grid-template-columns: minmax(78px, 108px) minmax(0, 1fr);
     }
 
-    .sultana-admin-banner-card .sultana-admin-card-actions {
-        justify-content: flex-end;
+    .sultana-admin-banner-toggle {
+        padding-inline: 8px;
     }
 }

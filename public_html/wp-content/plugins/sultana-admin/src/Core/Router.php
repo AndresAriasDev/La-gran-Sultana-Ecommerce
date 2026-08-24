@@ -295,6 +295,11 @@ class Router
                 'label' => __( 'Inicio', 'sultana-admin' ),
                 'url'   => self::dashboard_url(),
             ],
+            'banners' => [
+                'label' => __( 'Banners', 'sultana-admin' ),
+                'url'   => self::banners_url(),
+                'desktop_only' => true,
+            ],
             'products'  => [
                 'label' => __( 'Productos', 'sultana-admin' ),
                 'url'   => self::products_url(),
@@ -315,11 +320,6 @@ class Router
             'reviews' => [
                 'label' => __( 'Reseñas', 'sultana-admin' ),
                 'url'   => self::reviews_url(),
-                'desktop_only' => true,
-            ],
-            'banners' => [
-                'label' => __( 'Banners', 'sultana-admin' ),
-                'url'   => self::banners_url(),
                 'desktop_only' => true,
             ],
         ];

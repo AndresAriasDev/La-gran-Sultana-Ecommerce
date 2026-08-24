@@ -32,6 +32,7 @@ $submit_label        = $is_edit ? __( 'Guardar cambios', 'sultana-admin' ) : __(
 $new_url             = \Sultana\Admin\Core\Router::new_banner_url();
 $list_url            = \Sultana\Admin\Core\Router::banners_url();
 $icon_url            = static fn( string $name ): string => \Sultana\Admin\Core\Icons::url( $name );
+$current_destination = (string) ( $form['destination_type'] ?? 'none' );
 $destination_labels  = [
     'none'             => __( 'Sin enlace', 'sultana-admin' ),
     'page'             => __( 'Página', 'sultana-admin' ),
@@ -132,12 +133,11 @@ $render_destination_options = static function ( string $type, string $current_va
     <?php if ( 'form' !== $mode ) : ?>
         <div class="sultana-admin-section-header sultana-admin-banners-header">
             <div>
-                <h1><?php esc_html_e( 'Banners Home', 'sultana-admin' ); ?></h1>
-                <p><?php esc_html_e( 'Gestiona campañas responsive para la página de inicio.', 'sultana-admin' ); ?></p>
+                <h1><?php esc_html_e( 'Banners', 'sultana-admin' ); ?></h1>
             </div>
             <a class="sultana-admin-secondary-action" href="<?php echo esc_url( $new_url ); ?>">
                 <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'images' ) ); ?>');" aria-hidden="true"></span>
-                <?php esc_html_e( 'Nuevo banner', 'sultana-admin' ); ?>
+                <?php esc_html_e( 'Nuevo', 'sultana-admin' ); ?>
             </a>
         </div>
 
@@ -161,7 +161,7 @@ $render_destination_options = static function ( string $type, string $current_va
                 <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'images' ) ); ?>');" aria-hidden="true"></span>
                 <h2><?php esc_html_e( 'Aún no hay banners', 'sultana-admin' ); ?></h2>
                 <p><?php esc_html_e( 'Crea tu primer banner para mostrar promociones en la página de inicio.', 'sultana-admin' ); ?></p>
-                <a class="sultana-admin-secondary-action" href="<?php echo esc_url( $new_url ); ?>"><?php esc_html_e( 'Nuevo banner', 'sultana-admin' ); ?></a>
+                <a class="sultana-admin-secondary-action" href="<?php echo esc_url( $new_url ); ?>"><?php esc_html_e( 'Nuevo', 'sultana-admin' ); ?></a>
             </div>
         <?php else : ?>
             <div class="sultana-admin-banner-table-wrap">
@@ -243,9 +243,11 @@ $render_destination_options = static function ( string $type, string $current_va
                         </span>
                         <div>
                             <span class="sultana-admin-banner-name"><?php echo esc_html( (string) ( $promotion['name'] ?? '' ) ); ?></span>
-                            <small><?php echo esc_html( sprintf( __( 'Orden %d', 'sultana-admin' ), (int) ( $promotion['menu_order'] ?? 0 ) ) ); ?></small>
+                            <span class="sultana-admin-banner-card__meta">
+                                <small><?php echo esc_html( sprintf( __( 'Orden %d', 'sultana-admin' ), (int) ( $promotion['menu_order'] ?? 0 ) ) ); ?></small>
+                                <span class="<?php echo esc_attr( trim( 'sultana-admin-badge ' . $status_class ) ); ?>"><?php echo esc_html( $status_label ); ?></span>
+                            </span>
                         </div>
-                        <span class="<?php echo esc_attr( trim( 'sultana-admin-badge ' . $status_class ) ); ?>"><?php echo esc_html( $status_label ); ?></span>
                         <div class="sultana-admin-card-actions">
                             <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( $form_action ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Enviar este banner a la papelera?', 'sultana-admin' ) ); ?>');">
                                 <input type="hidden" name="sultana_admin_action" value="delete_promotion">
@@ -300,8 +302,8 @@ $render_destination_options = static function ( string $type, string $current_va
                                 <input id="sultana-admin-banner-name" type="text" name="name" value="<?php echo esc_attr( (string) ( $form['name'] ?? '' ) ); ?>" required data-sultana-promotion-title>
                                 <p><?php esc_html_e( 'Solo visible en administración.', 'sultana-admin' ); ?></p>
                             </div>
-                            <div class="sultana-admin-banner-grid">
-                                <div class="sultana-admin-banner-field">
+                            <div class="sultana-admin-banner-compact-row">
+                                <div class="sultana-admin-banner-field sultana-admin-banner-field--order">
                                     <label for="sultana-admin-banner-order"><?php esc_html_e( 'Orden', 'sultana-admin' ); ?></label>
                                     <input id="sultana-admin-banner-order" type="number" name="menu_order" value="<?php echo esc_attr( (string) (int) ( $form['menu_order'] ?? 0 ) ); ?>" step="1">
                                     <p><?php esc_html_e( 'Los números menores aparecen primero.', 'sultana-admin' ); ?></p>
@@ -324,6 +326,11 @@ $render_destination_options = static function ( string $type, string $current_va
                                 $render_image_field( 'mobile', __( 'Banner para móvil', 'sultana-admin' ), __( 'Recomendado: 750 × 375 px', 'sultana-admin' ), __( '2:1', 'sultana-admin' ) );
                                 ?>
                             </div>
+                            <div class="sultana-admin-banner-field">
+                                <label for="sultana-admin-banner-alt"><?php esc_html_e( 'Texto alternativo', 'sultana-admin' ); ?></label>
+                                <input id="sultana-admin-banner-alt" type="text" name="alt_text" value="<?php echo esc_attr( (string) ( $form['alt_text'] ?? '' ) ); ?>">
+                                <p><?php esc_html_e( 'Describe brevemente el banner para lectores de pantalla.', 'sultana-admin' ); ?></p>
+                            </div>
                         </section>
                     </div>
 
@@ -335,7 +342,7 @@ $render_destination_options = static function ( string $type, string $current_va
                                 <select id="sultana-admin-banner-destination-type" name="destination_type" data-sultana-promotion-destination-type>
                                     <?php foreach ( $destination_options as $type => $label ) : ?>
                                         <?php $display_label = $destination_labels[ (string) $type ] ?? (string) $label; ?>
-                                        <option value="<?php echo esc_attr( (string) $type ); ?>" <?php selected( (string) ( $form['destination_type'] ?? 'none' ), (string) $type ); ?>>
+                                        <option value="<?php echo esc_attr( (string) $type ); ?>" <?php selected( $current_destination, (string) $type ); ?>>
                                             <?php echo esc_html( $display_label ); ?>
                                         </option>
                                     <?php endforeach; ?>
@@ -343,26 +350,20 @@ $render_destination_options = static function ( string $type, string $current_va
                             </div>
 
                             <?php foreach ( [ 'page', 'product_category', 'product', 'brand' ] as $destination_type ) : ?>
-                                <div class="sultana-admin-banner-field" data-sultana-promotion-destination-field="<?php echo esc_attr( $destination_type ); ?>">
+                                <?php $is_current_destination = $current_destination === $destination_type; ?>
+                                <div class="sultana-admin-banner-field" data-sultana-promotion-destination-field="<?php echo esc_attr( $destination_type ); ?>" <?php hidden( ! $is_current_destination ); ?>>
                                     <label><?php echo esc_html( (string) ( $destination_labels[ $destination_type ] ?? $destination_type ) ); ?></label>
-                                    <select name="destination_value" data-sultana-promotion-destination-value="<?php echo esc_attr( $destination_type ); ?>">
+                                    <select name="destination_value" data-sultana-promotion-destination-value="<?php echo esc_attr( $destination_type ); ?>" <?php disabled( ! $is_current_destination ); ?>>
                                         <option value="0"><?php esc_html_e( 'Seleccionar', 'sultana-admin' ); ?></option>
                                         <?php $render_destination_options( $destination_type, (string) ( $form['destination_value'] ?? '' ) ); ?>
                                     </select>
                                 </div>
                             <?php endforeach; ?>
 
-                            <div class="sultana-admin-banner-field" data-sultana-promotion-destination-field="custom_url">
+                            <?php $is_custom_url_destination = 'custom_url' === $current_destination; ?>
+                            <div class="sultana-admin-banner-field" data-sultana-promotion-destination-field="custom_url" <?php hidden( ! $is_custom_url_destination ); ?>>
                                 <label for="sultana-admin-banner-custom-url"><?php esc_html_e( 'URL personalizada', 'sultana-admin' ); ?></label>
-                                <input id="sultana-admin-banner-custom-url" type="url" name="custom_url" value="<?php echo esc_attr( (string) ( $form['custom_url'] ?? '' ) ); ?>">
-                            </div>
-                        </section>
-
-                        <section class="sultana-admin-banner-card-section" aria-labelledby="sultana-admin-banner-accessibility-title">
-                            <h2 id="sultana-admin-banner-accessibility-title"><?php esc_html_e( 'Accesibilidad', 'sultana-admin' ); ?></h2>
-                            <div class="sultana-admin-banner-field">
-                                <label for="sultana-admin-banner-alt"><?php esc_html_e( 'Texto alternativo', 'sultana-admin' ); ?></label>
-                                <input id="sultana-admin-banner-alt" type="text" name="alt_text" value="<?php echo esc_attr( (string) ( $form['alt_text'] ?? '' ) ); ?>">
+                                <input id="sultana-admin-banner-custom-url" type="url" name="custom_url" value="<?php echo esc_attr( (string) ( $form['custom_url'] ?? '' ) ); ?>" <?php disabled( ! $is_custom_url_destination ); ?>>
                             </div>
                         </section>
                     </aside>

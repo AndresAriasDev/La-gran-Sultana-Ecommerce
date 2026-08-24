@@ -10,7 +10,6 @@
     const titleInput = screen.querySelector('[data-sultana-promotion-title]');
     const destinationType = screen.querySelector('[data-sultana-promotion-destination-type]');
     const destinationFields = Array.from(screen.querySelectorAll('[data-sultana-promotion-destination-field]'));
-    const destinationValues = Array.from(screen.querySelectorAll('[data-sultana-promotion-destination-value]'));
 
     setupDestinationFields();
     screen.querySelectorAll('[data-sultana-promotion-image]').forEach(setupImageField);
@@ -196,10 +195,9 @@
                 const type = field.getAttribute('data-sultana-promotion-destination-field');
                 const isActive = type === activeType;
                 field.hidden = !isActive;
-            });
-
-            destinationValues.forEach(function (field) {
-                field.disabled = field.getAttribute('data-sultana-promotion-destination-value') !== activeType;
+                Array.from(field.querySelectorAll('input, select, textarea')).forEach(function (control) {
+                    control.disabled = !isActive;
+                });
             });
         };
 
