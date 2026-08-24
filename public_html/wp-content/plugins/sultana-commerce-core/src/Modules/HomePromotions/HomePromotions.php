@@ -10,12 +10,21 @@ class HomePromotions
 {
     public const POST_TYPE = 'scc_home_promotion';
 
-    private const META_PROMO_TITLE = '_scc_home_promotion_title';
-    private const META_SUBTITLE    = '_scc_home_promotion_subtitle';
-    private const META_IMAGE_ID    = '_scc_home_promotion_image_id';
-    private const META_BUTTON_TEXT = '_scc_home_promotion_button_text';
-    private const META_URL         = '_scc_home_promotion_url';
-    private const META_ACTIVE      = '_scc_home_promotion_active';
+    private const META_DESKTOP_IMAGE_ID  = '_scc_home_promotion_desktop_image_id';
+    private const META_MOBILE_IMAGE_ID   = '_scc_home_promotion_mobile_image_id';
+    private const META_ALT_TEXT          = '_scc_home_promotion_alt_text';
+    private const META_DESTINATION_TYPE  = '_scc_home_promotion_destination_type';
+    private const META_DESTINATION_VALUE = '_scc_home_promotion_destination_value';
+    private const META_CUSTOM_URL        = '_scc_home_promotion_custom_url';
+    private const META_ACTIVE            = '_scc_home_promotion_active';
+
+    private const DESTINATION_NONE             = 'none';
+    private const DESTINATION_PAGE             = 'page';
+    private const DESTINATION_PRODUCT_CATEGORY = 'product_category';
+    private const DESTINATION_PRODUCT          = 'product';
+    private const DESTINATION_BRAND            = 'brand';
+    private const DESTINATION_SALE             = 'sale';
+    private const DESTINATION_CUSTOM_URL       = 'custom_url';
 
     public static function register(): void
     {
@@ -32,22 +41,22 @@ class HomePromotions
             [
                 'labels'              => [
                     'name'                  => __( 'Promociones Home', 'sultana-commerce-core' ),
-                    'singular_name'         => __( 'Promoción Home', 'sultana-commerce-core' ),
+                    'singular_name'         => __( 'Promocion Home', 'sultana-commerce-core' ),
                     'menu_name'             => __( 'Promociones Home', 'sultana-commerce-core' ),
-                    'name_admin_bar'        => __( 'Promoción Home', 'sultana-commerce-core' ),
+                    'name_admin_bar'        => __( 'Promocion Home', 'sultana-commerce-core' ),
                     'add_new'               => __( 'Agregar nueva', 'sultana-commerce-core' ),
-                    'add_new_item'          => __( 'Agregar promoción Home', 'sultana-commerce-core' ),
-                    'edit_item'             => __( 'Editar promoción Home', 'sultana-commerce-core' ),
-                    'new_item'              => __( 'Nueva promoción Home', 'sultana-commerce-core' ),
-                    'view_item'             => __( 'Ver promoción Home', 'sultana-commerce-core' ),
+                    'add_new_item'          => __( 'Agregar promocion Home', 'sultana-commerce-core' ),
+                    'edit_item'             => __( 'Editar promocion Home', 'sultana-commerce-core' ),
+                    'new_item'              => __( 'Nueva promocion Home', 'sultana-commerce-core' ),
+                    'view_item'             => __( 'Ver promocion Home', 'sultana-commerce-core' ),
                     'search_items'          => __( 'Buscar promociones Home', 'sultana-commerce-core' ),
                     'not_found'             => __( 'No se encontraron promociones.', 'sultana-commerce-core' ),
                     'not_found_in_trash'    => __( 'No hay promociones en la papelera.', 'sultana-commerce-core' ),
                     'all_items'             => __( 'Promociones Home', 'sultana-commerce-core' ),
                     'archives'              => __( 'Promociones Home', 'sultana-commerce-core' ),
-                    'attributes'            => __( 'Atributos de promoción', 'sultana-commerce-core' ),
-                    'insert_into_item'      => __( 'Insertar en la promoción', 'sultana-commerce-core' ),
-                    'uploaded_to_this_item' => __( 'Subido a esta promoción', 'sultana-commerce-core' ),
+                    'attributes'            => __( 'Atributos de promocion', 'sultana-commerce-core' ),
+                    'insert_into_item'      => __( 'Insertar en la promocion', 'sultana-commerce-core' ),
+                    'uploaded_to_this_item' => __( 'Subido a esta promocion', 'sultana-commerce-core' ),
                 ],
                 'public'              => false,
                 'show_ui'             => true,
@@ -72,7 +81,7 @@ class HomePromotions
     {
         add_meta_box(
             'scc-home-promotion-content',
-            __( 'Contenido de la promoción', 'sultana-commerce-core' ),
+            __( 'Banner responsive', 'sultana-commerce-core' ),
             [ self::class, 'render_content_meta_box' ],
             self::POST_TYPE,
             'normal',
@@ -93,47 +102,40 @@ class HomePromotions
     {
         wp_nonce_field( 'scc_home_promotion_meta', 'scc_home_promotion_nonce' );
 
-        $promo_title = (string) get_post_meta( $post->ID, self::META_PROMO_TITLE, true );
-        $subtitle    = (string) get_post_meta( $post->ID, self::META_SUBTITLE, true );
-        $image_id    = absint( get_post_meta( $post->ID, self::META_IMAGE_ID, true ) );
-        $button_text = (string) get_post_meta( $post->ID, self::META_BUTTON_TEXT, true );
-        $url         = (string) get_post_meta( $post->ID, self::META_URL, true );
-        $image_url   = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+        $desktop_image_id  = absint( get_post_meta( $post->ID, self::META_DESKTOP_IMAGE_ID, true ) );
+        $mobile_image_id   = absint( get_post_meta( $post->ID, self::META_MOBILE_IMAGE_ID, true ) );
+        $alt_text          = (string) get_post_meta( $post->ID, self::META_ALT_TEXT, true );
+        $destination_type  = self::sanitize_destination_type( get_post_meta( $post->ID, self::META_DESTINATION_TYPE, true ) );
+        $destination_value = (string) get_post_meta( $post->ID, self::META_DESTINATION_VALUE, true );
+        $custom_url        = (string) get_post_meta( $post->ID, self::META_CUSTOM_URL, true );
 
         ?>
         <div class="scc-home-promotion-fields">
-            <p>
-                <label for="scc-home-promotion-title"><strong><?php esc_html_e( 'Título promocional', 'sultana-commerce-core' ); ?></strong></label>
-                <input id="scc-home-promotion-title" class="widefat" type="text" name="scc_home_promotion_title" value="<?php echo esc_attr( $promo_title ); ?>" placeholder="<?php esc_attr_e( '10% OFF', 'sultana-commerce-core' ); ?>">
-            </p>
+            <?php
+            self::render_image_picker(
+                'desktop',
+                __( 'Banner escritorio', 'sultana-commerce-core' ),
+                'scc_home_promotion_desktop_image_id',
+                $desktop_image_id,
+                __( 'Medida recomendada: 1600 x 600 px (proporcion 8:3).', 'sultana-commerce-core' )
+            );
+
+            self::render_image_picker(
+                'mobile',
+                __( 'Banner movil', 'sultana-commerce-core' ),
+                'scc_home_promotion_mobile_image_id',
+                $mobile_image_id,
+                __( 'Medida recomendada: 750 x 375 px (proporcion 2:1).', 'sultana-commerce-core' )
+            );
+            ?>
 
             <p>
-                <label for="scc-home-promotion-subtitle"><strong><?php esc_html_e( 'Texto/subtítulo', 'sultana-commerce-core' ); ?></strong></label>
-                <textarea id="scc-home-promotion-subtitle" class="widefat" name="scc_home_promotion_subtitle" rows="3" placeholder="<?php esc_attr_e( 'En productos ELF', 'sultana-commerce-core' ); ?>"><?php echo esc_textarea( $subtitle ); ?></textarea>
+                <label for="scc-home-promotion-alt-text"><strong><?php esc_html_e( 'Texto alternativo', 'sultana-commerce-core' ); ?></strong></label>
+                <input id="scc-home-promotion-alt-text" class="widefat" type="text" name="scc_home_promotion_alt_text" value="<?php echo esc_attr( $alt_text ); ?>">
+                <span class="description"><?php esc_html_e( 'Describe brevemente el contenido o proposito del banner.', 'sultana-commerce-core' ); ?></span>
             </p>
 
-            <p>
-                <label><strong><?php esc_html_e( 'Imagen principal PNG', 'sultana-commerce-core' ); ?></strong></label>
-                <input type="hidden" name="scc_home_promotion_image_id" value="<?php echo esc_attr( $image_id ); ?>" data-scc-home-promotion-image-id>
-                <span class="scc-home-promotion-image-preview" data-scc-home-promotion-image-preview>
-                    <?php if ( $image_url ) : ?>
-                        <img src="<?php echo esc_url( $image_url ); ?>" alt="" style="display:block;max-width:180px;height:auto;margin:8px 0;">
-                    <?php endif; ?>
-                </span>
-                <button type="button" class="button" data-scc-home-promotion-image-select><?php esc_html_e( 'Seleccionar imagen', 'sultana-commerce-core' ); ?></button>
-                <button type="button" class="button" data-scc-home-promotion-image-remove <?php disabled( ! $image_id ); ?>><?php esc_html_e( 'Quitar imagen', 'sultana-commerce-core' ); ?></button>
-            </p>
-
-            <p>
-                <label for="scc-home-promotion-button"><strong><?php esc_html_e( 'Texto del botón', 'sultana-commerce-core' ); ?></strong></label>
-                <input id="scc-home-promotion-button" class="widefat" type="text" name="scc_home_promotion_button_text" value="<?php echo esc_attr( $button_text ?: __( 'Ver todo', 'sultana-commerce-core' ) ); ?>">
-            </p>
-
-            <p>
-                <label for="scc-home-promotion-url"><strong><?php esc_html_e( 'URL destino', 'sultana-commerce-core' ); ?></strong></label>
-                <input id="scc-home-promotion-url" class="widefat" type="url" name="scc_home_promotion_url" value="<?php echo esc_attr( $url ); ?>" placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>">
-                <span class="description"><?php esc_html_e( 'Usa la URL de la marca, categoría o selección que corresponda. No se genera automáticamente desde el cupón.', 'sultana-commerce-core' ); ?></span>
-            </p>
+            <?php self::render_destination_fields( $destination_type, $destination_value, $custom_url ); ?>
         </div>
         <?php
     }
@@ -146,10 +148,10 @@ class HomePromotions
         <p>
             <label>
                 <input type="checkbox" name="scc_home_promotion_active" value="yes" <?php checked( $is_active ); ?>>
-                <?php esc_html_e( 'Mostrar en Home / Promoción activa', 'sultana-commerce-core' ); ?>
+                <?php esc_html_e( 'Mostrar en Home / Promocion activa', 'sultana-commerce-core' ); ?>
             </label>
         </p>
-        <p class="description"><?php esc_html_e( 'Puedes tener varias promociones activas al mismo tiempo. Usa el campo Orden para controlar su posición.', 'sultana-commerce-core' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Usa el campo Orden para controlar su posicion.', 'sultana-commerce-core' ); ?></p>
         <?php
     }
 
@@ -165,11 +167,14 @@ class HomePromotions
             return;
         }
 
-        update_post_meta( $post_id, self::META_PROMO_TITLE, sanitize_text_field( wp_unslash( $_POST['scc_home_promotion_title'] ?? '' ) ) );
-        update_post_meta( $post_id, self::META_SUBTITLE, sanitize_textarea_field( wp_unslash( $_POST['scc_home_promotion_subtitle'] ?? '' ) ) );
-        update_post_meta( $post_id, self::META_IMAGE_ID, self::sanitize_image_id( $_POST['scc_home_promotion_image_id'] ?? 0 ) );
-        update_post_meta( $post_id, self::META_BUTTON_TEXT, sanitize_text_field( wp_unslash( $_POST['scc_home_promotion_button_text'] ?? '' ) ) );
-        update_post_meta( $post_id, self::META_URL, esc_url_raw( wp_unslash( $_POST['scc_home_promotion_url'] ?? '' ) ) );
+        $destination_type = self::sanitize_destination_type( $_POST['scc_home_promotion_destination_type'] ?? self::DESTINATION_NONE );
+
+        update_post_meta( $post_id, self::META_DESKTOP_IMAGE_ID, self::sanitize_image_id( $_POST['scc_home_promotion_desktop_image_id'] ?? 0 ) );
+        update_post_meta( $post_id, self::META_MOBILE_IMAGE_ID, self::sanitize_image_id( $_POST['scc_home_promotion_mobile_image_id'] ?? 0 ) );
+        update_post_meta( $post_id, self::META_ALT_TEXT, sanitize_text_field( wp_unslash( $_POST['scc_home_promotion_alt_text'] ?? '' ) ) );
+        update_post_meta( $post_id, self::META_DESTINATION_TYPE, $destination_type );
+        update_post_meta( $post_id, self::META_DESTINATION_VALUE, self::sanitize_destination_value( $destination_type, $_POST ) );
+        update_post_meta( $post_id, self::META_CUSTOM_URL, self::DESTINATION_CUSTOM_URL === $destination_type ? esc_url_raw( wp_unslash( $_POST['scc_home_promotion_custom_url'] ?? '' ) ) : '' );
 
         if ( 'yes' === sanitize_text_field( wp_unslash( $_POST['scc_home_promotion_active'] ?? '' ) ) ) {
             update_post_meta( $post_id, self::META_ACTIVE, 'yes' );
@@ -209,7 +214,7 @@ class HomePromotions
             [
                 'post_type'      => self::POST_TYPE,
                 'post_status'    => 'publish',
-                'posts_per_page' => -1,
+                'posts_per_page' => 5,
                 'orderby'        => [
                     'menu_order' => 'ASC',
                     'date'       => 'DESC',
@@ -232,13 +237,20 @@ class HomePromotions
                             return [];
                         }
 
+                        $destination_type  = self::sanitize_destination_type( get_post_meta( $promotion_id, self::META_DESTINATION_TYPE, true ) );
+                        $destination_value = (string) get_post_meta( $promotion_id, self::META_DESTINATION_VALUE, true );
+                        $custom_url        = esc_url_raw( (string) get_post_meta( $promotion_id, self::META_CUSTOM_URL, true ) );
+
                         return [
-                            'id'          => $promotion_id,
-                            'title'       => (string) get_post_meta( $promotion_id, self::META_PROMO_TITLE, true ),
-                            'subtitle'    => (string) get_post_meta( $promotion_id, self::META_SUBTITLE, true ),
-                            'image_id'    => absint( get_post_meta( $promotion_id, self::META_IMAGE_ID, true ) ),
-                            'button_text' => (string) get_post_meta( $promotion_id, self::META_BUTTON_TEXT, true ) ?: __( 'Ver todo', 'sultana-commerce-core' ),
-                            'url'         => esc_url_raw( (string) get_post_meta( $promotion_id, self::META_URL, true ) ),
+                            'id'                => $promotion_id,
+                            'name'              => get_the_title( $promotion_id ),
+                            'desktop_image_id'  => absint( get_post_meta( $promotion_id, self::META_DESKTOP_IMAGE_ID, true ) ),
+                            'mobile_image_id'   => absint( get_post_meta( $promotion_id, self::META_MOBILE_IMAGE_ID, true ) ),
+                            'alt_text'          => (string) get_post_meta( $promotion_id, self::META_ALT_TEXT, true ),
+                            'destination_type'  => $destination_type,
+                            'destination_value' => $destination_value,
+                            'custom_url'        => $custom_url,
+                            'url'               => self::resolve_destination_url( $destination_type, $destination_value, $custom_url ),
                         ];
                     },
                     $promotions
@@ -247,52 +259,329 @@ class HomePromotions
         );
     }
 
+    private static function render_image_picker( string $slot, string $label, string $field_name, int $image_id, string $description ): void
+    {
+        $image_url = $image_id ? wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+
+        ?>
+        <p>
+            <label><strong><?php echo esc_html( $label ); ?></strong></label>
+            <input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( (string) $image_id ); ?>" data-scc-home-promotion-image-id="<?php echo esc_attr( $slot ); ?>">
+            <span class="scc-home-promotion-image-preview" data-scc-home-promotion-image-preview="<?php echo esc_attr( $slot ); ?>">
+                <?php if ( $image_url ) : ?>
+                    <img src="<?php echo esc_url( $image_url ); ?>" alt="" style="display:block;max-width:240px;height:auto;margin:8px 0;">
+                <?php endif; ?>
+            </span>
+            <button type="button" class="button" data-scc-home-promotion-image-select="<?php echo esc_attr( $slot ); ?>"><?php esc_html_e( 'Seleccionar/Cambiar', 'sultana-commerce-core' ); ?></button>
+            <button type="button" class="button" data-scc-home-promotion-image-remove="<?php echo esc_attr( $slot ); ?>" <?php disabled( ! $image_id ); ?>><?php esc_html_e( 'Quitar', 'sultana-commerce-core' ); ?></button>
+            <span class="description"><?php echo esc_html( $description ); ?></span>
+        </p>
+        <?php
+    }
+
+    private static function render_destination_fields( string $destination_type, string $destination_value, string $custom_url ): void
+    {
+        ?>
+        <p>
+            <label for="scc-home-promotion-destination-type"><strong><?php esc_html_e( 'Destino', 'sultana-commerce-core' ); ?></strong></label>
+            <select id="scc-home-promotion-destination-type" class="widefat" name="scc_home_promotion_destination_type" data-scc-home-promotion-destination-type>
+                <?php foreach ( self::destination_type_options() as $type => $label ) : ?>
+                    <option value="<?php echo esc_attr( $type ); ?>" <?php selected( $destination_type, $type ); ?>>
+                        <?php echo esc_html( $label ); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </p>
+
+        <p data-scc-home-promotion-destination-field="page">
+            <label for="scc-home-promotion-destination-page"><strong><?php esc_html_e( 'Pagina', 'sultana-commerce-core' ); ?></strong></label>
+            <?php
+            wp_dropdown_pages(
+                [
+                    'name'              => 'scc_home_promotion_destination_page',
+                    'id'                => 'scc-home-promotion-destination-page',
+                    'class'             => 'widefat',
+                    'selected'          => self::DESTINATION_PAGE === $destination_type ? absint( $destination_value ) : 0,
+                    'show_option_none'  => __( 'Selecciona una pagina', 'sultana-commerce-core' ),
+                    'option_none_value' => '0',
+                ]
+            );
+            ?>
+        </p>
+
+        <p data-scc-home-promotion-destination-field="product_category">
+            <label for="scc-home-promotion-destination-category"><strong><?php esc_html_e( 'Categoria de producto', 'sultana-commerce-core' ); ?></strong></label>
+            <?php
+            wp_dropdown_categories(
+                [
+                    'taxonomy'          => 'product_cat',
+                    'name'              => 'scc_home_promotion_destination_product_category',
+                    'id'                => 'scc-home-promotion-destination-category',
+                    'class'             => 'widefat',
+                    'selected'          => self::DESTINATION_PRODUCT_CATEGORY === $destination_type ? absint( $destination_value ) : 0,
+                    'hide_empty'        => false,
+                    'show_option_none'  => __( 'Selecciona una categoria', 'sultana-commerce-core' ),
+                    'option_none_value' => '0',
+                ]
+            );
+            ?>
+        </p>
+
+        <p data-scc-home-promotion-destination-field="product">
+            <label for="scc-home-promotion-destination-product"><strong><?php esc_html_e( 'ID de producto', 'sultana-commerce-core' ); ?></strong></label>
+            <input id="scc-home-promotion-destination-product" class="widefat" type="number" min="1" step="1" name="scc_home_promotion_destination_product" value="<?php echo esc_attr( self::DESTINATION_PRODUCT === $destination_type ? (string) absint( $destination_value ) : '' ); ?>">
+        </p>
+
+        <p data-scc-home-promotion-destination-field="brand">
+            <label for="scc-home-promotion-destination-brand"><strong><?php esc_html_e( 'Marca', 'sultana-commerce-core' ); ?></strong></label>
+            <?php self::render_brand_destination_control( self::DESTINATION_BRAND === $destination_type ? absint( $destination_value ) : 0 ); ?>
+        </p>
+
+        <p data-scc-home-promotion-destination-field="custom_url">
+            <label for="scc-home-promotion-custom-url"><strong><?php esc_html_e( 'URL personalizada', 'sultana-commerce-core' ); ?></strong></label>
+            <input id="scc-home-promotion-custom-url" class="widefat" type="url" name="scc_home_promotion_custom_url" value="<?php echo esc_attr( $custom_url ); ?>" placeholder="<?php echo esc_attr( home_url( '/' ) ); ?>">
+        </p>
+        <?php
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private static function destination_type_options(): array
+    {
+        return [
+            self::DESTINATION_NONE             => __( 'Sin enlace', 'sultana-commerce-core' ),
+            self::DESTINATION_PAGE             => __( 'Pagina', 'sultana-commerce-core' ),
+            self::DESTINATION_PRODUCT_CATEGORY => __( 'Categoria de producto', 'sultana-commerce-core' ),
+            self::DESTINATION_PRODUCT          => __( 'Producto', 'sultana-commerce-core' ),
+            self::DESTINATION_BRAND            => __( 'Marca', 'sultana-commerce-core' ),
+            self::DESTINATION_SALE             => __( 'Ofertas', 'sultana-commerce-core' ),
+            self::DESTINATION_CUSTOM_URL       => __( 'URL personalizada', 'sultana-commerce-core' ),
+        ];
+    }
+
+    private static function render_brand_destination_control( int $selected_brand_id ): void
+    {
+        $brand_taxonomy = self::brand_taxonomy();
+
+        if ( '' === $brand_taxonomy ) {
+            ?>
+            <select id="scc-home-promotion-destination-brand" class="widefat" name="scc_home_promotion_destination_brand" disabled>
+                <option value="0"><?php esc_html_e( 'No hay taxonomia de marcas disponible', 'sultana-commerce-core' ); ?></option>
+            </select>
+            <?php
+            return;
+        }
+
+        wp_dropdown_categories(
+            [
+                'taxonomy'          => $brand_taxonomy,
+                'name'              => 'scc_home_promotion_destination_brand',
+                'id'                => 'scc-home-promotion-destination-brand',
+                'class'             => 'widefat',
+                'selected'          => $selected_brand_id,
+                'hide_empty'        => false,
+                'show_option_none'  => __( 'Selecciona una marca', 'sultana-commerce-core' ),
+                'option_none_value' => '0',
+            ]
+        );
+    }
+
     private static function sanitize_image_id( $image_id ): int
     {
         $image_id = absint( $image_id );
 
-        return $image_id && 'attachment' === get_post_type( $image_id ) ? $image_id : 0;
+        return $image_id && 'attachment' === get_post_type( $image_id ) && wp_attachment_is_image( $image_id ) ? $image_id : 0;
+    }
+
+    private static function sanitize_destination_type( $type ): string
+    {
+        $type = sanitize_key( (string) $type );
+
+        if ( 'offers' === $type ) {
+            $type = self::DESTINATION_SALE;
+        }
+
+        return array_key_exists( $type, self::destination_type_options() ) ? $type : self::DESTINATION_NONE;
+    }
+
+    /**
+     * @param array<string,mixed> $source
+     */
+    private static function sanitize_destination_value( string $destination_type, array $source ): string
+    {
+        if ( self::DESTINATION_PAGE === $destination_type ) {
+            $page_id = absint( $source['scc_home_promotion_destination_page'] ?? 0 );
+
+            return $page_id && 'page' === get_post_type( $page_id ) ? (string) $page_id : '';
+        }
+
+        if ( self::DESTINATION_PRODUCT_CATEGORY === $destination_type ) {
+            $term_id = absint( $source['scc_home_promotion_destination_product_category'] ?? 0 );
+
+            return $term_id && term_exists( $term_id, 'product_cat' ) ? (string) $term_id : '';
+        }
+
+        if ( self::DESTINATION_PRODUCT === $destination_type ) {
+            $product_id = absint( $source['scc_home_promotion_destination_product'] ?? 0 );
+
+            return $product_id && 'product' === get_post_type( $product_id ) ? (string) $product_id : '';
+        }
+
+        if ( self::DESTINATION_BRAND === $destination_type ) {
+            $brand_taxonomy = self::brand_taxonomy();
+            $term_id        = absint( $source['scc_home_promotion_destination_brand'] ?? 0 );
+
+            return $term_id && '' !== $brand_taxonomy && term_exists( $term_id, $brand_taxonomy ) ? (string) $term_id : '';
+        }
+
+        return '';
+    }
+
+    private static function resolve_destination_url( string $destination_type, string $destination_value, string $custom_url ): string
+    {
+        if ( self::DESTINATION_NONE === $destination_type ) {
+            return '';
+        }
+
+        if ( self::DESTINATION_CUSTOM_URL === $destination_type ) {
+            return esc_url_raw( $custom_url );
+        }
+
+        if ( self::DESTINATION_SALE === $destination_type ) {
+            $shop_url = function_exists( 'wc_get_page_permalink' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
+
+            return esc_url_raw( add_query_arg( 'on_sale', '1', $shop_url ) );
+        }
+
+        $object_id = absint( $destination_value );
+
+        if ( ! $object_id ) {
+            return '';
+        }
+
+        if ( self::DESTINATION_PAGE === $destination_type || self::DESTINATION_PRODUCT === $destination_type ) {
+            $expected_post_type = self::DESTINATION_PAGE === $destination_type ? 'page' : 'product';
+
+            if ( $expected_post_type !== get_post_type( $object_id ) ) {
+                return '';
+            }
+
+            $permalink = get_permalink( $object_id );
+
+            return $permalink ? esc_url_raw( $permalink ) : '';
+        }
+
+        if ( self::DESTINATION_PRODUCT_CATEGORY === $destination_type ) {
+            return self::resolve_term_url( $object_id, 'product_cat' );
+        }
+
+        if ( self::DESTINATION_BRAND === $destination_type ) {
+            $brand_taxonomy = self::brand_taxonomy();
+
+            return '' !== $brand_taxonomy ? self::resolve_term_url( $object_id, $brand_taxonomy ) : '';
+        }
+
+        return '';
+    }
+
+    private static function resolve_term_url( int $term_id, string $taxonomy ): string
+    {
+        if ( ! $term_id || ! taxonomy_exists( $taxonomy ) || ! term_exists( $term_id, $taxonomy ) ) {
+            return '';
+        }
+
+        $url = get_term_link( $term_id, $taxonomy );
+
+        return is_wp_error( $url ) ? '' : esc_url_raw( $url );
+    }
+
+    private static function brand_taxonomy(): string
+    {
+        foreach ( [ 'product_brand', 'pa_marca', 'pa_brand', 'yith_product_brand' ] as $taxonomy ) {
+            if ( ! taxonomy_exists( $taxonomy ) ) {
+                continue;
+            }
+
+            $taxonomy_object = get_taxonomy( $taxonomy );
+
+            if ( $taxonomy_object && in_array( 'product', (array) $taxonomy_object->object_type, true ) ) {
+                return $taxonomy;
+            }
+        }
+
+        return '';
     }
 
     private static function admin_inline_script(): string
     {
         return <<<'JS'
 jQuery(function($){
-  const frameState = { frame: null };
-  const imageId = $('[data-scc-home-promotion-image-id]');
-  const preview = $('[data-scc-home-promotion-image-preview]');
-  const removeButton = $('[data-scc-home-promotion-image-remove]');
+  const frameState = {};
+
+  const imageControls = function(slot) {
+    return {
+      imageId: $('[data-scc-home-promotion-image-id="' + slot + '"]'),
+      preview: $('[data-scc-home-promotion-image-preview="' + slot + '"]'),
+      removeButton: $('[data-scc-home-promotion-image-remove="' + slot + '"]')
+    };
+  };
 
   $('[data-scc-home-promotion-image-select]').on('click', function(event){
     event.preventDefault();
 
-    if (!frameState.frame) {
-      frameState.frame = wp.media({
-        title: 'Seleccionar imagen principal',
+    const slot = $(this).data('sccHomePromotionImageSelect');
+    const controls = imageControls(slot);
+
+    if (!frameState[slot]) {
+      frameState[slot] = wp.media({
+        title: 'Seleccionar banner',
         button: { text: 'Usar esta imagen' },
         multiple: false,
         library: { type: 'image' }
       });
 
-      frameState.frame.on('select', function(){
-        const attachment = frameState.frame.state().get('selection').first().toJSON();
+      frameState[slot].on('select', function(){
+        const attachment = frameState[slot].state().get('selection').first().toJSON();
         const url = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
 
-        imageId.val(attachment.id || '');
-        preview.html(url ? '<img src="' + url + '" alt="" style="display:block;max-width:180px;height:auto;margin:8px 0;">' : '');
-        removeButton.prop('disabled', false);
+        controls.imageId.val(attachment.id || '');
+        controls.preview.html(url ? '<img src="' + url + '" alt="" style="display:block;max-width:240px;height:auto;margin:8px 0;">' : '');
+        controls.removeButton.prop('disabled', false);
       });
     }
 
-    frameState.frame.open();
+    frameState[slot].open();
   });
 
-  removeButton.on('click', function(event){
+  $('[data-scc-home-promotion-image-remove]').on('click', function(event){
     event.preventDefault();
-    imageId.val('');
-    preview.empty();
-    removeButton.prop('disabled', true);
+
+    const slot = $(this).data('sccHomePromotionImageRemove');
+    const controls = imageControls(slot);
+
+    controls.imageId.val('');
+    controls.preview.empty();
+    controls.removeButton.prop('disabled', true);
   });
+
+  const destinationType = $('[data-scc-home-promotion-destination-type]');
+  const destinationFields = $('[data-scc-home-promotion-destination-field]');
+
+  const updateDestinationFields = function() {
+    const activeType = destinationType.val();
+
+    destinationFields.each(function(){
+      const field = $(this);
+      const isActive = field.data('sccHomePromotionDestinationField') === activeType;
+
+      field.toggle(isActive);
+      field.find(':input').prop('disabled', !isActive);
+    });
+  };
+
+  destinationType.on('change', updateDestinationFields);
+  updateDestinationFields();
 });
 JS;
     }

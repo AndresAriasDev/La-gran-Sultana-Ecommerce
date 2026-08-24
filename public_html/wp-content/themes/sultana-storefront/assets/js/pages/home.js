@@ -32,8 +32,6 @@
 
     let activeIndex = 0;
     let ticking = false;
-    let lastScrollLeft = track.scrollLeft;
-    let lastScrollAt = 0;
 
     const slideOffset = function (index) {
       const slide = slides[index];
@@ -80,33 +78,6 @@
       updateState(nextIndex);
     };
 
-    slides.forEach(function (slide) {
-      slide.addEventListener("click", function (event) {
-        const url = slide.dataset.promotionUrl || "";
-
-        if (!url || event.target.closest(".home-promotion-banner__button")) {
-          return;
-        }
-
-        if (Date.now() - lastScrollAt < 180) {
-          return;
-        }
-
-        window.location.assign(url);
-      });
-
-      slide.addEventListener("keydown", function (event) {
-        const url = slide.dataset.promotionUrl || "";
-
-        if (!url || (event.key !== "Enter" && event.key !== " ")) {
-          return;
-        }
-
-        event.preventDefault();
-        window.location.assign(url);
-      });
-    });
-
     if (slides.length <= 1) {
       return;
     }
@@ -132,11 +103,6 @@
     track.addEventListener(
       "scroll",
       function () {
-        if (Math.abs(track.scrollLeft - lastScrollLeft) > 2) {
-          lastScrollAt = Date.now();
-          lastScrollLeft = track.scrollLeft;
-        }
-
         if (ticking) {
           return;
         }

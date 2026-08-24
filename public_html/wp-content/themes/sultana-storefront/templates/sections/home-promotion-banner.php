@@ -13,6 +13,94 @@ if (
     return;
 }
 
+if ( ! function_exists( 'variedadesexpress_home_promotion_image_data' ) ) {
+    /**
+     * @return array{src:string,width:int,height:int,srcset:string,sizes:string}|null
+     */
+    function variedadesexpress_home_promotion_image_data( int $attachment_id, string $sizes ): ?array
+    {
+        if ( ! $attachment_id ) {
+            return null;
+        }
+
+        $src = wp_get_attachment_image_src( $attachment_id, 'full' );
+
+        if ( ! is_array( $src ) || empty( $src[0] ) || empty( $src[1] ) || empty( $src[2] ) ) {
+            return null;
+        }
+
+        return [
+            'src'    => (string) $src[0],
+            'width'  => absint( $src[1] ),
+            'height' => absint( $src[2] ),
+            'srcset' => (string) wp_get_attachment_image_srcset( $attachment_id, 'full' ),
+            'sizes'  => $sizes,
+        ];
+    }
+}
+
+if ( ! function_exists( 'variedadesexpress_home_promotion_picture' ) ) {
+    function variedadesexpress_home_promotion_picture( array $promotion, int $index ): string
+    {
+        $desktop_image_id = absint( $promotion['desktop_image_id'] ?? 0 );
+        $mobile_image_id  = absint( $promotion['mobile_image_id'] ?? 0 );
+        $fallback_id      = $desktop_image_id ?: $mobile_image_id;
+        $fallback_sizes   = $desktop_image_id ? '(max-width: 900px) calc(100vw - 32px), 1180px' : 'calc(100vw - 32px)';
+        $fallback         = variedadesexpress_home_promotion_image_data( $fallback_id, $fallback_sizes );
+
+        if ( null === $fallback ) {
+            return '';
+        }
+
+        $mobile = null;
+
+        if ( $desktop_image_id && $mobile_image_id ) {
+            $mobile = variedadesexpress_home_promotion_image_data( $mobile_image_id, '(max-width: 560px) calc(100vw - 32px), 560px' );
+        }
+
+        $image_attrs = [
+            'class'    => 'home-promotion-banner__image',
+            'src'      => $fallback['src'],
+            'width'    => (string) $fallback['width'],
+            'height'   => (string) $fallback['height'],
+            'alt'      => (string) ( $promotion['alt_text'] ?? '' ),
+            'loading'  => 0 === $index ? 'eager' : 'lazy',
+            'decoding' => 'async',
+            'sizes'    => $fallback['sizes'],
+        ];
+
+        if ( '' !== $fallback['srcset'] ) {
+            $image_attrs['srcset'] = $fallback['srcset'];
+        }
+
+        if ( 0 === $index ) {
+            $image_attrs['fetchpriority'] = 'high';
+        }
+
+        ob_start();
+        ?>
+        <picture class="home-promotion-banner__picture">
+            <?php if ( null !== $mobile ) : ?>
+                <source
+                    media="(max-width: 560px)"
+                    srcset="<?php echo esc_attr( '' !== $mobile['srcset'] ? $mobile['srcset'] : $mobile['src'] ); ?>"
+                    sizes="<?php echo esc_attr( $mobile['sizes'] ); ?>"
+                    width="<?php echo esc_attr( (string) $mobile['width'] ); ?>"
+                    height="<?php echo esc_attr( (string) $mobile['height'] ); ?>"
+                >
+            <?php endif; ?>
+            <img
+                <?php foreach ( $image_attrs as $attr => $value ) : ?>
+                    <?php echo esc_attr( $attr ); ?>="<?php echo 'src' === $attr ? esc_url( $value ) : esc_attr( $value ); ?>"
+                <?php endforeach; ?>
+            >
+        </picture>
+        <?php
+
+        return (string) ob_get_clean();
+    }
+}
+
 $promotions = $promotion_class::get_active_promotions();
 
 if ( ! is_array( $promotions ) || empty( $promotions ) ) {
@@ -27,10 +115,7 @@ $promotions = array_values(
                 return false;
             }
 
-            return '' !== trim( (string) ( $promotion['title'] ?? '' ) )
-                || '' !== trim( (string) ( $promotion['subtitle'] ?? '' ) )
-                || '' !== trim( (string) ( $promotion['url'] ?? '' ) )
-                || absint( $promotion['image_id'] ?? 0 ) > 0;
+            return absint( $promotion['desktop_image_id'] ?? 0 ) > 0 || absint( $promotion['mobile_image_id'] ?? 0 ) > 0;
         }
     )
 );
@@ -39,13 +124,31 @@ if ( empty( $promotions ) ) {
     return;
 }
 
-$has_multiple = count( $promotions ) > 1;
+$rendered_promotions = [];
+
+foreach ( $promotions as $index => $promotion ) {
+    $picture = variedadesexpress_home_promotion_picture( $promotion, $index );
+
+    if ( '' === trim( $picture ) ) {
+        continue;
+    }
+
+    $promotion['picture'] = $picture;
+    $rendered_promotions[] = $promotion;
+}
+
+if ( empty( $rendered_promotions ) ) {
+    return;
+}
+
+$promotions    = $rendered_promotions;
+$has_multiple  = count( $promotions ) > 1;
 ?>
 
 <section class="home-promotion-carousel <?php echo esc_attr( $has_multiple ? 'has-multiple-promotions' : 'has-single-promotion' ); ?>" aria-label="<?php esc_attr_e( 'Promociones destacadas', 'sultana-storefront' ); ?>">
     <div class="home-promotion-carousel__viewport">
         <?php if ( $has_multiple ) : ?>
-            <button class="home-promotion-carousel__arrow home-promotion-carousel__arrow--prev" type="button" aria-label="<?php esc_attr_e( 'Ver promoción anterior', 'sultana-storefront' ); ?>" disabled>
+            <button class="home-promotion-carousel__arrow home-promotion-carousel__arrow--prev" type="button" aria-label="<?php esc_attr_e( 'Ver promocion anterior', 'sultana-storefront' ); ?>" disabled>
                 <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/chevron-left.svg' ); ?>" alt="" width="22" height="22" aria-hidden="true">
             </button>
         <?php endif; ?>
@@ -53,117 +156,40 @@ $has_multiple = count( $promotions ) > 1;
         <div class="home-promotion-carousel__track" tabindex="<?php echo esc_attr( $has_multiple ? '0' : '-1' ); ?>" data-home-promotion-track>
             <?php foreach ( $promotions as $index => $promotion ) : ?>
                 <?php
-                $title       = trim( (string) ( $promotion['title'] ?? '' ) );
-                $subtitle    = trim( (string) ( $promotion['subtitle'] ?? '' ) );
-                $button_url  = trim( (string) ( $promotion['url'] ?? '' ) );
-                $button_text = trim( (string) ( $promotion['button_text'] ?? '' ) );
-                $image_id    = absint( $promotion['image_id'] ?? 0 );
-                $slide_id    = 'home-promotion-slide-' . absint( $promotion['id'] ?? $index );
-                $classes     = [ 'home-promotion-banner' ];
-                $requires_account_modal = false;
-
-                if ( '' !== $button_url && ! is_user_logged_in() ) {
-                    $button_path  = (string) wp_parse_url( $button_url, PHP_URL_PATH );
-                    $coupons_url  = function_exists( 'wc_get_account_endpoint_url' )
-                        ? wc_get_account_endpoint_url( 'cupones' )
-                        : home_url( '/mi-cuenta/cupones/' );
-                    $coupons_path = (string) wp_parse_url( $coupons_url, PHP_URL_PATH );
-
-                    $requires_account_modal = trim( $button_path, '/' ) === trim( $coupons_path, '/' );
-                }
-
-                if ( ! $image_id ) {
-                    $classes[] = 'home-promotion-banner--no-image';
-                }
-
-                if ( '' === $button_url || $requires_account_modal ) {
-                    $classes[] = 'home-promotion-banner--no-url';
-                } else {
-                    $classes[] = 'home-promotion-banner--is-clickable';
-                }
+                $slide_id = 'home-promotion-slide-' . absint( $promotion['id'] ?? $index );
+                $url      = esc_url( (string) ( $promotion['url'] ?? '' ) );
                 ?>
 
                 <article
                     id="<?php echo esc_attr( $slide_id ); ?>"
-                    class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>"
-                    aria-label="<?php echo esc_attr( $title ?: __( 'Promoción destacada', 'sultana-storefront' ) ); ?>"
-                    <?php if ( '' !== $button_url && ! $requires_account_modal ) : ?>
-                        role="link"
-                        tabindex="0"
-                        data-promotion-url="<?php echo esc_url( $button_url ); ?>"
-                    <?php endif; ?>
+                    class="home-promotion-banner"
                     data-home-promotion-slide
                 >
-                    <?php if ( $image_id ) : ?>
-                        <figure class="home-promotion-banner__art">
-                            <?php
-                            echo wp_get_attachment_image(
-                                $image_id,
-                                'large',
-                                false,
-                                [
-                                    'class'    => 'home-promotion-banner__image',
-                                    'loading'  => 0 === $index ? 'eager' : 'lazy',
-                                    'decoding' => 'async',
-                                ]
-                            );
-                            ?>
-                        </figure>
+                    <?php if ( '' !== $url ) : ?>
+                        <a class="home-promotion-banner__link" href="<?php echo esc_url( $url ); ?>">
+                            <?php echo $promotion['picture']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        </a>
+                    <?php else : ?>
+                        <?php echo $promotion['picture']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
                     <?php endif; ?>
-
-                    <div class="home-promotion-banner__content">
-                        <?php if ( '' !== $title ) : ?>
-                            <h2 class="home-promotion-banner__title">
-                                <?php echo esc_html( $title ); ?>
-                            </h2>
-                        <?php endif; ?>
-
-                        <?php if ( '' !== $subtitle ) : ?>
-                            <p class="home-promotion-banner__subtitle">
-                                <?php echo esc_html( $subtitle ); ?>
-                            </p>
-                        <?php endif; ?>
-
-                        <?php if ( '' !== $button_url ) : ?>
-                            <?php if ( $requires_account_modal ) : ?>
-                                <button class="home-promotion-banner__button" type="button" data-modal-open="account" data-account-view="register">
-                                    <?php
-                                    if ( function_exists( 'variedadesexpress_get_icon_svg' ) ) {
-                                        echo variedadesexpress_get_icon_svg( 'shopping-bag', 'home-promotion-banner__button-icon' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                    }
-                                    ?>
-                                    <span><?php echo esc_html( $button_text ?: __( 'Ver todo', 'sultana-storefront' ) ); ?></span>
-                                </button>
-                            <?php else : ?>
-                                <a class="home-promotion-banner__button" href="<?php echo esc_url( $button_url ); ?>">
-                                    <?php
-                                    if ( function_exists( 'variedadesexpress_get_icon_svg' ) ) {
-                                        echo variedadesexpress_get_icon_svg( 'shopping-bag', 'home-promotion-banner__button-icon' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                                    }
-                                    ?>
-                                    <span><?php echo esc_html( $button_text ?: __( 'Ver todo', 'sultana-storefront' ) ); ?></span>
-                                </a>
-                            <?php endif; ?>
-                        <?php endif; ?>
-                    </div>
                 </article>
             <?php endforeach; ?>
         </div>
 
         <?php if ( $has_multiple ) : ?>
-            <button class="home-promotion-carousel__arrow home-promotion-carousel__arrow--next" type="button" aria-label="<?php esc_attr_e( 'Ver siguiente promoción', 'sultana-storefront' ); ?>">
+            <button class="home-promotion-carousel__arrow home-promotion-carousel__arrow--next" type="button" aria-label="<?php esc_attr_e( 'Ver siguiente promocion', 'sultana-storefront' ); ?>">
                 <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/chevron-right.svg' ); ?>" alt="" width="22" height="22" aria-hidden="true">
             </button>
         <?php endif; ?>
     </div>
 
     <?php if ( $has_multiple ) : ?>
-        <div class="home-promotion-carousel__dots" aria-label="<?php esc_attr_e( 'Seleccionar promoción', 'sultana-storefront' ); ?>">
+        <div class="home-promotion-carousel__dots" aria-label="<?php esc_attr_e( 'Seleccionar promocion', 'sultana-storefront' ); ?>">
             <?php foreach ( $promotions as $index => $promotion ) : ?>
                 <button
                     class="home-promotion-carousel__dot <?php echo esc_attr( 0 === $index ? 'is-active' : '' ); ?>"
                     type="button"
-                    aria-label="<?php echo esc_attr( sprintf( __( 'Ver promoción %d', 'sultana-storefront' ), $index + 1 ) ); ?>"
+                    aria-label="<?php echo esc_attr( sprintf( __( 'Ver promocion %d', 'sultana-storefront' ), $index + 1 ) ); ?>"
                     aria-current="<?php echo esc_attr( 0 === $index ? 'true' : 'false' ); ?>"
                     data-home-promotion-dot="<?php echo esc_attr( $index ); ?>"
                 ></button>
