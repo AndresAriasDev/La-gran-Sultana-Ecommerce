@@ -15,6 +15,10 @@ class ProductImageProcessor
     private const MAX_UPLOAD_BYTES = 25165824; // 24 MB.
     private const MAX_PIXELS = 50000000; // 50 MP.
     private const MIN_WEBP_SAVINGS_RATIO = 0.08;
+    private const EXIF_PROFILE = 'exif';
+    private const WEBP_CHUNK_EXIF = 'EXIF';
+    private const WEBP_CHUNK_VP8X = 'VP8X';
+    private const WEBP_VP8X_EXIF_FLAG = 0x08;
 
     private const RASTER_MIMES = [ 'image/jpeg', 'image/png', 'image/webp' ];
 
@@ -84,17 +88,26 @@ class ProductImageProcessor
             ];
         }
 
-        $needs_resize = max( $width, $height ) > self::MAX_LONG_EDGE;
+        $needs_resize    = max( $width, $height ) > self::MAX_LONG_EDGE;
+        $temporary_paths = [];
 
         if ( 'image/webp' === $mime && ! $needs_resize ) {
+            $cleaned_file = $this->prepare_exif_cleaned_original_file( $file, $mime, $context, $temporary_paths );
+
+            if ( is_array( $cleaned_file ) ) {
+                return [
+                    'file'            => $cleaned_file,
+                    'temporary_paths' => $temporary_paths,
+                    'processed'       => true,
+                ];
+            }
+
             return [
                 'file'            => $file,
-                'temporary_paths' => [],
+                'temporary_paths' => $temporary_paths,
                 'processed'       => false,
             ];
         }
-
-        $temporary_paths = [];
 
         if ( 'image/jpeg' === $mime && $this->webp_is_supported() ) {
             $candidate = $this->transform_image( $path, 'image/webp', $needs_resize, $mime );
@@ -131,6 +144,16 @@ class ProductImageProcessor
         }
 
         if ( ! $needs_resize ) {
+            $cleaned_file = $this->prepare_exif_cleaned_original_file( $file, $mime, $context, $temporary_paths );
+
+            if ( is_array( $cleaned_file ) ) {
+                return [
+                    'file'            => $cleaned_file,
+                    'temporary_paths' => $temporary_paths,
+                    'processed'       => true,
+                ];
+            }
+
             return [
                 'file'            => $file,
                 'temporary_paths' => $temporary_paths,
@@ -226,6 +249,18 @@ class ProductImageProcessor
         }
 
         $saved_path = isset( $saved['path'] ) ? (string) $saved['path'] : $path;
+
+        if ( 'image/webp' === $target_mime ) {
+            $cleaned_path = $this->prepare_webp_exif_stripped_candidate( $saved_path, 'image/webp' !== $source_mime );
+
+            if ( is_string( $cleaned_path ) ) {
+                $this->delete_file( $saved_path );
+                $saved_path = $cleaned_path;
+            }
+        } elseif ( 'image/jpeg' === $target_mime ) {
+            $this->remove_exif_profile_in_place( $saved_path );
+        }
+
         $saved_size = is_readable( $saved_path ) ? (int) filesize( $saved_path ) : 0;
 
         if ( $saved_size <= 0 ) {
@@ -239,6 +274,425 @@ class ProductImageProcessor
             'extension' => $extension,
             'size'      => $saved_size,
         ];
+    }
+
+    /**
+     * @param array<string,mixed> $file
+     * @param array<string,mixed> $context
+     * @param array<int,string>   $temporary_paths
+     * @return array<string,mixed>|false
+     */
+    private function prepare_exif_cleaned_original_file( array $file, string $mime, array $context, array &$temporary_paths )
+    {
+        $path = isset( $file['tmp_name'] ) ? (string) $file['tmp_name'] : '';
+
+        if ( '' === $path || ! is_readable( $path ) ) {
+            return false;
+        }
+
+        if ( 'image/jpeg' === $mime ) {
+            if ( ! $this->has_exif_profile( $path ) ) {
+                return false;
+            }
+
+            $candidate = $this->transform_image( $path, $mime, false, $mime );
+
+            if ( is_wp_error( $candidate ) ) {
+                return false;
+            }
+
+            $temporary_paths[] = $candidate['path'];
+            $prepared_file     = $this->file_from_candidate( $file, $candidate, $context );
+
+            return is_wp_error( $prepared_file ) ? false : $prepared_file;
+        }
+
+        if ( 'image/webp' !== $mime ) {
+            return false;
+        }
+
+        $candidate_path = $this->prepare_webp_exif_stripped_candidate( $path, false );
+
+        if ( ! is_string( $candidate_path ) ) {
+            return false;
+        }
+
+        $candidate_size = is_readable( $candidate_path ) ? (int) filesize( $candidate_path ) : 0;
+
+        if ( $candidate_size <= 0 ) {
+            $this->delete_file( $candidate_path );
+            return false;
+        }
+
+        $temporary_paths[] = $candidate_path;
+        $prepared_file     = $this->file_from_candidate(
+            $file,
+            [
+                'path'      => $candidate_path,
+                'mime'      => $mime,
+                'extension' => $this->extension_for_mime( $mime ),
+                'size'      => $candidate_size,
+            ],
+            $context
+        );
+
+        return is_wp_error( $prepared_file ) ? false : $prepared_file;
+    }
+
+    private function prepare_webp_exif_stripped_candidate( string $path, bool $orientation_is_normalized )
+    {
+        if ( '' === $path || ! is_readable( $path ) ) {
+            return false;
+        }
+
+        $contents = file_get_contents( $path );
+
+        if ( false === $contents ) {
+            return false;
+        }
+
+        $stripped = $this->strip_webp_exif_chunk( $contents, $orientation_is_normalized );
+
+        if ( false === $stripped || $stripped === $contents ) {
+            return false;
+        }
+
+        $candidate_path = $this->temporary_path( 'webp' );
+
+        if ( is_wp_error( $candidate_path ) ) {
+            return false;
+        }
+
+        $bytes_written = file_put_contents( $candidate_path, $stripped, LOCK_EX );
+
+        if ( strlen( $stripped ) !== $bytes_written ) {
+            $this->delete_file( $candidate_path );
+            return false;
+        }
+
+        return $candidate_path;
+    }
+
+    /**
+     * Removes only WebP EXIF chunks. Visual chunks and metadata other than EXIF
+     * are copied byte for byte; VP8X only has its EXIF feature flag cleared.
+     *
+     * @return string|false
+     */
+    private function strip_webp_exif_chunk( string $contents, bool $orientation_is_normalized )
+    {
+        $length = strlen( $contents );
+
+        if ( $length < 12 || 'RIFF' !== substr( $contents, 0, 4 ) || 'WEBP' !== substr( $contents, 8, 4 ) ) {
+            return false;
+        }
+
+        $riff_size = $this->read_little_endian_uint32( $contents, 4 );
+
+        if ( false === $riff_size || $riff_size < 4 || $riff_size + 8 !== $length ) {
+            return false;
+        }
+
+        $offset       = 12;
+        $chunks       = [];
+        $removed_exif = false;
+
+        while ( $offset < $length ) {
+            if ( $length - $offset < 8 ) {
+                return false;
+            }
+
+            $fourcc       = substr( $contents, $offset, 4 );
+            $payload_size = $this->read_little_endian_uint32( $contents, $offset + 4 );
+
+            if ( false === $payload_size ) {
+                return false;
+            }
+
+            $payload_offset = $offset + 8;
+            $payload_end    = $payload_offset + $payload_size;
+
+            if ( $payload_end < $payload_offset || $payload_end > $length ) {
+                return false;
+            }
+
+            $padded_end = $payload_end + ( $payload_size % 2 );
+
+            if ( $padded_end < $payload_end || $padded_end > $length ) {
+                return false;
+            }
+
+            if ( 1 === $payload_size % 2 && "\0" !== $contents[ $payload_end ] ) {
+                return false;
+            }
+
+            if ( self::WEBP_CHUNK_EXIF === $fourcc ) {
+                if ( ! $orientation_is_normalized ) {
+                    $orientation_requires_transform = $this->webp_exif_orientation_requires_transform(
+                        substr( $contents, $payload_offset, $payload_size )
+                    );
+
+                    if ( null === $orientation_requires_transform || $orientation_requires_transform ) {
+                        return false;
+                    }
+                }
+
+                $removed_exif = true;
+            } else {
+                $chunks[] = [
+                    'fourcc' => $fourcc,
+                    'bytes'  => substr( $contents, $offset, $padded_end - $offset ),
+                ];
+            }
+
+            $offset = $padded_end;
+        }
+
+        if ( ! $removed_exif ) {
+            return false;
+        }
+
+        $body = 'WEBP';
+
+        foreach ( $chunks as $chunk ) {
+            if ( self::WEBP_CHUNK_VP8X === $chunk['fourcc'] ) {
+                $chunk['bytes'] = $this->clear_vp8x_exif_flag( $chunk['bytes'] );
+
+                if ( false === $chunk['bytes'] ) {
+                    return false;
+                }
+            }
+
+            $body .= $chunk['bytes'];
+        }
+
+        $new_riff_size = strlen( $body );
+
+        if ( $new_riff_size > 0xffffffff ) {
+            return false;
+        }
+
+        return 'RIFF' . $this->pack_little_endian_uint32( $new_riff_size ) . $body;
+    }
+
+    /**
+     * @return string|false
+     */
+    private function clear_vp8x_exif_flag( string $chunk )
+    {
+        if ( strlen( $chunk ) < 18 || self::WEBP_CHUNK_VP8X !== substr( $chunk, 0, 4 ) ) {
+            return false;
+        }
+
+        $payload_size = $this->read_little_endian_uint32( $chunk, 4 );
+
+        if ( 10 !== $payload_size || strlen( $chunk ) < 18 + ( $payload_size % 2 ) ) {
+            return false;
+        }
+
+        $chunk[8] = chr( ord( $chunk[8] ) & ~self::WEBP_VP8X_EXIF_FLAG );
+
+        return $chunk;
+    }
+
+    /**
+     * @return bool|null Null means the EXIF orientation could not be read safely.
+     */
+    private function webp_exif_orientation_requires_transform( string $exif ): ?bool
+    {
+        if ( 0 === strncmp( $exif, "Exif\0\0", 6 ) ) {
+            $exif = substr( $exif, 6 );
+        }
+
+        if ( strlen( $exif ) < 8 ) {
+            return null;
+        }
+
+        $byte_order = substr( $exif, 0, 2 );
+
+        if ( 'II' === $byte_order ) {
+            $little_endian = true;
+        } elseif ( 'MM' === $byte_order ) {
+            $little_endian = false;
+        } else {
+            return null;
+        }
+
+        if ( 42 !== $this->read_tiff_uint16( $exif, 2, $little_endian ) ) {
+            return null;
+        }
+
+        $ifd_offset = $this->read_tiff_uint32( $exif, 4, $little_endian );
+
+        if ( false === $ifd_offset || $ifd_offset < 8 || $ifd_offset + 2 > strlen( $exif ) ) {
+            return null;
+        }
+
+        $entry_count = $this->read_tiff_uint16( $exif, $ifd_offset, $little_endian );
+
+        if ( false === $entry_count ) {
+            return null;
+        }
+
+        $entries_offset = $ifd_offset + 2;
+        $entries_size   = $entry_count * 12;
+
+        if ( $entries_size < 0 || $entries_offset + $entries_size > strlen( $exif ) ) {
+            return null;
+        }
+
+        for ( $index = 0; $index < $entry_count; $index++ ) {
+            $entry_offset = $entries_offset + ( $index * 12 );
+            $tag          = $this->read_tiff_uint16( $exif, $entry_offset, $little_endian );
+
+            if ( 0x0112 !== $tag ) {
+                continue;
+            }
+
+            $type  = $this->read_tiff_uint16( $exif, $entry_offset + 2, $little_endian );
+            $count = $this->read_tiff_uint32( $exif, $entry_offset + 4, $little_endian );
+
+            if ( 3 !== $type || 1 !== $count ) {
+                return null;
+            }
+
+            $orientation = $this->read_tiff_uint16( $exif, $entry_offset + 8, $little_endian );
+
+            if ( false === $orientation || $orientation < 1 || $orientation > 8 ) {
+                return null;
+            }
+
+            return 1 !== $orientation;
+        }
+
+        return false;
+    }
+
+    /**
+     * @return int|false
+     */
+    private function read_little_endian_uint32( string $bytes, int $offset )
+    {
+        if ( $offset < 0 || $offset + 4 > strlen( $bytes ) ) {
+            return false;
+        }
+
+        $value = unpack( 'V', substr( $bytes, $offset, 4 ) );
+
+        return is_array( $value ) ? (int) $value[1] : false;
+    }
+
+    private function pack_little_endian_uint32( int $value ): string
+    {
+        return pack( 'V', $value );
+    }
+
+    /**
+     * @return int|false
+     */
+    private function read_tiff_uint16( string $bytes, int $offset, bool $little_endian )
+    {
+        if ( $offset < 0 || $offset + 2 > strlen( $bytes ) ) {
+            return false;
+        }
+
+        $value = unpack( $little_endian ? 'v' : 'n', substr( $bytes, $offset, 2 ) );
+
+        return is_array( $value ) ? (int) $value[1] : false;
+    }
+
+    /**
+     * @return int|false
+     */
+    private function read_tiff_uint32( string $bytes, int $offset, bool $little_endian )
+    {
+        if ( $offset < 0 || $offset + 4 > strlen( $bytes ) ) {
+            return false;
+        }
+
+        $value = unpack( $little_endian ? 'V' : 'N', substr( $bytes, $offset, 4 ) );
+
+        return is_array( $value ) ? (int) $value[1] : false;
+    }
+
+    private function has_exif_profile( string $path ): bool
+    {
+        return $this->with_imagick_image(
+            $path,
+            static function ( \Imagick $image ): bool {
+                foreach ( $image->getImageProfiles( '*', true ) as $profile_name => $profile ) {
+                    if ( self::EXIF_PROFILE === strtolower( (string) $profile_name ) && '' !== (string) $profile ) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        );
+    }
+
+    private function remove_exif_profile_in_place( string $path ): bool
+    {
+        return $this->with_imagick_image(
+            $path,
+            static function ( \Imagick $image ) use ( $path ): bool {
+                if ( method_exists( $image, 'getNumberImages' ) && $image->getNumberImages() > 1 ) {
+                    return false;
+                }
+
+                $removed = false;
+
+                foreach ( array_keys( $image->getImageProfiles( '*', true ) ) as $profile_name ) {
+                    if ( self::EXIF_PROFILE !== strtolower( (string) $profile_name ) ) {
+                        continue;
+                    }
+
+                    $image->removeImageProfile( (string) $profile_name );
+                    $removed = true;
+                }
+
+                if ( ! $removed ) {
+                    return false;
+                }
+
+                return $image->writeImage( $path );
+            }
+        );
+    }
+
+    /**
+     * @template T
+     *
+     * @param callable(\Imagick):T $callback
+     * @return T|false
+     */
+    private function with_imagick_image( string $path, callable $callback )
+    {
+        if (
+            '' === $path
+            || ! is_readable( $path )
+            || ! extension_loaded( 'imagick' )
+            || ! class_exists( '\Imagick' )
+        ) {
+            return false;
+        }
+
+        try {
+            $image = new \Imagick( $path );
+
+            if ( method_exists( $image, 'setIteratorIndex' ) ) {
+                $image->setIteratorIndex( 0 );
+            }
+
+            return $callback( $image );
+        } catch ( \Throwable $exception ) {
+            return false;
+        } finally {
+            if ( isset( $image ) && $image instanceof \Imagick ) {
+                $image->clear();
+                $image->destroy();
+            }
+        }
     }
 
     /**
