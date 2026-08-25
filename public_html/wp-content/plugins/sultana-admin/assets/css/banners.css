@@ -201,7 +201,7 @@
 .sultana-admin-banner-editor-main,
 .sultana-admin-banner-editor-sidebar {
     display: grid;
-    gap: var(--sultana-admin-space-3);
+    gap: var(--sultana-admin-space-5);
     min-width: 0;
 }
 
@@ -226,12 +226,19 @@
 }
 
 .sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] {
-    grid-template-columns: minmax(0, 1fr) minmax(86px, 116px);
+    grid-template-columns: 1fr;
     align-items: start;
 }
 
-.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > h2,
-.sultana-admin-banner-compact-row > .sultana-admin-banner-toggle {
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-images-title"] {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+}
+
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > h2 {
     grid-column: 1 / -1;
 }
 
@@ -243,15 +250,18 @@
 .sultana-admin-banner-upload-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--sultana-admin-space-4);
+    gap: var(--sultana-admin-space-5);
 }
 
 .sultana-admin-banner-compact-row {
-    display: contents;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sultana-admin-space-3);
+    min-width: 0;
 }
 
 .sultana-admin-banner-field--order input[type="number"] {
-    max-width: 116px;
+    max-width: none;
 }
 
 .sultana-admin-banner-field {
@@ -275,8 +285,7 @@
     font-size: var(--sultana-admin-font-size-sm);
 }
 
-.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > .sultana-admin-banner-field > p,
-.sultana-admin-banner-field--order > p {
+.sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] > .sultana-admin-banner-field > p {
     display: none;
 }
 
@@ -336,16 +345,16 @@
 .sultana-admin-banner-toggle {
     display: flex;
     align-items: center;
-    justify-self: start;
+    align-self: end;
     gap: var(--sultana-admin-space-2);
     min-height: 44px;
-    width: fit-content;
+    width: 100%;
     max-width: 100%;
     border: 1px solid var(--sultana-admin-border);
     border-radius: var(--sultana-admin-radius-md);
     background: var(--sultana-admin-surface-soft);
     cursor: pointer;
-    padding: 9px 10px;
+    padding: 10px;
 }
 
 .sultana-admin-banner-toggle input {
@@ -365,15 +374,14 @@
     font-weight: var(--sultana-admin-font-weight-semibold);
 }
 
-.sultana-admin-banner-toggle small {
-    color: var(--sultana-admin-muted);
-    font-size: var(--sultana-admin-font-size-xs);
-}
-
 .sultana-admin-banner-uploader {
     display: grid;
     gap: var(--sultana-admin-space-3);
     min-width: 0;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: var(--sultana-admin-radius-lg);
+    background: #ffffff;
+    padding: var(--sultana-admin-space-3);
 }
 
 .sultana-admin-banner-uploader__header {
@@ -386,18 +394,6 @@
 
 .sultana-admin-banner-uploader__header > div {
     min-width: 0;
-}
-
-.sultana-admin-banner-uploader__header > span {
-    flex: 0 0 auto;
-    border: 1px solid var(--sultana-admin-border);
-    border-radius: var(--sultana-admin-radius-pill);
-    background: var(--sultana-admin-surface-soft);
-    color: var(--sultana-admin-muted);
-    font-size: var(--sultana-admin-font-size-xs);
-    font-weight: var(--sultana-admin-font-weight-semibold);
-    line-height: var(--sultana-admin-line-height-control);
-    padding: 5px 8px;
 }
 
 .sultana-admin-banner-uploader__dropzone {
@@ -477,12 +473,21 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--sultana-admin-space-3);
+    min-width: 0;
 }
 
 .sultana-admin-banner-uploader__meta {
+    min-width: 0;
     min-height: 1.2rem;
     color: var(--sultana-admin-muted);
     font-size: var(--sultana-admin-font-size-sm);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sultana-admin-banner-uploader__remove {
+    flex: 0 0 auto;
 }
 
 .sultana-admin-image-status {
@@ -565,14 +570,13 @@
     }
 
     .sultana-admin-banner-form-screen {
-        padding-bottom: calc(88px + env(safe-area-inset-bottom));
+        padding-bottom: 0px;
     }
 }
 
 @media (max-width: 520px) {
     .sultana-admin-banner-uploader__footer {
-        align-items: stretch;
-        flex-direction: column;
+        align-items: center;
     }
 
     .sultana-admin-banner-actions {
@@ -603,10 +607,6 @@
 }
 
 @media (max-width: 380px) {
-    .sultana-admin-banner-card-section[aria-labelledby="sultana-admin-banner-info-title"] {
-        grid-template-columns: 1fr;
-    }
-
     .sultana-admin-banner-toggle {
         padding-inline: 8px;
     }

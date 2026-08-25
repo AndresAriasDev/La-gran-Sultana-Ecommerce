@@ -706,6 +706,7 @@ button:active,
     background: var(--sultana-admin-success-soft);
     color: var(--sultana-admin-success);
     font-weight: var(--sultana-admin-font-weight-bold);
+    margin: 0 0 var(--sultana-admin-space-4);
     padding: 12px 14px;
 }
 

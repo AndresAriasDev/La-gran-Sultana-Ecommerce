@@ -58,7 +58,7 @@ $format_image_meta = static function ( ?array $image ): string {
     return implode( ' · ', array_filter( [ $dimensions, $format ? strtoupper( $format ) : '', $filesize ] ) );
 };
 
-$render_image_field = static function ( string $slot, string $label, string $recommendation, string $ratio ) use ( $form, $selected_images, $icon_url, $format_image_meta ): void {
+$render_image_field = static function ( string $slot, string $label, string $recommendation ) use ( $form, $selected_images, $icon_url, $format_image_meta ): void {
     $field_name = $slot . '_image_id';
     $image      = is_array( $selected_images[ $slot ] ?? null ) ? $selected_images[ $slot ] : null;
     $image_id   = absint( $form[ $field_name ] ?? 0 );
@@ -74,7 +74,6 @@ $render_image_field = static function ( string $slot, string $label, string $rec
                 <h3><?php echo esc_html( $label ); ?></h3>
                 <p><?php echo esc_html( $recommendation ); ?></p>
             </div>
-            <span><?php echo esc_html( $ratio ); ?></span>
         </div>
         <input type="hidden" name="<?php echo esc_attr( $field_name ); ?>" value="<?php echo esc_attr( (string) $image_id ); ?>" data-sultana-promotion-image-id>
         <button class="sultana-admin-banner-uploader__dropzone" type="button" aria-label="<?php echo esc_attr( $image_id ? __( 'Cambiar imagen', 'sultana-admin' ) : __( 'Subir imagen', 'sultana-admin' ) ); ?>" data-sultana-promotion-image-trigger>
@@ -90,8 +89,8 @@ $render_image_field = static function ( string $slot, string $label, string $rec
         </button>
         <div class="sultana-admin-banner-uploader__footer">
             <span class="sultana-admin-banner-uploader__meta" data-sultana-promotion-image-meta><?php echo esc_html( $format_image_meta( $image ) ); ?></span>
-            <button type="button" class="sultana-admin-muted-action" data-sultana-promotion-image-remove <?php disabled( ! $image_id ); ?>>
-                <?php esc_html_e( 'Quitar', 'sultana-admin' ); ?>
+            <button type="button" class="sultana-admin-icon-button sultana-admin-icon-button--danger sultana-admin-banner-uploader__remove" aria-label="<?php esc_attr_e( 'Quitar imagen', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Quitar imagen', 'sultana-admin' ); ?>" data-sultana-promotion-image-remove <?php disabled( ! $image_id ); ?>>
+                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
             </button>
         </div>
         <input class="sultana-admin-banner-upload-input" type="file" accept="image/jpeg,image/png,image/webp" data-sultana-promotion-image-input>
@@ -331,13 +330,11 @@ $render_destination_options = static function ( string $type, string $current_va
                                 <div class="sultana-admin-banner-field sultana-admin-banner-field--order">
                                     <label for="sultana-admin-banner-order"><?php esc_html_e( 'Orden', 'sultana-admin' ); ?></label>
                                     <input id="sultana-admin-banner-order" type="number" name="menu_order" value="<?php echo esc_attr( (string) (int) ( $form['menu_order'] ?? 0 ) ); ?>" step="1">
-                                    <p><?php esc_html_e( 'Los números menores aparecen primero.', 'sultana-admin' ); ?></p>
                                 </div>
                                 <label class="sultana-admin-banner-toggle">
                                     <input type="checkbox" name="active" value="yes" <?php checked( ! empty( $form['active'] ) ); ?>>
                                     <span>
                                         <strong><?php esc_html_e( 'Activo', 'sultana-admin' ); ?></strong>
-                                        <small><?php esc_html_e( 'Visible en la página de inicio.', 'sultana-admin' ); ?></small>
                                     </span>
                                 </label>
                             </div>
@@ -347,8 +344,8 @@ $render_destination_options = static function ( string $type, string $current_va
                             <h2 id="sultana-admin-banner-images-title"><?php esc_html_e( 'Imágenes del banner', 'sultana-admin' ); ?></h2>
                             <div class="sultana-admin-banner-upload-grid">
                                 <?php
-                                $render_image_field( 'desktop', __( 'Banner para escritorio', 'sultana-admin' ), __( 'Recomendado: 1600 × 600 px', 'sultana-admin' ), __( '8:3', 'sultana-admin' ) );
-                                $render_image_field( 'mobile', __( 'Banner para móvil', 'sultana-admin' ), __( 'Recomendado: 750 × 375 px', 'sultana-admin' ), __( '2:1', 'sultana-admin' ) );
+                                $render_image_field( 'desktop', __( 'Banner para escritorio', 'sultana-admin' ), __( 'Recomendado: 1600 × 600 px', 'sultana-admin' ) );
+                                $render_image_field( 'mobile', __( 'Banner para móvil', 'sultana-admin' ), __( 'Recomendado: 750 × 375 px', 'sultana-admin' ) );
                                 ?>
                             </div>
                         </section>
