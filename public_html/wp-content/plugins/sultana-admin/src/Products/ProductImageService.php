@@ -15,7 +15,7 @@ class ProductImageService
     public const TEMP_USER_META_KEY = '_sultana_admin_temp_upload_user';
     public const TEMP_TIME_META_KEY = '_sultana_admin_temp_upload_time';
 
-    private const ALLOWED_IMAGE_MIMES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp' ];
+    private const ALLOWED_IMAGE_MIMES = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif' ];
 
     public function upload_temporary_image( string $field, array $context = [] ): array
     {
@@ -299,7 +299,7 @@ class ProductImageService
             return new WP_Error( 'sultana_admin_upload_error', __( 'No se pudo subir la imagen.', 'sultana-admin' ) );
         }
 
-        $check = wp_check_filetype_and_ext( (string) $file['tmp_name'], (string) $file['name'] );
+        $check = wp_check_filetype_and_ext( (string) $file['tmp_name'], (string) $file['name'], $this->allowed_upload_mimes() );
         $type  = isset( $check['type'] ) ? (string) $check['type'] : '';
 
         if ( '' === $type || ! in_array( $type, self::ALLOWED_IMAGE_MIMES, true ) ) {
@@ -342,6 +342,20 @@ class ProductImageService
         }
 
         return absint( $attachment_id );
+    }
+
+    /**
+     * @return array<string,string>
+     */
+    private function allowed_upload_mimes(): array
+    {
+        return [
+            'jpg|jpeg|jpe|jfif' => 'image/jpeg',
+            'png'               => 'image/png',
+            'gif'               => 'image/gif',
+            'webp'              => 'image/webp',
+            'avif'              => 'image/avif',
+        ];
     }
 
     private function is_valid_image_attachment( int $attachment_id ): bool

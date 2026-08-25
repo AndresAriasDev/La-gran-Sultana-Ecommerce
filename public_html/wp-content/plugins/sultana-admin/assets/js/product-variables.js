@@ -523,7 +523,7 @@
         const upload = document.createElement('input');
         upload.type = 'file';
         upload.className = 'sultana-admin-variation-image-input';
-        upload.accept = 'image/jpeg,image/png,image/gif,image/webp';
+        upload.accept = '.jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif';
         upload.addEventListener('change', function () {
             const file = upload.files && upload.files[0];
             upload.value = '';

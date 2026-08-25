@@ -261,7 +261,7 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                         id="sultana-admin-product-images-input"
                         class="sultana-admin-image-upload-input"
                         type="file"
-                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif"
                         multiple
                         data-sultana-product-image-input
                     >

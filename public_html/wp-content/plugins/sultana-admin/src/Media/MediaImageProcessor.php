@@ -21,7 +21,7 @@ class MediaImageProcessor
     private const WEBP_CHUNK_VP8X = 'VP8X';
     private const WEBP_VP8X_EXIF_FLAG = 0x08;
 
-    private const RASTER_MIMES = [ 'image/jpeg', 'image/png', 'image/webp' ];
+    private const RASTER_MIMES = [ 'image/jpeg', 'image/png', 'image/webp', 'image/avif' ];
 
     public static function product_profile(): array
     {
@@ -122,6 +122,10 @@ class MediaImageProcessor
 
         $mime = isset( $file['type'] ) ? (string) $file['type'] : '';
         $file['name'] = $this->contextual_filename( $context, $mime, (string) ( $file['name'] ?? '' ), $profile );
+
+        if ( 'image/avif' === $mime && ! $this->image_mime_is_supported( $mime ) ) {
+            return new WP_Error( 'sultana_admin_avif_unsupported', __( 'El servidor no admite imagenes AVIF.', 'sultana-admin' ) );
+        }
 
         if ( 'image/gif' === $mime ) {
             return [
@@ -857,10 +861,15 @@ class MediaImageProcessor
 
     private function webp_is_supported(): bool
     {
+        return $this->image_mime_is_supported( 'image/webp' );
+    }
+
+    private function image_mime_is_supported( string $mime ): bool
+    {
         return function_exists( 'wp_image_editor_supports' )
             && wp_image_editor_supports(
                 [
-                    'mime_type' => 'image/webp',
+                    'mime_type' => $mime,
                 ]
             );
     }
@@ -895,6 +904,7 @@ class MediaImageProcessor
             'image/png'  => 'png',
             'image/gif'  => 'gif',
             'image/webp' => 'webp',
+            'image/avif' => 'avif',
         ];
 
         return $extensions[ $mime ] ?? '';
