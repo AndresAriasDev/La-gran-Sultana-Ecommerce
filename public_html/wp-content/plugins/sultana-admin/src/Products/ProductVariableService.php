@@ -528,9 +528,14 @@ class ProductVariableService
                 }
 
                 foreach ( $allowed_terms as $taxonomy => $term_slugs ) {
-                    $slug = sanitize_title( (string) ( $variation_attributes[ $taxonomy ] ?? '' ) );
+                    if ( ! array_key_exists( $taxonomy, $variation_attributes ) ) {
+                        $errors[] = __( 'Una variacion nueva debe pertenecer a los atributos configurados.', 'sultana-admin' );
+                        continue 2;
+                    }
 
-                    if ( '' === $slug || ! in_array( $slug, $term_slugs, true ) ) {
+                    $slug = sanitize_title( (string) $variation_attributes[ $taxonomy ] );
+
+                    if ( '' !== $slug && ! in_array( $slug, $term_slugs, true ) ) {
                         $errors[] = __( 'Una variacion nueva debe pertenecer a los atributos configurados.', 'sultana-admin' );
                         continue 2;
                     }
