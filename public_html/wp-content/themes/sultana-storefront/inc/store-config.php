@@ -210,6 +210,16 @@ function sultana_storefront_store_social_url( string $network ): string
         'instagram' => 'sultana_storefront_instagram_url',
         'tiktok'    => 'sultana_storefront_tiktok_url',
     ];
+    $canonical_urls = [
+        'facebook'  => 'https://www.facebook.com/lagransultanagranada/',
+        'instagram' => 'https://www.instagram.com/lagransultanagranada/',
+        'tiktok'    => 'https://www.tiktok.com/@lagransultanagranada',
+    ];
+    $legacy_urls = [
+        'facebook'  => 'https://www.facebook.com/variedadesexpress.nic',
+        'instagram' => 'https://www.instagram.com/variedadesexpress_gr/',
+        'tiktok'    => 'https://www.tiktok.com/@variedadesexpres',
+    ];
 
     if ( ! isset( $theme_mods[ $network ] ) ) {
         return '';
@@ -220,6 +230,10 @@ function sultana_storefront_store_social_url( string $network ): string
         apply_filters( 'sultana_storefront_store_social_url', $url, $network ),
         $url
     );
+
+    if ( '' === $url || ( isset( $legacy_urls[ $network ] ) && untrailingslashit( $url ) === untrailingslashit( $legacy_urls[ $network ] ) ) ) {
+        $url = $canonical_urls[ $network ];
+    }
 
     return esc_url_raw( $url );
 }
@@ -483,9 +497,9 @@ function variedadesexpress_store_migrate_identity_theme_mods(): void
         'sultana_storefront_phone'         => '7603 4911',
         'sultana_storefront_whatsapp'      => '50576034911',
         'sultana_storefront_address'       => 'Del Cuerpo de Bomberos 1 cuadra al Lago, Granada, Nicaragua, 43000',
-        'sultana_storefront_facebook_url'  => 'https://www.facebook.com/variedadesexpress.nic',
-        'sultana_storefront_instagram_url' => 'https://www.instagram.com/variedadesexpress_gr/',
-        'sultana_storefront_tiktok_url'    => 'https://www.tiktok.com/@variedadesexpres',
+        'sultana_storefront_facebook_url'  => 'https://www.facebook.com/lagransultanagranada/',
+        'sultana_storefront_instagram_url' => 'https://www.instagram.com/lagransultanagranada/',
+        'sultana_storefront_tiktok_url'    => 'https://www.tiktok.com/@lagransultanagranada',
     ];
 
     foreach ( $legacy_values as $theme_mod => $value ) {

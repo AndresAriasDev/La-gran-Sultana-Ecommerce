@@ -12,9 +12,12 @@ $privacy_url   = get_privacy_policy_url() ?: home_url( '/politicas-de-privacidad
 $store_name    = function_exists( 'sultana_storefront_store_name' ) ? sultana_storefront_store_name() : wp_specialchars_decode( get_bloginfo( 'name' ), ENT_QUOTES );
 $store_url     = function_exists( 'sultana_storefront_store_url' ) ? sultana_storefront_store_url() : home_url( '/' );
 $logo_url      = function_exists( 'sultana_storefront_store_logo_url' ) ? sultana_storefront_store_logo_url() : '';
-$phone         = function_exists( 'sultana_storefront_store_phone' ) ? sultana_storefront_store_phone() : '';
-$whatsapp_url  = function_exists( 'sultana_storefront_store_whatsapp_url' ) ? sultana_storefront_store_whatsapp_url() : '';
-$address       = function_exists( 'sultana_storefront_store_address' ) ? sultana_storefront_store_address() : '';
+$whatsapp_text = '+505 8668 7005';
+$whatsapp_url  = 'https://wa.me/50586687005?text=Hola%20Andr%C3%A9s%2C%20me%20interesa%20la%20tienda%20en%20l%C3%ADnea%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n.';
+$contact_emails = [
+    'andresariasdev02@gmail.com',
+    'contacto@lagransultana.com',
+];
 $social_urls   = function_exists( 'sultana_storefront_store_social_url' )
     ? [
         'facebook'  => sultana_storefront_store_social_url( 'facebook' ),
@@ -22,8 +25,7 @@ $social_urls   = function_exists( 'sultana_storefront_store_social_url' )
         'tiktok'    => sultana_storefront_store_social_url( 'tiktok' ),
     ]
     : [];
-$whatsapp_text = '' !== $phone ? $phone : ( function_exists( 'sultana_storefront_store_whatsapp' ) ? sultana_storefront_store_whatsapp() : '' );
-$has_contact   = ( '' !== $whatsapp_text && '' !== $whatsapp_url ) || '' !== $address;
+$has_contact   = '' !== $whatsapp_text || ! empty( $contact_emails );
 $social_labels = [
     'facebook'  => sprintf( __( 'Facebook de %s', 'sultana-storefront' ), $store_name ),
     'instagram' => sprintf( __( 'Instagram de %s', 'sultana-storefront' ), $store_name ),
@@ -70,18 +72,20 @@ $social_labels = [
                 <h2 class="site-footer__heading">
                     <?php esc_html_e( 'Contacto', 'sultana-storefront' ); ?>
                 </h2>
-                <?php if ( '' !== $whatsapp_text && '' !== $whatsapp_url ) : ?>
-                    <a class="site-footer__contact-link" href="<?php echo esc_url( $whatsapp_url ); ?>" target="_blank" rel="noopener">
-                        <span class="site-footer__icon site-footer__icon--whatsapp" aria-hidden="true"></span>
-                        <span><?php echo esc_html( $whatsapp_text ); ?></span>
-                    </a>
-                <?php endif; ?>
-                <?php if ( '' !== $address ) : ?>
-                    <p class="site-footer__contact-item">
-                        <span class="site-footer__icon site-footer__icon--map-pin" aria-hidden="true"></span>
-                        <span><?php echo esc_html( $address ); ?></span>
-                    </p>
-                <?php endif; ?>
+                <a class="site-footer__contact-link" href="<?php echo esc_url( $whatsapp_url ); ?>" target="_blank" rel="noopener">
+                    <span class="site-footer__icon site-footer__icon--whatsapp" aria-hidden="true"></span>
+                    <span><?php echo esc_html( $whatsapp_text ); ?></span>
+                </a>
+                <div class="site-footer__contact-item">
+                    <span class="site-footer__icon site-footer__icon--mail" aria-hidden="true"></span>
+                    <span class="site-footer__contact-emails">
+                        <?php foreach ( $contact_emails as $contact_email ) : ?>
+                            <a class="site-footer__contact-link" href="<?php echo esc_url( 'mailto:' . $contact_email ); ?>">
+                                <?php echo esc_html( $contact_email ); ?>
+                            </a>
+                        <?php endforeach; ?>
+                    </span>
+                </div>
             </address>
         <?php endif; ?>
 
@@ -112,7 +116,7 @@ $social_labels = [
                     <?php if ( '' === $social_url ) : ?>
                         <?php continue; ?>
                     <?php endif; ?>
-                    <a href="<?php echo esc_url( $social_url ); ?>" target="_blank" rel="noopener" aria-label="<?php echo esc_attr( $social_labels[ $network ] ); ?>">
+                    <a href="<?php echo esc_url( $social_url ); ?>" target="_blank" rel="noopener noreferrer" aria-label="<?php echo esc_attr( $social_labels[ $network ] ); ?>">
                         <span class="site-footer__icon site-footer__icon--<?php echo esc_attr( $network ); ?>" aria-hidden="true"></span>
                     </a>
                 <?php endforeach; ?>

@@ -89,6 +89,11 @@
   align-items: start;
 }
 
+.site-footer__contact-emails {
+  display: grid;
+  gap: 0.35rem;
+}
+
 .site-footer__icon {
   display: inline-block;
   width: 20px;
@@ -108,11 +113,10 @@
   -webkit-mask-image: url("../../icons/whatsapp-icon.svg");
 }
 
-.site-footer__icon--map-pin {
+.site-footer__icon--mail {
   margin-top: 0.15rem;
-  color: var(--color-brand);
-  mask-image: url("../../icons/map-pin.svg");
-  -webkit-mask-image: url("../../icons/map-pin.svg");
+  mask-image: url("../../icons/mail.svg");
+  -webkit-mask-image: url("../../icons/mail.svg");
 }
 
 .site-footer__icon--facebook {
