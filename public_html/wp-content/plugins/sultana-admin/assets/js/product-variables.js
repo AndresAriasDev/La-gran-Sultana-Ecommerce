@@ -23,6 +23,9 @@
     let uploadCounter = 0;
     let openValuePicker = null;
     let deletedVariationIds = [];
+    let activeVariationIdentity = '';
+    let hasVariationInteraction = false;
+    let variationUploads = {};
     let forcedOpenVariation = null;
     let pendingSelectChange = null;
     const modal = createAdminModal();
@@ -39,6 +42,10 @@
     updateCombinationCount();
     updateGenerateActionState();
     updateSubmitState();
+
+    window.SultanaAdminProductVariableEditor = {
+        validatePreSubmit: validatePreSubmit
+    };
 
     if (addAttributeButton) {
         addAttributeButton.addEventListener('click', function () {
@@ -102,6 +109,132 @@
     function nextVariationClientUid() {
         variationClientCounter += 1;
         return 'variation-' + variationClientCounter;
+    }
+
+    function variationIdentity(variation) {
+        if (!variation) {
+            return '';
+        }
+
+        if (variation.id) {
+            return 'id:' + variation.id;
+        }
+
+        return variation.client_uid ? 'client:' + variation.client_uid : '';
+    }
+
+    function validatePreSubmit() {
+        const result = {
+            errors: [],
+            focus: null
+        };
+        const validationStrings = (window.SultanaAdminProductEditor && window.SultanaAdminProductEditor.strings) || {};
+        const validAttributes = selectedAttributes.filter(function (attribute) {
+            return attribute.taxonomy && attribute.term_ids.length;
+        });
+
+        if (!validAttributes.length) {
+            addPreSubmitError(result, validationStrings.attributeRequired || 'Selecciona al menos un atributo para variaciones.', addAttributeButton || attributesRoot);
+        }
+
+        selectedAttributes.forEach(function (attribute) {
+            if (attribute.taxonomy && !attribute.term_ids.length) {
+                addPreSubmitError(result, validationStrings.attributeValuesInvalid || 'Selecciona valores validos para cada atributo.', attributesRoot);
+            }
+        });
+
+        if (!variations.length) {
+            addPreSubmitError(result, validationStrings.variationRequired || 'Configura al menos una variacion.', generateButton || variationsRoot);
+        }
+
+        variations.forEach(function (variation, index) {
+            const regularInput = variationInput(index, 'regular_price');
+            const saleInput = variationInput(index, 'sale_price');
+            const stockInput = variationInput(index, 'stock_quantity');
+            const weightInput = variationInput(index, 'weight');
+            const regularValue = parsePreSubmitDecimal(inputValue(regularInput, variation.regular_price));
+
+            if (null === regularValue) {
+                addPreSubmitError(result, validationStrings.variationRegularInvalid || 'Cada variacion necesita un precio regular valido.', variationFocus(variation, 'regular_price'));
+            }
+
+            if (saleInput && '' !== inputValue(saleInput, variation.sale_price).trim()) {
+                const saleValue = parsePreSubmitDecimal(inputValue(saleInput, variation.sale_price));
+
+                if (null === saleValue || (null !== regularValue && saleValue >= regularValue)) {
+                    addPreSubmitError(result, validationStrings.variationSaleInvalid || 'El precio de oferta de cada variacion debe ser valido y menor al regular.', variationFocus(variation, 'sale_price'));
+                }
+            }
+
+            if (!isPreSubmitInteger(inputValue(stockInput, variation.stock_quantity))) {
+                addPreSubmitError(result, validationStrings.variationStockInvalid || 'Cada variacion necesita una cantidad de stock valida.', variationFocus(variation, 'stock_quantity'));
+            }
+
+            if (!isPreSubmitPositiveDecimal(inputValue(weightInput, variation.weight))) {
+                addPreSubmitError(result, validationStrings.variationWeightInvalid || 'Cada variacion necesita un peso valido.', variationFocus(variation, 'weight'));
+            }
+        });
+
+        return result;
+    }
+
+    function addPreSubmitError(result, message, focus) {
+        result.errors.push(message);
+
+        if (!result.focus && focus) {
+            result.focus = focus;
+        }
+    }
+
+    function variationInput(index, fieldName) {
+        return variationsRoot ? variationsRoot.querySelector('[name="variations[' + index + '][' + fieldName + ']"]') : null;
+    }
+
+    function variationFocus(variation, fieldName) {
+        return function () {
+            const identity = variationIdentity(variation);
+
+            activeVariationIdentity = identity;
+            hasVariationInteraction = true;
+            renderVariations();
+
+            const index = variations.indexOf(variation);
+            const input = index >= 0 ? variationInput(index, fieldName) : null;
+
+            if (input && 'function' === typeof input.focus) {
+                try {
+                    input.focus({ preventScroll: true });
+                } catch (error) {
+                    input.focus();
+                }
+            }
+        };
+    }
+
+    function inputValue(input, fallback) {
+        return input ? input.value : String(fallback || '');
+    }
+
+    function parsePreSubmitDecimal(value) {
+        const normalized = String(value || '').trim().replace(',', '.');
+
+        if ('' === normalized || !isFinite(normalized)) {
+            return null;
+        }
+
+        const number = Number(normalized);
+
+        return number >= 0 ? number : null;
+    }
+
+    function isPreSubmitPositiveDecimal(value) {
+        const number = parsePreSubmitDecimal(value);
+
+        return null !== number && number > 0;
+    }
+
+    function isPreSubmitInteger(value) {
+        return /^\d+$/.test(String(value || '').trim());
     }
 
     function normalize(value) {
@@ -402,14 +535,34 @@
         variationsRoot.innerHTML = '';
 
         if (!variations.length) {
+            activeVariationIdentity = '';
+            hasVariationInteraction = false;
+            forcedOpenVariation = null;
             return;
         }
+
+        if (forcedOpenVariation) {
+            activeVariationIdentity = variationIdentity(forcedOpenVariation);
+            hasVariationInteraction = true;
+        }
+
+        if (activeVariationIdentity && !variations.some(function (variation) {
+            return variationIdentity(variation) === activeVariationIdentity;
+        })) {
+            activeVariationIdentity = '';
+            hasVariationInteraction = false;
+        }
+
+        const shouldUseInitialDesktopFallback = !activeVariationIdentity && !hasVariationInteraction && !window.matchMedia('(max-width: 760px)').matches;
 
         variations.forEach(function (variation, index) {
             const card = document.createElement('div');
             card.className = 'sultana-admin-variation-card';
             const panelId = 'sultana-admin-variation-panel-' + index;
-            const isOpen = forcedOpenVariation === variation || (!forcedOpenVariation && !window.matchMedia('(max-width: 760px)').matches && 0 === index);
+            const identity = variationIdentity(variation);
+            const isOpen = activeVariationIdentity
+                ? activeVariationIdentity === identity
+                : shouldUseInitialDesktopFallback && 0 === index;
             const header = document.createElement('div');
             header.className = 'sultana-admin-variation-card__header';
 
@@ -460,10 +613,17 @@
 
                 if (expanded) {
                     setVariationPanelState(toggle, panel, false);
+                    if (activeVariationIdentity === identity) {
+                        activeVariationIdentity = '';
+                    }
+
+                    hasVariationInteraction = true;
                     return;
                 }
 
                 closeOpenVariationPanels(toggle);
+                activeVariationIdentity = identity;
+                hasVariationInteraction = true;
                 setVariationPanelState(toggle, panel, true);
             });
 
@@ -529,7 +689,7 @@
             upload.value = '';
 
             if (file) {
-                uploadVariationImage(file, variation, hiddenInput, preview);
+                uploadVariationImage(file, variation, hiddenInput, preview, upload, trigger, remove);
             }
         });
 
@@ -538,8 +698,16 @@
         trigger.className = 'sultana-admin-variation-image-trigger';
         trigger.setAttribute('aria-label', strings.uploadImage || 'Imagen');
         trigger.addEventListener('click', function () {
+            if (upload.disabled) {
+                return;
+            }
+
             upload.click();
         });
+
+        const progress = document.createElement('span');
+        progress.className = 'sultana-admin-variation-image-progress';
+        progress.setAttribute('aria-hidden', 'true');
 
         const triggerIcon = document.createElement('span');
         triggerIcon.className = 'sultana-admin-variation-image-trigger__icon';
@@ -559,6 +727,11 @@
         remove.addEventListener('click', function (event) {
             event.preventDefault();
             event.stopPropagation();
+
+            if (remove.disabled) {
+                return;
+            }
+
             variation.image_id = 0;
             variation.image_url = '';
             hiddenInput.value = '0';
@@ -569,6 +742,7 @@
             triggerText.textContent = strings.uploadImage || 'Imagen';
         });
 
+        trigger.appendChild(progress);
         trigger.appendChild(preview);
         trigger.appendChild(triggerIcon);
         trigger.appendChild(triggerText);
@@ -714,7 +888,16 @@
         return 'Cualquier ' + String(label || '').toLowerCase();
     }
 
-    function uploadVariationImage(file, variation, hiddenInput, preview) {
+    function uploadVariationImage(file, variation, hiddenInput, preview, upload, trigger, remove) {
+        const identity = variationIdentity(variation);
+
+        if (identity && variationUploads[identity]) {
+            return;
+        }
+
+        activeVariationIdentity = identity;
+        hasVariationInteraction = true;
+
         const formData = new FormData();
         formData.append('action', config.uploadAction);
         formData.append('nonce', config.nonce);
@@ -722,23 +905,47 @@
         formData.append('product_title', currentProductTitle());
         formData.append('image_index', String(variationImageIndex(variation)));
 
+        if (identity) {
+            variationUploads[identity] = true;
+        }
+
         uploadCounter += 1;
-        setStatus(strings.uploading || 'Subiendo imagen...', false);
+        setVariationUploadState(upload, trigger, remove, true);
+        setVariationUploadProgress(trigger, 0, false);
         updateSubmitState();
 
-        fetch(config.ajaxUrl, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: formData
-        })
-            .then(function (response) {
-                return response.json();
-            })
-            .then(function (payload) {
-                if (!payload || !payload.success || !payload.data || !payload.data.image) {
-                    throw new Error((payload && payload.data && payload.data.message) || strings.uploadError || 'No se pudo subir la imagen.');
-                }
+        const xhr = new XMLHttpRequest();
 
+        xhr.open('POST', config.ajaxUrl, true);
+        xhr.withCredentials = true;
+
+        xhr.upload.onprogress = function (event) {
+            if (!event.lengthComputable) {
+                setVariationUploadProgress(trigger, 0, true);
+                return;
+            }
+
+            setVariationUploadProgress(trigger, Math.min(100, Math.max(0, (event.loaded / event.total) * 100)), false);
+        };
+
+        xhr.onload = function () {
+            let payload = null;
+
+            try {
+                payload = JSON.parse(xhr.responseText || '');
+            } catch (error) {
+                handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+                return;
+            }
+
+            if (xhr.status < 200 || xhr.status >= 300 || !payload || !payload.success || !payload.data || !payload.data.image) {
+                handleVariationUploadError((payload && payload.data && payload.data.message) || strings.uploadError || 'No se pudo subir la imagen.');
+                return;
+            }
+
+            setVariationUploadProgress(trigger, 100, false);
+
+            window.setTimeout(function () {
                 variation.image_id = toInt(payload.data.image.id);
                 variation.image_url = payload.data.image.url || '';
                 hiddenInput.value = String(variation.image_id);
@@ -752,7 +959,6 @@
                 }
 
                 const wrap = preview.closest('.sultana-admin-variation-image');
-                const remove = wrap ? wrap.querySelector('.sultana-admin-variation-image-remove') : null;
                 const triggerIcon = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__icon') : null;
                 const triggerText = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__text') : null;
 
@@ -769,14 +975,64 @@
                 }
 
                 setStatus('', false);
-            })
-            .catch(function (error) {
-                setStatus(error.message || strings.uploadError || 'No se pudo subir la imagen.', true);
-            })
-            .finally(function () {
-                uploadCounter = Math.max(0, uploadCounter - 1);
-                updateSubmitState();
-            });
+                finishVariationUpload();
+            }, 120);
+        };
+
+        xhr.onerror = function () {
+            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+        };
+
+        xhr.onabort = function () {
+            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+        };
+
+        xhr.ontimeout = function () {
+            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+        };
+
+        xhr.send(formData);
+
+        function handleVariationUploadError(message) {
+            setStatus(message || strings.uploadError || 'No se pudo subir la imagen.', true);
+            finishVariationUpload();
+        }
+
+        function finishVariationUpload() {
+            if (identity) {
+                delete variationUploads[identity];
+            }
+
+            setVariationUploadState(upload, trigger, remove, false);
+            setVariationUploadProgress(trigger, 0, false);
+            uploadCounter = Math.max(0, uploadCounter - 1);
+            updateSubmitState();
+        }
+    }
+
+    function setVariationUploadState(upload, trigger, remove, isUploading) {
+        if (upload) {
+            upload.disabled = isUploading;
+        }
+
+        if (trigger) {
+            trigger.disabled = isUploading;
+            trigger.classList.toggle('is-uploading', isUploading);
+        }
+
+        if (remove) {
+            remove.disabled = isUploading;
+            remove.classList.toggle('is-disabled', isUploading);
+        }
+    }
+
+    function setVariationUploadProgress(trigger, progress, isIndeterminate) {
+        if (!trigger) {
+            return;
+        }
+
+        trigger.classList.toggle('is-uploading-indeterminate', Boolean(isIndeterminate));
+        trigger.style.setProperty('--sultana-admin-upload-progress', Math.min(100, Math.max(0, progress)) + '%');
     }
 
     function generateConcreteVariations() {

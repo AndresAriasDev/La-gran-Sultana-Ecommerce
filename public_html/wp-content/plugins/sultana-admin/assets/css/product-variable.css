@@ -455,6 +455,7 @@
 
 .sultana-admin-variation-image-trigger {
     display: grid;
+    position: relative;
     width: 100%;
     min-height: 116px;
     place-items: center;
@@ -463,6 +464,7 @@
     background: var(--sultana-admin-surface-subtle);
     color: var(--sultana-admin-text);
     padding: 12px;
+    overflow: hidden;
 }
 
 .sultana-admin-variation-image-trigger:hover,
@@ -475,6 +477,39 @@
 
 .sultana-admin-variation-image-trigger:focus-visible {
     box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-variation-image-trigger.is-uploading {
+    cursor: progress;
+}
+
+.sultana-admin-variation-image-trigger:disabled {
+    opacity: 1;
+}
+
+.sultana-admin-variation-image-progress {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 0;
+    height: var(--sultana-admin-upload-progress, 0%);
+    background: var(--sultana-admin-primary-soft);
+    opacity: 0.72;
+    pointer-events: none;
+    transition: height var(--sultana-admin-transition-fast);
+}
+
+.sultana-admin-variation-image-trigger.is-uploading-indeterminate .sultana-admin-variation-image-progress {
+    height: 100%;
+    opacity: 0.32;
+}
+
+.sultana-admin-variation-image-preview,
+.sultana-admin-variation-image-trigger__icon,
+.sultana-admin-variation-image-trigger__text {
+    position: relative;
+    z-index: 1;
 }
 
 .sultana-admin-variation-image-trigger__icon .sultana-admin-icon {
@@ -505,6 +540,11 @@
 .sultana-admin-variation-image-remove .sultana-admin-icon {
     width: 14px;
     height: 14px;
+}
+
+.sultana-admin-variation-image-remove:disabled {
+    cursor: progress;
+    opacity: 0.6;
 }
 
 

@@ -133,6 +133,7 @@ class Assets
         }
 
         if ( 'combo' === $product_type ) {
+            self::enqueue_product_editor();
             self::enqueue_combo_editor();
             return;
         }
@@ -345,6 +346,33 @@ class Assets
             [],
             $js_version,
             true
+        );
+
+        wp_localize_script(
+            'sultana-admin-product-editor',
+            'SultanaAdminProductEditor',
+            [
+                'strings' => [
+                    'reviewForm'                => __( 'Revisa el formulario', 'sultana-admin' ),
+                    'nameRequired'              => __( 'Ingresa el nombre del producto.', 'sultana-admin' ),
+                    'regularPriceInvalid'       => __( 'Ingresa un precio regular valido.', 'sultana-admin' ),
+                    'salePriceInvalid'          => __( 'Ingresa un precio de oferta valido.', 'sultana-admin' ),
+                    'salePriceLowerThanRegular' => __( 'El precio de oferta debe ser menor al precio regular.', 'sultana-admin' ),
+                    'stockInvalid'              => __( 'Ingresa una cantidad de stock valida.', 'sultana-admin' ),
+                    'weightInvalid'             => __( 'Ingresa un peso valido para el producto.', 'sultana-admin' ),
+                    'attributeRequired'         => __( 'Selecciona al menos un atributo para variaciones.', 'sultana-admin' ),
+                    'attributeValuesInvalid'    => __( 'Selecciona valores validos para cada atributo.', 'sultana-admin' ),
+                    'variationRequired'         => __( 'Configura al menos una variacion.', 'sultana-admin' ),
+                    'variationRegularInvalid'   => __( 'Cada variacion necesita un precio regular valido.', 'sultana-admin' ),
+                    'variationSaleInvalid'      => __( 'El precio de oferta de cada variacion debe ser valido y menor al regular.', 'sultana-admin' ),
+                    'variationStockInvalid'     => __( 'Cada variacion necesita una cantidad de stock valida.', 'sultana-admin' ),
+                    'variationWeightInvalid'    => __( 'Cada variacion necesita un peso valido.', 'sultana-admin' ),
+                    'comboComponentRequired'    => __( 'Selecciona al menos un componente.', 'sultana-admin' ),
+                    'comboQuantityInvalid'      => __( 'La cantidad debe ser un numero entero.', 'sultana-admin' ),
+                    'comboSaleInvalid'          => __( 'Ingresa un precio de oferta valido.', 'sultana-admin' ),
+                    'comboSaleLowerThanCurrent' => __( 'El precio de oferta debe ser menor que el precio actual del combo.', 'sultana-admin' ),
+                ],
+            ]
         );
     }
 
