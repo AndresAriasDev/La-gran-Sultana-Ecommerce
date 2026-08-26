@@ -1,6 +1,9 @@
 (function () {
     'use strict';
 
+    var config = window.SultanaAdminProductList || {};
+    var strings = config.strings || {};
+    var confirmedTrashForms = new WeakSet();
     var mobileQuery = window.matchMedia ? window.matchMedia('(max-width: 760px)') : null;
     var lists = [
         {
@@ -20,6 +23,40 @@
             header: '.sultana-admin-review-card__header'
         }
     ];
+
+    document.querySelectorAll('[data-sultana-product-trash-form]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (confirmedTrashForms.has(form)) {
+                disableSubmitButtons(form);
+                return;
+            }
+
+            event.preventDefault();
+
+            if (!window.SultanaAdminModal || 'function' !== typeof window.SultanaAdminModal.open) {
+                return;
+            }
+
+            window.SultanaAdminModal.open({
+                message: strings.deleteProductMessage || '¿Quieres eliminar este producto?',
+                messageAsTitle: true,
+                detail: strings.deleteProductDetail || 'El producto sera enviado a la papelera y dejara de mostrarse en la tienda.',
+                confirmText: strings.deleteProductConfirm || 'Eliminar producto',
+                cancelText: strings.cancel || 'Cancelar',
+                variant: 'danger',
+                onConfirm: function () {
+                    confirmedTrashForms.add(form);
+                    disableSubmitButtons(form);
+
+                    if ('function' === typeof form.requestSubmit) {
+                        form.requestSubmit();
+                    } else {
+                        HTMLFormElement.prototype.submit.call(form);
+                    }
+                }
+            });
+        });
+    });
 
     document.querySelectorAll('.sultana-admin-search').forEach(function (searchForm) {
         if (searchForm.hasAttribute('data-review-search')) {
@@ -80,6 +117,12 @@
             });
         }
     });
+
+    function disableSubmitButtons(form) {
+        form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (button) {
+            button.disabled = true;
+        });
+    }
 
     function setCardState(button, expanded) {
         var panelId = button.getAttribute('aria-controls');

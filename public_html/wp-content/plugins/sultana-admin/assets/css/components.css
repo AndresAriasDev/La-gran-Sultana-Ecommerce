@@ -668,6 +668,102 @@ button:active,
     color: var(--sultana-admin-primary-dark);
 }
 
+.sultana-admin-modal[hidden] {
+    display: none;
+}
+
+.sultana-admin-modal {
+    position: fixed;
+    z-index: calc(var(--sultana-admin-z-popover) + 10);
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(31, 41, 51, 0.42);
+    padding: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-modal__dialog {
+    display: grid;
+    gap: var(--sultana-admin-space-3);
+    width: min(520px, 100%);
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    border: 1px solid var(--sultana-admin-border);
+    border-radius: 6px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 18px 42px rgba(31, 41, 51, 0.22);
+    padding: var(--sultana-admin-space-5);
+}
+
+.sultana-admin-modal__title {
+    margin: 0;
+}
+
+.sultana-admin-modal__message,
+.sultana-admin-modal__detail {
+    margin: 0;
+    color: var(--sultana-admin-text);
+}
+
+.sultana-admin-modal__detail {
+    color: var(--sultana-admin-muted);
+}
+
+.sultana-admin-modal__message--heading {
+    font-size: var(--sultana-admin-font-size-lg);
+    font-weight: 600;
+}
+
+.sultana-admin-modal__list {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding-left: 18px;
+    color: var(--sultana-admin-text);
+}
+
+.sultana-admin-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.sultana-admin-modal__actions .sultana-admin-muted-action:hover,
+.sultana-admin-modal__actions .sultana-admin-muted-action:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-primary-dark);
+    outline: 0;
+}
+
+.sultana-admin-modal__actions .sultana-admin-muted-action:focus-visible {
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
+.sultana-admin-modal__confirm {
+    min-height: 42px;
+    font-weight: 600;
+}
+
+.sultana-admin-modal__confirm--danger {
+    border-color: var(--sultana-admin-danger);
+    background: var(--sultana-admin-danger);
+    color: var(--sultana-admin-text-inverse);
+}
+
+.sultana-admin-modal__confirm--danger:hover,
+.sultana-admin-modal__confirm--danger:focus-visible {
+    border-color: var(--sultana-admin-danger-hover);
+    background: var(--sultana-admin-danger-hover);
+    color: var(--sultana-admin-text-inverse);
+}
+
+.sultana-admin-modal__confirm--warning {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-primary);
+    color: var(--sultana-admin-primary-contrast);
+}
+
 .sultana-admin-search,
 .sultana-admin-toolbar,
 .sultana-admin-notice,

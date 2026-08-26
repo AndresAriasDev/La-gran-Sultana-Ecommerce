@@ -28,7 +28,6 @@
     let variationUploads = {};
     let forcedOpenVariation = null;
     let pendingSelectChange = null;
-    const modal = createAdminModal();
     const deletedVariationsRoot = document.createElement('div');
     deletedVariationsRoot.hidden = true;
     editor.appendChild(deletedVariationsRoot);
@@ -1513,13 +1512,18 @@
     }
 
     function openVariationModal(options) {
-        modal.open({
+        if (!window.SultanaAdminModal || 'function' !== typeof window.SultanaAdminModal.open) {
+            return;
+        }
+
+        window.SultanaAdminModal.open({
             title: options.title,
             message: options.message,
             detail: options.detail || '',
             items: (options.items || []).map(function (variation) {
                 return variationLabel(variation);
             }),
+            moreText: '+ ' + Math.max(0, (options.items || []).length - 6) + ' variaciones mas',
             confirmText: options.confirmText,
             variant: options.variant,
             onCancel: options.onCancel,
@@ -1563,120 +1567,6 @@
         setStatus('', false);
         refreshVariationAttributeOptions(wrap, variation);
         updateGenerateActionState();
-    }
-
-    function createAdminModal() {
-        const root = document.createElement('div');
-        const dialog = document.createElement('div');
-        const title = document.createElement('h2');
-        const message = document.createElement('p');
-        const detail = document.createElement('p');
-        const list = document.createElement('ul');
-        const actions = document.createElement('div');
-        const cancel = document.createElement('button');
-        const confirm = document.createElement('button');
-        const titleId = 'sultana-admin-modal-title-' + Date.now();
-        let previousFocus = null;
-        let currentOptions = {};
-
-        root.className = 'sultana-admin-modal';
-        root.hidden = true;
-        dialog.className = 'sultana-admin-modal__dialog';
-        dialog.setAttribute('role', 'dialog');
-        dialog.setAttribute('aria-modal', 'true');
-        dialog.setAttribute('aria-labelledby', titleId);
-        title.id = titleId;
-        title.className = 'sultana-admin-modal__title';
-        message.className = 'sultana-admin-modal__message';
-        detail.className = 'sultana-admin-modal__detail';
-        list.className = 'sultana-admin-modal__list';
-        actions.className = 'sultana-admin-modal__actions';
-        cancel.type = 'button';
-        cancel.className = 'sultana-admin-muted-action';
-        cancel.textContent = 'Cancelar';
-        confirm.type = 'button';
-
-        actions.appendChild(cancel);
-        actions.appendChild(confirm);
-        dialog.appendChild(title);
-        dialog.appendChild(message);
-        dialog.appendChild(detail);
-        dialog.appendChild(list);
-        dialog.appendChild(actions);
-        root.appendChild(dialog);
-        document.body.appendChild(root);
-
-        cancel.addEventListener('click', function () {
-            close(false);
-        });
-
-        confirm.addEventListener('click', function () {
-            close(true);
-        });
-
-        root.addEventListener('click', function (event) {
-            if (event.target === root) {
-                close(false);
-            }
-        });
-
-        document.addEventListener('keydown', function (event) {
-            if (root.hidden || 'Escape' !== event.key) {
-                return;
-            }
-
-            event.preventDefault();
-            close(false);
-        });
-
-        function open(options) {
-            currentOptions = options || {};
-            previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-            title.textContent = currentOptions.title || '';
-            message.textContent = currentOptions.message || '';
-            detail.textContent = currentOptions.detail || '';
-            detail.hidden = !currentOptions.detail;
-            confirm.textContent = currentOptions.confirmText || 'Confirmar';
-            confirm.className = 'sultana-admin-modal__confirm sultana-admin-modal__confirm--' + (currentOptions.variant || 'warning');
-            renderModalList(currentOptions.items || []);
-            root.hidden = false;
-            confirm.focus();
-        }
-
-        function renderModalList(items) {
-            list.innerHTML = '';
-            list.hidden = !items.length;
-
-            items.slice(0, 6).forEach(function (item) {
-                const row = document.createElement('li');
-                row.textContent = item;
-                list.appendChild(row);
-            });
-
-            if (items.length > 6) {
-                const more = document.createElement('li');
-                more.textContent = '+ ' + (items.length - 6) + ' variaciones mas';
-                list.appendChild(more);
-            }
-        }
-
-        function close(confirmed) {
-            const callback = confirmed ? currentOptions.onConfirm : currentOptions.onCancel;
-            root.hidden = true;
-            currentOptions = {};
-
-            if ('function' === typeof callback) {
-                callback();
-            }
-
-            if (previousFocus && 'function' === typeof previousFocus.focus) {
-                previousFocus.focus();
-            }
-        }
-
-        return {
-            open: open
-        };
     }
 
     function setStatus(message, isError) {

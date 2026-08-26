@@ -118,7 +118,8 @@ class Assets
         }
 
         if ( 'products' === $route ) {
-            self::enqueue_product_list();
+            self::enqueue_admin_modal();
+            self::enqueue_product_list( true );
             return;
         }
 
@@ -130,6 +131,7 @@ class Assets
 
         if ( 'variable' === $product_type ) {
             self::enqueue_style( 'product-variable', [ 'sultana-admin-product-editor' ] );
+            self::enqueue_admin_modal();
         }
 
         if ( 'combo' === $product_type ) {
@@ -191,7 +193,7 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-product-variables',
             SULTANA_ADMIN_URL . 'assets/js/product-variables.js',
-            [],
+            [ 'sultana-admin-modal' ],
             $variable_js_version,
             true
         );
@@ -237,7 +239,21 @@ class Assets
         );
     }
 
-    private static function enqueue_product_list(): void
+    private static function enqueue_admin_modal(): void
+    {
+        $js_path    = SULTANA_ADMIN_PATH . 'assets/js/admin-modal.js';
+        $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
+
+        wp_enqueue_script(
+            'sultana-admin-modal',
+            SULTANA_ADMIN_URL . 'assets/js/admin-modal.js',
+            [],
+            $js_version,
+            true
+        );
+    }
+
+    private static function enqueue_product_list( bool $with_delete_modal = false ): void
     {
         $js_path    = SULTANA_ADMIN_PATH . 'assets/js/product-list.js';
         $js_version = file_exists( $js_path ) ? (string) filemtime( $js_path ) : SULTANA_ADMIN_VERSION;
@@ -245,9 +261,27 @@ class Assets
         wp_enqueue_script(
             'sultana-admin-product-list',
             SULTANA_ADMIN_URL . 'assets/js/product-list.js',
-            [],
+            $with_delete_modal ? [ 'sultana-admin-modal' ] : [],
             $js_version,
             true
+        );
+
+        if ( ! $with_delete_modal ) {
+            return;
+        }
+
+        wp_localize_script(
+            'sultana-admin-product-list',
+            'SultanaAdminProductList',
+            [
+                'strings' => [
+                    'deleteProductTitle'   => __( 'Eliminar producto', 'sultana-admin' ),
+                    'deleteProductMessage' => __( '¿Quieres eliminar este producto?', 'sultana-admin' ),
+                    'deleteProductDetail'  => __( 'El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ),
+                    'deleteProductConfirm' => __( 'Eliminar producto', 'sultana-admin' ),
+                    'cancel'               => __( 'Cancelar', 'sultana-admin' ),
+                ],
+            ]
         );
     }
 

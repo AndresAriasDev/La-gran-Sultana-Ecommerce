@@ -117,7 +117,7 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                             <td>
                                 <div class="sultana-admin-row-actions">
                                 <?php if ( ! empty( $product['can_delete'] ) ) : ?>
-                                    <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                                    <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" data-sultana-product-trash-form>
                                         <input type="hidden" name="sultana_admin_action" value="trash_product">
                                         <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
                                         <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
@@ -181,7 +181,7 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                     </dl>
                     <div class="sultana-admin-card-actions">
                         <?php if ( ! empty( $product['can_delete'] ) ) : ?>
-                            <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" onsubmit="return confirm('<?php echo esc_js( __( '¿Eliminar este producto? El producto será enviado a la papelera y dejará de mostrarse en la tienda.', 'sultana-admin' ) ); ?>');">
+                            <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" data-sultana-product-trash-form>
                                 <input type="hidden" name="sultana_admin_action" value="trash_product">
                                 <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
                                 <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
