@@ -236,20 +236,6 @@ function variedadesexpress_home_for_you_card( WC_Product $product ): void
                     </span>
                 <?php endif; ?>
             </div>
-
-            <?php if ( $product->is_purchasable() && $product->is_in_stock() ) : ?>
-                <a
-                    class="for-you-product-card__cart add_to_cart_button ajax_add_to_cart product_type_<?php echo esc_attr( $product->get_type() ); ?>"
-                    href="<?php echo esc_url( $product->add_to_cart_url() ); ?>"
-                    data-quantity="1"
-                    data-product_id="<?php echo esc_attr( $product_id ); ?>"
-                    data-product_sku="<?php echo esc_attr( $product->get_sku() ); ?>"
-                    aria-label="<?php echo esc_attr( sprintf( __( 'Agregar %s al carrito', 'sultana-storefront' ), $product->get_name() ) ); ?>"
-                    rel="nofollow"
-                >
-                    <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/shopping-cart.svg' ); ?>" alt="" width="18" height="18" aria-hidden="true">
-                </a>
-            <?php endif; ?>
         </div>
     </article>
     <?php

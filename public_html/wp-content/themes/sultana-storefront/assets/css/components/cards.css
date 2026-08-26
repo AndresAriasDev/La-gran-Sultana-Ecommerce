@@ -80,6 +80,7 @@
   display: block;
   aspect-ratio: 1 / 1;
   overflow: hidden;
+  border-radius: 10px;
   background: var(--color-surface);
 }
 
@@ -111,7 +112,6 @@
   align-items: end;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-top: 0.35rem;
 }
 
 .for-you-product-card__prices {
@@ -119,11 +119,25 @@
   align-content: end;
   gap: 0.18rem;
   min-width: 0;
-  min-height: 1.95rem;
+  min-height: 1.2rem;
 }
 
 .for-you-product-card__prices.has-single-price {
   align-content: center;
+}
+
+.for-you-product-card__prices.has-discount {
+  display: flex;
+  align-items: end;
+  gap: 0.35rem;
+}
+
+.for-you-product-card__prices.has-discount .for-you-product-card__price {
+  order: 1;
+}
+
+.for-you-product-card__prices.has-discount .for-you-product-card__regular-price {
+  order: 2;
 }
 
 .for-you-product-card__regular-price {
@@ -150,23 +164,6 @@
   font-weight: inherit;
 }
 
-.for-you-product-card__cart {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  min-height: 30px;
-  border: 1px solid var(--color-line);
-  border-radius: 7px;
-  background: var(--color-surface);
-}
-
-.for-you-product-card__cart img {
-  width: 17px;
-  height: 17px;
-}
-
 .for-you-product-card__discount-badge {
   position: absolute;
   top: 0.55rem;
@@ -181,7 +178,7 @@
   background: var(--color-accent);
   color: var(--color-on-brand);
   font-size: 0.68rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -209,8 +206,4 @@
     font-size: 0.95rem;
   }
 
-  .for-you-product-card__cart {
-    width: 32px;
-    min-height: 28px;
-  }
 }

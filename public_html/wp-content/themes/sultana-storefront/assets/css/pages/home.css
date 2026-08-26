@@ -322,8 +322,7 @@
 }
 
 .skeleton-block,
-.skeleton-line,
-.skeleton-button {
+.skeleton-line {
   display: block;
   overflow: hidden;
   background: linear-gradient(
@@ -358,16 +357,9 @@
   width: 42%;
 }
 
-.skeleton-button {
-  width: 34px;
-  min-height: 30px;
-  border-radius: 7px;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .skeleton-block,
-  .skeleton-line,
-  .skeleton-button {
+  .skeleton-line {
     animation: none;
   }
 }

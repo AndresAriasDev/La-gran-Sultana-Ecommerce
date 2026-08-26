@@ -120,6 +120,9 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                                     <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" data-sultana-product-trash-form>
                                         <input type="hidden" name="sultana_admin_action" value="trash_product">
                                         <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
+                                        <?php if ( '' !== $search ) : ?>
+                                            <input type="hidden" name="s" value="<?php echo esc_attr( $search ); ?>">
+                                        <?php endif; ?>
                                         <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
                                         <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="submit" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
                                             <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>
@@ -184,6 +187,9 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
                             <form class="sultana-admin-icon-action-form" method="post" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" data-sultana-product-trash-form>
                                 <input type="hidden" name="sultana_admin_action" value="trash_product">
                                 <input type="hidden" name="product_id" value="<?php echo esc_attr( (string) $product['id'] ); ?>">
+                                <?php if ( '' !== $search ) : ?>
+                                    <input type="hidden" name="s" value="<?php echo esc_attr( $search ); ?>">
+                                <?php endif; ?>
                                 <?php wp_nonce_field( \Sultana\Admin\Products\ProductController::TRASH_NONCE_ACTION, 'sultana_admin_trash_nonce' ); ?>
                                 <button class="sultana-admin-icon-button sultana-admin-icon-button--danger" type="submit" aria-label="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>" title="<?php esc_attr_e( 'Eliminar producto', 'sultana-admin' ); ?>">
                                     <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'trash' ) ); ?>');" aria-hidden="true"></span>

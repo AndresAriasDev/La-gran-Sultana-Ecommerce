@@ -22,8 +22,7 @@ class ProductController
 
     public static function prepare_list_screen(): array
     {
-        $search = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
-        $search = substr( trim( $search ), 0, 120 );
+        $search = self::requested_list_search();
         $product_id = isset( $_GET['product_id'] ) ? absint( wp_unslash( $_GET['product_id'] ) ) : 0;
         $page   = isset( $_GET['product_page'] ) ? absint( wp_unslash( $_GET['product_page'] ) ) : 1;
         $page   = max( 1, min( 500, $page ) );
@@ -359,6 +358,23 @@ class ProductController
         );
     }
 
+    private static function requested_list_search(): string
+    {
+        $raw_search = '';
+
+        if ( isset( $_GET['s'] ) ) {
+            $raw_search = wp_unslash( $_GET['s'] );
+        } elseif ( 'POST' === strtoupper( (string) ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) && isset( $_POST['s'] ) ) {
+            $raw_search = wp_unslash( $_POST['s'] );
+        }
+
+        if ( ! is_scalar( $raw_search ) ) {
+            return '';
+        }
+
+        return substr( trim( sanitize_text_field( $raw_search ) ), 0, 120 );
+    }
+
     private static function list_notice(): string
     {
         $notice = isset( $_GET['notice'] ) ? sanitize_key( wp_unslash( $_GET['notice'] ) ) : '';
@@ -409,7 +425,16 @@ class ProductController
             return $result['errors'];
         }
 
-        wp_safe_redirect( add_query_arg( 'notice', 'product_trashed', Router::products_url() ) );
+        $redirect_args = [];
+        $search        = self::requested_list_search();
+
+        if ( '' !== $search ) {
+            $redirect_args['s'] = $search;
+        }
+
+        $redirect_args['notice'] = 'product_trashed';
+
+        wp_safe_redirect( add_query_arg( $redirect_args, Router::products_url() ) );
         exit;
     }
 

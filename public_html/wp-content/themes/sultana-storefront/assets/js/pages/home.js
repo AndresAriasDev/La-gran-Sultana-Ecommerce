@@ -177,7 +177,6 @@
             '<span class="skeleton-line skeleton-line--price"></span>' +
             '<span class="skeleton-line skeleton-line--price-short"></span>' +
           '</span>' +
-          '<span class="for-you-product-card__cart skeleton-button"></span>' +
         '</span>';
 
       fragment.appendChild(card);
