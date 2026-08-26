@@ -17,6 +17,9 @@ $search_value  = function_exists( 'variedadesexpress_current_product_search_quer
 $wishlist_count = 0;
 $product_terms = [];
 $is_shop_active = class_exists( 'WooCommerce' ) && ( is_shop() || is_product() || ( is_search() && 'product' === get_query_var( 'post_type' ) ) );
+$applied_product_search = class_exists( 'WooCommerce' ) && is_search() && 'product' === get_query_var( 'post_type' )
+    ? $search_value
+    : '';
 
 if ( class_exists( 'WooCommerce' ) ) {
     $cart_count = WC()->cart ? WC()->cart->get_cart_contents_count() : 0;
@@ -84,7 +87,7 @@ if ( class_exists( 'WooCommerce' ) ) {
             </a>
 
             <?php if ( class_exists( 'WooCommerce' ) ) : ?>
-                <form class="site-search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" data-shop-url="<?php echo esc_url( $shop_url ); ?>">
+                <form class="site-search" role="search" method="get" action="<?php echo esc_url( home_url( '/' ) ); ?>" data-shop-url="<?php echo esc_url( $shop_url ); ?>" data-clear-url="<?php echo esc_url( $shop_url ); ?>" data-applied-search="<?php echo esc_attr( $applied_product_search ); ?>">
                     <label class="screen-reader-text" for="site-product-search">
                         <?php esc_html_e( 'Buscar productos', 'sultana-storefront' ); ?>
                     </label>
@@ -99,12 +102,14 @@ if ( class_exists( 'WooCommerce' ) ) {
                     <input type="hidden" name="post_type" value="product">
                     <button class="site-search__button" type="submit" aria-label="<?php esc_attr_e( 'Buscar', 'sultana-storefront' ); ?>">
                         <img
+                            class="site-search__button-icon"
                             src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/search.svg' ); ?>"
                             alt=""
                             width="20"
                             height="20"
                             aria-hidden="true"
                         >
+                        <span class="site-search__clear-icon" aria-hidden="true" hidden>&times;</span>
                     </button>
                 </form>
             <?php endif; ?>

@@ -174,7 +174,79 @@ function variedadesexpress_brand_terms_matching_search( string $search_query ): 
     return array_map( 'array_unique', $matches );
 }
 
-function variedadesexpress_apply_brand_search_to_product_query( WP_Query $query ): void
+function variedadesexpress_product_ids_matching_search_fields( string $search_query, int $limit = 0 ): array
+{
+    global $wpdb;
+
+    $search_query = trim( wp_strip_all_tags( $search_query ) );
+
+    if ( '' === $search_query ) {
+        return [];
+    }
+
+    $like        = '%' . $wpdb->esc_like( $search_query ) . '%';
+    $limit_sql   = $limit > 0 ? ' LIMIT ' . absint( $limit ) : '';
+    $product_ids = $wpdb->get_col(
+        $wpdb->prepare(
+            "
+            SELECT DISTINCT
+                CASE
+                    WHEN product_posts.post_type = 'product_variation' THEN product_posts.post_parent
+                    ELSE product_posts.ID
+                END AS product_id
+            FROM {$wpdb->posts} AS product_posts
+            LEFT JOIN {$wpdb->postmeta} AS product_sku
+                ON product_sku.post_id = product_posts.ID
+                AND product_sku.meta_key = '_sku'
+            WHERE
+                (
+                    product_posts.post_type = 'product'
+                    AND product_posts.post_status = 'publish'
+                    AND (
+                        product_posts.post_title LIKE %s
+                        OR product_posts.post_excerpt LIKE %s
+                        OR product_sku.meta_value LIKE %s
+                    )
+                )
+                OR (
+                    product_posts.post_type = 'product_variation'
+                    AND product_posts.post_status IN ( 'publish', 'private' )
+                    AND product_posts.post_parent > 0
+                    AND product_sku.meta_value LIKE %s
+                )
+            ORDER BY product_id DESC
+            {$limit_sql}
+            ",
+            $like,
+            $like,
+            $like,
+            $like
+        )
+    );
+
+    return array_values( array_unique( array_filter( array_map( 'absint', (array) $product_ids ) ) ) );
+}
+
+function variedadesexpress_product_ids_matching_taxonomy_terms( array $term_matches ): array
+{
+    $product_ids = [];
+
+    foreach ( $term_matches as $taxonomy => $term_ids ) {
+        $objects = get_objects_in_term( array_map( 'absint', (array) $term_ids ), (string) $taxonomy );
+
+        if ( is_wp_error( $objects ) || empty( $objects ) ) {
+            continue;
+        }
+
+        foreach ( $objects as $object_id ) {
+            $product_ids[] = absint( $object_id );
+        }
+    }
+
+    return array_values( array_unique( array_filter( $product_ids ) ) );
+}
+
+function variedadesexpress_apply_product_search_to_product_query( WP_Query $query ): void
 {
     if ( is_admin() || ! $query->is_main_query() || ! $query->is_search() ) {
         return;
@@ -187,36 +259,28 @@ function variedadesexpress_apply_brand_search_to_product_query( WP_Query $query 
         return;
     }
 
-    $brand_matches = variedadesexpress_brand_terms_matching_search( (string) $query->get( 's' ) );
+    $search_query = trim( (string) $query->get( 's' ) );
 
-    if ( empty( $brand_matches ) ) {
+    if ( '' === $search_query ) {
         return;
     }
 
-    $brand_tax_query = [];
+    $matching_ids = array_merge(
+        variedadesexpress_product_ids_matching_search_fields( $search_query ),
+        variedadesexpress_product_ids_matching_taxonomy_terms( variedadesexpress_brand_terms_matching_search( $search_query ) )
+    );
+    $matching_ids = array_values( array_unique( array_filter( array_map( 'absint', $matching_ids ) ) ) );
 
-    foreach ( $brand_matches as $taxonomy => $term_ids ) {
-        $brand_tax_query[] = [
-            'taxonomy' => $taxonomy,
-            'field'    => 'term_id',
-            'terms'    => array_map( 'absint', $term_ids ),
-        ];
+    if ( empty( $matching_ids ) ) {
+        $matching_ids = [ 0 ];
     }
-
-    if ( count( $brand_tax_query ) > 1 ) {
-        $brand_tax_query['relation'] = 'OR';
-    }
-
-    $tax_query = $query->get( 'tax_query' );
-    $tax_query = is_array( $tax_query ) ? $tax_query : [];
-    $tax_query[] = $brand_tax_query;
 
     $query->set( 's', '' );
     $query->set( 'post_type', 'product' );
-    $query->set( 'tax_query', $tax_query );
+    $query->set( 'post__in', $matching_ids );
 }
 
-add_action( 'pre_get_posts', 'variedadesexpress_apply_brand_search_to_product_query', 20 );
+add_action( 'pre_get_posts', 'variedadesexpress_apply_product_search_to_product_query', 20 );
 
 function variedadesexpress_search_suggestion_products( string $search_query, int $limit = 15 ): array
 {
@@ -299,6 +363,19 @@ function variedadesexpress_search_suggestion_products( string $search_query, int
                 'tax_query' => $tax_query,
             ]
         );
+    }
+
+    if ( count( $products ) < $limit ) {
+        $matching_ids = variedadesexpress_product_ids_matching_search_fields( $search_query, $limit * 3 );
+        $matching_ids = array_values( array_diff( $matching_ids, array_keys( $product_ids ) ) );
+
+        if ( $matching_ids ) {
+            $collect_products(
+                [
+                    'post__in' => $matching_ids,
+                ]
+            );
+        }
     }
 
     if ( count( $products ) < $limit ) {

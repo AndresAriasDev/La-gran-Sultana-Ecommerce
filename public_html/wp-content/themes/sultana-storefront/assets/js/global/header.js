@@ -37,11 +37,47 @@
     }
 
     const searchInput = searchForm.querySelector('input[name="s"]');
+    const searchButton = searchForm.querySelector(".site-search__button");
+    const searchIcon = searchForm.querySelector(".site-search__button-icon");
+    const clearIcon = searchForm.querySelector(".site-search__clear-icon");
     const shopUrl = searchForm.dataset.shopUrl;
+    const clearUrl = searchForm.dataset.clearUrl || shopUrl;
+    const appliedSearch = (searchForm.dataset.appliedSearch || "").trim();
 
-    if (!searchInput || !shopUrl) {
+    if (!searchInput || !searchButton || !shopUrl) {
       return;
     }
+
+    const updateSearchButton = function () {
+      const isAppliedSearch =
+        appliedSearch !== "" && searchInput.value.trim() === appliedSearch;
+
+      searchForm.dataset.searchMode = isAppliedSearch ? "clear" : "search";
+      searchButton.type = isAppliedSearch ? "button" : "submit";
+      searchButton.setAttribute(
+        "aria-label",
+        isAppliedSearch ? "Limpiar busqueda" : "Buscar"
+      );
+
+      if (searchIcon) {
+        searchIcon.hidden = isAppliedSearch;
+      }
+
+      if (clearIcon) {
+        clearIcon.hidden = !isAppliedSearch;
+      }
+    };
+
+    searchInput.addEventListener("input", updateSearchButton);
+
+    searchButton.addEventListener("click", function (event) {
+      if (searchForm.dataset.searchMode !== "clear") {
+        return;
+      }
+
+      event.preventDefault();
+      window.location.assign(clearUrl);
+    });
 
     searchForm.addEventListener("submit", function (event) {
       if (searchInput.value.trim() !== "") {
@@ -51,6 +87,8 @@
       event.preventDefault();
       window.location.assign(shopUrl);
     });
+
+    updateSearchButton();
   };
 
   const setupAutoHideHeader = function () {
