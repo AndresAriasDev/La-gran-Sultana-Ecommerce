@@ -709,6 +709,10 @@
         progress.className = 'sultana-admin-variation-image-progress';
         progress.setAttribute('aria-hidden', 'true');
 
+        const progressValue = document.createElement('span');
+        progressValue.className = 'sultana-admin-variation-image-progress-value';
+        progressValue.hidden = true;
+
         const triggerIcon = document.createElement('span');
         triggerIcon.className = 'sultana-admin-variation-image-trigger__icon';
         appendIcon(triggerIcon, variation.image_url ? '' : 'images');
@@ -743,6 +747,7 @@
         });
 
         trigger.appendChild(progress);
+        trigger.appendChild(progressValue);
         trigger.appendChild(preview);
         trigger.appendChild(triggerIcon);
         trigger.appendChild(triggerText);
@@ -945,38 +950,36 @@
 
             setVariationUploadProgress(trigger, 100, false);
 
-            window.setTimeout(function () {
-                variation.image_id = toInt(payload.data.image.id);
-                variation.image_url = payload.data.image.url || '';
-                hiddenInput.value = String(variation.image_id);
-                preview.innerHTML = '';
+            variation.image_id = toInt(payload.data.image.id);
+            variation.image_url = payload.data.image.url || '';
+            hiddenInput.value = String(variation.image_id);
+            preview.innerHTML = '';
 
-                if (variation.image_url) {
-                    const image = document.createElement('img');
-                    image.src = variation.image_url;
-                    image.alt = '';
-                    preview.appendChild(image);
-                }
+            if (variation.image_url) {
+                const image = document.createElement('img');
+                image.src = variation.image_url;
+                image.alt = '';
+                preview.appendChild(image);
+            }
 
-                const wrap = preview.closest('.sultana-admin-variation-image');
-                const triggerIcon = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__icon') : null;
-                const triggerText = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__text') : null;
+            const wrap = preview.closest('.sultana-admin-variation-image');
+            const triggerIcon = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__icon') : null;
+            const triggerText = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__text') : null;
 
-                if (remove) {
-                    remove.hidden = false;
-                }
+            if (remove) {
+                remove.hidden = false;
+            }
 
-                if (triggerIcon) {
-                    triggerIcon.innerHTML = '';
-                }
+            if (triggerIcon) {
+                triggerIcon.innerHTML = '';
+            }
 
-                if (triggerText) {
-                    triggerText.textContent = '';
-                }
+            if (triggerText) {
+                triggerText.textContent = '';
+            }
 
-                setStatus('', false);
-                finishVariationUpload();
-            }, 120);
+            setStatus('', false);
+            finishVariationUpload();
         };
 
         xhr.onerror = function () {
@@ -1031,8 +1034,17 @@
             return;
         }
 
+        const clampedProgress = Math.min(100, Math.max(0, progress));
+        const progressValue = trigger.querySelector('.sultana-admin-variation-image-progress-value');
+        const showsPercentage = trigger.classList.contains('is-uploading') && !isIndeterminate;
+
         trigger.classList.toggle('is-uploading-indeterminate', Boolean(isIndeterminate));
-        trigger.style.setProperty('--sultana-admin-upload-progress', Math.min(100, Math.max(0, progress)) + '%');
+        trigger.style.setProperty('--sultana-admin-upload-progress', clampedProgress + '%');
+
+        if (progressValue) {
+            progressValue.hidden = !showsPercentage;
+            progressValue.textContent = showsPercentage ? Math.round(clampedProgress) + '%' : '';
+        }
     }
 
     function generateConcreteVariations() {

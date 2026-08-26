@@ -65,6 +65,18 @@
     color: var(--sultana-admin-muted);
 }
 
+.sultana-admin-modal__actions .sultana-admin-muted-action:hover,
+.sultana-admin-modal__actions .sultana-admin-muted-action:focus-visible {
+    border-color: var(--sultana-admin-primary);
+    background: var(--sultana-admin-surface);
+    color: var(--sultana-admin-primary-dark);
+    outline: 0;
+}
+
+.sultana-admin-modal__actions .sultana-admin-muted-action:focus-visible {
+    box-shadow: 0 0 0 3px var(--sultana-admin-primary-soft);
+}
+
 .sultana-admin-variable-attribute {
     display: grid;
     gap: 10px;
@@ -492,24 +504,33 @@
     right: 0;
     bottom: 0;
     left: 0;
-    z-index: 0;
+    z-index: 2;
     height: var(--sultana-admin-upload-progress, 0%);
-    background: var(--sultana-admin-primary-soft);
-    opacity: 0.72;
+    background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sultana-admin-primary) 36%, transparent),
+        color-mix(in srgb, var(--sultana-admin-primary) 68%, transparent)
+    );
     pointer-events: none;
-    transition: height var(--sultana-admin-transition-fast);
+    transition: height 160ms ease-out;
 }
 
 .sultana-admin-variation-image-trigger.is-uploading-indeterminate .sultana-admin-variation-image-progress {
     height: 100%;
-    opacity: 0.32;
+    background: var(--sultana-admin-primary-soft);
+    opacity: 0.48;
 }
 
-.sultana-admin-variation-image-preview,
-.sultana-admin-variation-image-trigger__icon,
-.sultana-admin-variation-image-trigger__text {
+.sultana-admin-variation-image-preview {
     position: relative;
     z-index: 1;
+}
+
+.sultana-admin-variation-image-trigger__icon,
+.sultana-admin-variation-image-trigger__text,
+.sultana-admin-variation-image-progress-value {
+    position: relative;
+    z-index: 3;
 }
 
 .sultana-admin-variation-image-trigger__icon .sultana-admin-icon {
@@ -521,6 +542,24 @@
 .sultana-admin-variation-image-trigger__text {
     font-size: var(--sultana-admin-font-size-sm);
     font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-variation-image-progress-value {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    border-radius: var(--sultana-admin-radius-pill);
+    background: color-mix(in srgb, var(--sultana-admin-text) 86%, transparent);
+    color: var(--sultana-admin-text-inverse);
+    font-size: var(--sultana-admin-font-size-xs);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: 1;
+    padding: 6px 8px;
+}
+
+.sultana-admin-variation-image-progress-value[hidden] {
+    display: none;
 }
 
 .sultana-admin-variation-image {
@@ -535,6 +574,7 @@
     min-width: 30px;
     min-height: 30px;
     border-radius: 100px;
+    z-index: 4;
 }
 
 .sultana-admin-variation-image-remove .sultana-admin-icon {
