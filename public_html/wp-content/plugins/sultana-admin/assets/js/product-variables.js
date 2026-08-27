@@ -20,14 +20,13 @@
     let selectedAttributes = Array.isArray(initialState.attributes) ? normalizeAttributes(initialState.attributes) : [];
     let variations = Array.isArray(initialState.variations) ? normalizeVariations(initialState.variations) : [];
     let attributeCounter = 0;
-    let uploadCounter = 0;
     let openValuePicker = null;
     let deletedVariationIds = [];
     let activeVariationIdentity = '';
     let hasVariationInteraction = false;
-    let variationUploads = {};
     let forcedOpenVariation = null;
     let pendingSelectChange = null;
+    let imageSelector = null;
     const deletedVariationsRoot = document.createElement('div');
     deletedVariationsRoot.hidden = true;
     editor.appendChild(deletedVariationsRoot);
@@ -40,7 +39,6 @@
     renderVariations();
     updateCombinationCount();
     updateGenerateActionState();
-    updateSubmitState();
 
     window.SultanaAdminProductVariableEditor = {
         validatePreSubmit: validatePreSubmit
@@ -64,6 +62,44 @@
     document.addEventListener('click', function (event) {
         if (openValuePicker && !openValuePicker.picker.contains(event.target)) {
             closeResults(openValuePicker.search, openValuePicker.results);
+        }
+    });
+
+    document.addEventListener('sultana:product-image-added', function () {
+        if (imageSelector) {
+            renderImageSelectorOptions();
+        }
+    });
+
+    document.addEventListener('sultana:product-images-reordered', function () {
+        if (imageSelector) {
+            renderImageSelectorOptions();
+        }
+    });
+
+    document.addEventListener('sultana:product-image-removed', function (event) {
+        const removedId = toInt(event.detail && event.detail.id);
+
+        if (!removedId) {
+            return;
+        }
+
+        let changed = false;
+
+        variations.forEach(function (variation) {
+            if (variation.image_id === removedId) {
+                variation.image_id = 0;
+                variation.image_url = '';
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            renderVariations();
+        }
+
+        if (imageSelector) {
+            renderImageSelectorOptions();
         }
     });
 
@@ -677,40 +713,22 @@
             image.src = variation.image_url;
             image.alt = '';
             preview.appendChild(image);
+        } else {
+            const empty = document.createElement('span');
+            empty.className = 'sultana-admin-variation-image-empty';
+            empty.textContent = strings.noImageSelected || 'Sin imagen seleccionada';
+            preview.appendChild(empty);
         }
-
-        const upload = document.createElement('input');
-        upload.type = 'file';
-        upload.className = 'sultana-admin-variation-image-input';
-        upload.accept = '.jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif';
-        upload.addEventListener('change', function () {
-            const file = upload.files && upload.files[0];
-            upload.value = '';
-
-            if (file) {
-                uploadVariationImage(file, variation, hiddenInput, preview, upload, trigger, remove);
-            }
-        });
 
         const trigger = document.createElement('button');
         trigger.type = 'button';
         trigger.className = 'sultana-admin-variation-image-trigger';
-        trigger.setAttribute('aria-label', strings.uploadImage || 'Imagen');
+        trigger.setAttribute('aria-label', strings.selectImage || strings.uploadImage || 'Seleccionar imagen');
         trigger.addEventListener('click', function () {
-            if (upload.disabled) {
-                return;
-            }
-
-            upload.click();
+            activeVariationIdentity = variationIdentity(variation);
+            hasVariationInteraction = true;
+            openImageSelector(variation);
         });
-
-        const progress = document.createElement('span');
-        progress.className = 'sultana-admin-variation-image-progress';
-        progress.setAttribute('aria-hidden', 'true');
-
-        const progressValue = document.createElement('span');
-        progressValue.className = 'sultana-admin-variation-image-progress-value';
-        progressValue.hidden = true;
 
         const triggerIcon = document.createElement('span');
         triggerIcon.className = 'sultana-admin-variation-image-trigger__icon';
@@ -735,29 +753,219 @@
                 return;
             }
 
-            variation.image_id = 0;
-            variation.image_url = '';
-            hiddenInput.value = '0';
-            preview.innerHTML = '';
-            remove.hidden = true;
-            triggerIcon.innerHTML = '';
-            appendIcon(triggerIcon, 'images');
-            triggerText.textContent = strings.uploadImage || 'Imagen';
+            assignVariationImage(variation, null);
         });
 
-        trigger.appendChild(progress);
-        trigger.appendChild(progressValue);
         trigger.appendChild(preview);
         trigger.appendChild(triggerIcon);
         trigger.appendChild(triggerText);
 
         wrap.appendChild(label);
         wrap.appendChild(hiddenInput);
-        wrap.appendChild(upload);
         wrap.appendChild(trigger);
         wrap.appendChild(remove);
 
         return wrap;
+    }
+
+    function assignVariationImage(variation, image) {
+        activeVariationIdentity = variationIdentity(variation);
+        hasVariationInteraction = true;
+
+        if (image && image.id) {
+            variation.image_id = toInt(image.id);
+            variation.image_url = image.url || '';
+        } else {
+            variation.image_id = 0;
+            variation.image_url = '';
+        }
+
+        renderVariations();
+    }
+
+    function productImagesApi() {
+        return window.SultanaProductImages && typeof window.SultanaProductImages.getImages === 'function'
+            ? window.SultanaProductImages
+            : null;
+    }
+
+    function openImageSelector(variation) {
+        const api = productImagesApi();
+
+        closeImageSelector();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'sultana-admin-image-selector-overlay';
+
+        const dialog = document.createElement('div');
+        dialog.className = 'sultana-admin-image-selector';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', 'sultana-admin-image-selector-title');
+
+        const header = document.createElement('header');
+        header.className = 'sultana-admin-image-selector__header';
+
+        const title = document.createElement('h3');
+        title.id = 'sultana-admin-image-selector-title';
+        title.textContent = strings.selectImage || 'Seleccionar imagen';
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'sultana-admin-icon-button sultana-admin-image-selector__close';
+        close.setAttribute('aria-label', strings.cancel || 'Cerrar');
+        close.setAttribute('title', strings.cancel || 'Cerrar');
+        appendIcon(close, 'close');
+        close.addEventListener('click', closeImageSelector);
+
+        const options = document.createElement('div');
+        options.className = 'sultana-admin-image-selector__grid';
+
+        const footer = document.createElement('footer');
+        footer.className = 'sultana-admin-image-selector__footer';
+
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'sultana-admin-muted-action sultana-admin-image-selector__add';
+        appendIcon(add, 'images');
+
+        const addText = document.createElement('span');
+        addText.textContent = strings.addImage || 'Agregar nueva';
+        add.appendChild(addText);
+
+        const upload = document.createElement('input');
+        upload.type = 'file';
+        upload.accept = '.jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif';
+        upload.className = 'sultana-admin-image-selector__upload';
+
+        const status = document.createElement('div');
+        status.className = 'sultana-admin-image-selector__status';
+        status.setAttribute('aria-live', 'polite');
+
+        add.addEventListener('click', function () {
+            if (!api || !api.uploadFile || add.disabled) {
+                return;
+            }
+
+            upload.click();
+        });
+
+        upload.addEventListener('change', function () {
+            const file = upload.files && upload.files[0] ? upload.files[0] : null;
+            upload.value = '';
+
+            if (!file || !api || typeof api.uploadFile !== 'function') {
+                return;
+            }
+
+            add.disabled = true;
+            status.textContent = strings.uploading || 'Subiendo imagen...';
+            status.classList.remove('is-error');
+
+            api.uploadFile(file).then(function (image) {
+                assignVariationImage(variation, image);
+                closeImageSelector();
+            }).catch(function (error) {
+                status.textContent = error && error.message ? error.message : (strings.uploadError || 'No se pudo subir la imagen.');
+                status.classList.add('is-error');
+                add.disabled = false;
+            });
+        });
+
+        overlay.addEventListener('click', function (event) {
+            if (event.target === overlay) {
+                closeImageSelector();
+            }
+        });
+
+        header.appendChild(title);
+        header.appendChild(close);
+        footer.appendChild(add);
+        footer.appendChild(upload);
+        footer.appendChild(status);
+        dialog.appendChild(header);
+        dialog.appendChild(options);
+        dialog.appendChild(footer);
+        overlay.appendChild(dialog);
+        document.body.appendChild(overlay);
+
+        imageSelector = {
+            variation: variation,
+            overlay: overlay,
+            options: options,
+            add: add,
+            status: status,
+            keydown: function (event) {
+                if ('Escape' === event.key) {
+                    closeImageSelector();
+                }
+            }
+        };
+
+        document.addEventListener('keydown', imageSelector.keydown);
+        renderImageSelectorOptions();
+        close.focus();
+    }
+
+    function closeImageSelector() {
+        if (!imageSelector) {
+            return;
+        }
+
+        if (imageSelector.keydown) {
+            document.removeEventListener('keydown', imageSelector.keydown);
+        }
+
+        if (imageSelector.overlay && imageSelector.overlay.parentNode) {
+            imageSelector.overlay.parentNode.removeChild(imageSelector.overlay);
+        }
+
+        imageSelector = null;
+    }
+
+    function renderImageSelectorOptions() {
+        if (!imageSelector || !imageSelector.options) {
+            return;
+        }
+
+        const api = productImagesApi();
+        const images = api ? api.getImages() : [];
+        const selectedId = imageSelector.variation ? toInt(imageSelector.variation.image_id) : 0;
+
+        imageSelector.options.innerHTML = '';
+
+        if (!images.length) {
+            const empty = document.createElement('p');
+            empty.className = 'sultana-admin-image-selector__empty';
+            empty.textContent = strings.noGalleryImages || 'No hay imagenes disponibles.';
+            imageSelector.options.appendChild(empty);
+            return;
+        }
+
+        images.forEach(function (image, index) {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = 'sultana-admin-image-selector__option';
+            option.classList.toggle('is-selected', selectedId === toInt(image.id));
+            option.setAttribute('aria-label', index === 0 ? 'Portada' : 'Imagen ' + (index + 1));
+
+            const thumb = document.createElement('img');
+            thumb.src = image.url;
+            thumb.alt = '';
+
+            const badge = document.createElement('span');
+            badge.className = 'sultana-admin-image-selector__badge';
+            badge.textContent = index === 0 ? 'Portada' : String(index + 1);
+
+            option.appendChild(thumb);
+            option.appendChild(badge);
+            option.addEventListener('click', function () {
+                assignVariationImage(imageSelector.variation, image);
+                closeImageSelector();
+            });
+
+            imageSelector.options.appendChild(option);
+        });
     }
 
     function variationAttributeFields(variation, index, title) {
@@ -890,160 +1098,6 @@
 
     function anyAttributeLabel(label) {
         return 'Cualquier ' + String(label || '').toLowerCase();
-    }
-
-    function uploadVariationImage(file, variation, hiddenInput, preview, upload, trigger, remove) {
-        const identity = variationIdentity(variation);
-
-        if (identity && variationUploads[identity]) {
-            return;
-        }
-
-        activeVariationIdentity = identity;
-        hasVariationInteraction = true;
-
-        const formData = new FormData();
-        formData.append('action', config.uploadAction);
-        formData.append('nonce', config.nonce);
-        formData.append('image', file);
-        formData.append('product_title', currentProductTitle());
-        formData.append('image_index', String(variationImageIndex(variation)));
-
-        if (identity) {
-            variationUploads[identity] = true;
-        }
-
-        uploadCounter += 1;
-        setVariationUploadState(upload, trigger, remove, true);
-        setVariationUploadProgress(trigger, 0, false);
-        updateSubmitState();
-
-        const xhr = new XMLHttpRequest();
-
-        xhr.open('POST', config.ajaxUrl, true);
-        xhr.withCredentials = true;
-
-        xhr.upload.onprogress = function (event) {
-            if (!event.lengthComputable) {
-                setVariationUploadProgress(trigger, 0, true);
-                return;
-            }
-
-            setVariationUploadProgress(trigger, Math.min(100, Math.max(0, (event.loaded / event.total) * 100)), false);
-        };
-
-        xhr.onload = function () {
-            let payload = null;
-
-            try {
-                payload = JSON.parse(xhr.responseText || '');
-            } catch (error) {
-                handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-                return;
-            }
-
-            if (xhr.status < 200 || xhr.status >= 300 || !payload || !payload.success || !payload.data || !payload.data.image) {
-                handleVariationUploadError((payload && payload.data && payload.data.message) || strings.uploadError || 'No se pudo subir la imagen.');
-                return;
-            }
-
-            setVariationUploadProgress(trigger, 100, false);
-
-            variation.image_id = toInt(payload.data.image.id);
-            variation.image_url = payload.data.image.url || '';
-            hiddenInput.value = String(variation.image_id);
-            preview.innerHTML = '';
-
-            if (variation.image_url) {
-                const image = document.createElement('img');
-                image.src = variation.image_url;
-                image.alt = '';
-                preview.appendChild(image);
-            }
-
-            const wrap = preview.closest('.sultana-admin-variation-image');
-            const triggerIcon = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__icon') : null;
-            const triggerText = wrap ? wrap.querySelector('.sultana-admin-variation-image-trigger__text') : null;
-
-            if (remove) {
-                remove.hidden = false;
-            }
-
-            if (triggerIcon) {
-                triggerIcon.innerHTML = '';
-            }
-
-            if (triggerText) {
-                triggerText.textContent = '';
-            }
-
-            setStatus('', false);
-            finishVariationUpload();
-        };
-
-        xhr.onerror = function () {
-            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.onabort = function () {
-            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.ontimeout = function () {
-            handleVariationUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.send(formData);
-
-        function handleVariationUploadError(message) {
-            setStatus(message || strings.uploadError || 'No se pudo subir la imagen.', true);
-            finishVariationUpload();
-        }
-
-        function finishVariationUpload() {
-            if (identity) {
-                delete variationUploads[identity];
-            }
-
-            setVariationUploadState(upload, trigger, remove, false);
-            setVariationUploadProgress(trigger, 0, false);
-            uploadCounter = Math.max(0, uploadCounter - 1);
-            updateSubmitState();
-        }
-    }
-
-    function setVariationUploadState(upload, trigger, remove, isUploading) {
-        if (upload) {
-            upload.disabled = isUploading;
-        }
-
-        if (trigger) {
-            trigger.disabled = isUploading;
-            trigger.classList.toggle('is-uploading', isUploading);
-        }
-
-        if (remove) {
-            remove.disabled = isUploading;
-            remove.classList.toggle('is-disabled', isUploading);
-        }
-    }
-
-    function setVariationUploadProgress(trigger, progress, isIndeterminate) {
-        if (!trigger) {
-            return;
-        }
-
-        const clampedProgress = Math.min(100, Math.max(0, progress));
-        const progressValue = trigger.querySelector('.sultana-admin-variation-image-progress-value');
-        const showsPercentage = trigger.classList.contains('is-uploading') && !isIndeterminate;
-
-        trigger.classList.toggle('is-uploading-indeterminate', Boolean(isIndeterminate));
-        trigger.style.setProperty('--sultana-admin-upload-progress', clampedProgress + '%');
-
-        if (progressValue) {
-            progressValue.hidden = !showsPercentage;
-            progressValue.textContent = showsPercentage ? Math.round(clampedProgress) + '%' : '';
-        }
     }
 
     function generateConcreteVariations() {
@@ -1576,27 +1630,6 @@
 
         status.textContent = message;
         status.classList.toggle('is-error', Boolean(isError));
-    }
-
-    function updateSubmitState() {
-        const submit = editor.closest('form') ? editor.closest('form').querySelector('button[type="submit"]') : null;
-
-        if (submit) {
-            submit.disabled = uploadCounter > 0;
-        }
-    }
-
-    function currentProductTitle() {
-        const form = editor.closest('form');
-        const titleInput = form ? form.querySelector('[name="name"]') : null;
-
-        return titleInput ? titleInput.value || '' : '';
-    }
-
-    function variationImageIndex(variation) {
-        const index = variations.indexOf(variation);
-
-        return index >= 0 ? index + 1 : 0;
     }
 
     function setVariationPanelState(toggle, panel, isOpen) {

@@ -541,13 +541,11 @@ class ProductController
             ];
         }
 
-        $include_variation_images = 'variable' !== $product_type;
-
         $data = [
             'categories'           => $service->get_product_categories(),
             'brands'               => $service->get_product_brands(),
             'brand_taxonomy'       => $service->get_brand_taxonomy(),
-            'selected_images'      => ( new ProductImageService() )->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id, $include_variation_images ),
+            'selected_images'      => ( new ProductImageService() )->get_product_image_items_for_form( $form['product_image_ids'] ?? '', $product_id, true ),
             'available_attributes' => [],
             'combo_components'     => [],
             'variation_pagination' => $form['variation_pagination'] ?? [],

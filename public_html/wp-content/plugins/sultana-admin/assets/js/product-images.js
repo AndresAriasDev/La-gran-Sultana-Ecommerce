@@ -22,6 +22,21 @@
     let uploadIdCounter = 0;
     let draggedId = null;
 
+    window.SultanaProductImages = {
+        getImages: function () {
+            return images.map(snapshotImage);
+        },
+        uploadFile: function (file) {
+            uploadBatchCounter += 1;
+            uploadBatch = createUploadBatch(uploadBatchCounter, [file]);
+
+            return uploadImage(file, images.length + 1, uploadBatch);
+        },
+        hasPendingUploads: function () {
+            return pendingUploads > 0;
+        }
+    };
+
     render();
     syncIds();
     updateSubmitState();
@@ -43,7 +58,7 @@
             }
 
             files.forEach(function (file, index) {
-                uploadImage(file, images.length + index + 1, uploadBatch);
+                uploadImage(file, images.length + index + 1, uploadBatch).catch(function () {});
             });
         });
     }
@@ -84,6 +99,19 @@
         };
     }
 
+    function snapshotImage(image) {
+        return {
+            id: parseInt(image.id, 10) || 0,
+            url: image.url || '',
+            name: image.name || '',
+            temporary: Boolean(image.temporary)
+        };
+    }
+
+    function dispatchImageEvent(name, detail) {
+        document.dispatchEvent(new CustomEvent(name, { detail: detail || {} }));
+    }
+
     function createUploadBatch(id, files) {
         return {
             id: id,
@@ -98,125 +126,132 @@
     }
 
     function uploadImage(file, imageIndex, batch) {
-        const formData = new FormData();
-        uploadIdCounter += 1;
-        const uploadId = 'upload-' + uploadIdCounter;
-        const uploadSize = Math.max(0, file.size || 0);
+        return new Promise(function (resolve, reject) {
+            const formData = new FormData();
+            uploadIdCounter += 1;
+            const uploadId = 'upload-' + uploadIdCounter;
+            const uploadSize = Math.max(0, file.size || 0);
 
-        formData.append('action', config.uploadAction);
-        formData.append('nonce', config.nonce);
-        formData.append('image', file);
-        formData.append('product_title', currentProductTitle());
-        formData.append('image_index', String(imageIndex || 0));
+            formData.append('action', config.uploadAction);
+            formData.append('nonce', config.nonce);
+            formData.append('image', file);
+            formData.append('product_title', currentProductTitle());
+            formData.append('image_index', String(imageIndex || 0));
 
-        if (batch) {
-            batch.active[uploadId] = {
-                loaded: 0,
-                total: uploadSize,
-                indeterminate: false
-            };
-        }
-
-        pendingUploads += 1;
-        updateUploadStatus(batch);
-        updateSubmitState();
-
-        const xhr = new XMLHttpRequest();
-
-        xhr.open('POST', config.ajaxUrl, true);
-        xhr.withCredentials = true;
-
-        xhr.upload.onprogress = function (event) {
-            if (!batch || !batch.active[uploadId]) {
-                return;
-            }
-
-            if (!event.lengthComputable) {
-                batch.active[uploadId].indeterminate = true;
-                batch.hasIndeterminate = true;
-                updateUploadStatus(batch);
-                return;
-            }
-
-            batch.active[uploadId].loaded = uploadSize > 0
-                ? Math.min(uploadSize, (event.loaded / event.total) * uploadSize)
-                : Math.min(event.total, Math.max(0, event.loaded));
-            batch.active[uploadId].total = uploadSize > 0 ? uploadSize : event.total;
-            updateUploadStatus(batch);
-        };
-
-        xhr.onload = function () {
-            let payload = null;
-
-            try {
-                payload = JSON.parse(xhr.responseText || '');
-            } catch (error) {
-                handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-                return;
-            }
-
-            if (xhr.status < 200 || xhr.status >= 300 || !payload || !payload.success || !payload.data || !payload.data.image) {
-                handleUploadError((payload && payload.data && payload.data.message) || strings.uploadError || 'No se pudo subir la imagen.');
-                return;
-            }
-
-            addImage(normalizeImage(payload.data.image));
-            finishUpload(false);
-        };
-
-        xhr.onerror = function () {
-            handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.onabort = function () {
-            handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.ontimeout = function () {
-            handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
-        };
-
-        xhr.send(formData);
-
-        function handleUploadError(message) {
             if (batch) {
-                batch.hasError = true;
+                batch.active[uploadId] = {
+                    loaded: 0,
+                    total: uploadSize,
+                    indeterminate: false
+                };
             }
 
-            setStatus(message || strings.uploadError || 'No se pudo subir la imagen.', true);
-            finishUpload(true);
-        }
-
-        function finishUpload(hasError) {
-            if (batch && batch.active[uploadId]) {
-                const record = batch.active[uploadId];
-                const completedTotal = record.total || uploadSize;
-
-                if (!record.indeterminate && completedTotal > 0) {
-                    batch.completedBytes += completedTotal;
-                }
-
-                delete batch.active[uploadId];
-            }
-
-            pendingUploads = Math.max(0, pendingUploads - 1);
-
-            if (pendingUploads > 0 && !hasError) {
-                updateUploadStatus(batch);
-            }
-
-            if (0 === pendingUploads) {
-                if (!hasError && (!batch || !batch.hasError)) {
-                    setStatus('', false);
-                }
-
-                if (uploadBatch === batch) {
-                    uploadBatch = null;
-                }
-            }
-
+            pendingUploads += 1;
+            updateUploadStatus(batch);
             updateSubmitState();
-        }
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('POST', config.ajaxUrl, true);
+            xhr.withCredentials = true;
+
+            xhr.upload.onprogress = function (event) {
+                if (!batch || !batch.active[uploadId]) {
+                    return;
+                }
+
+                if (!event.lengthComputable) {
+                    batch.active[uploadId].indeterminate = true;
+                    batch.hasIndeterminate = true;
+                    updateUploadStatus(batch);
+                    return;
+                }
+
+                batch.active[uploadId].loaded = uploadSize > 0
+                    ? Math.min(uploadSize, (event.loaded / event.total) * uploadSize)
+                    : Math.min(event.total, Math.max(0, event.loaded));
+                batch.active[uploadId].total = uploadSize > 0 ? uploadSize : event.total;
+                updateUploadStatus(batch);
+            };
+
+            xhr.onload = function () {
+                let payload = null;
+
+                try {
+                    payload = JSON.parse(xhr.responseText || '');
+                } catch (error) {
+                    handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+                    return;
+                }
+
+                if (xhr.status < 200 || xhr.status >= 300 || !payload || !payload.success || !payload.data || !payload.data.image) {
+                    handleUploadError((payload && payload.data && payload.data.message) || strings.uploadError || 'No se pudo subir la imagen.');
+                    return;
+                }
+
+                const image = normalizeImage(payload.data.image);
+                addImage(image);
+                finishUpload(false);
+                resolve(snapshotImage(image));
+            };
+
+            xhr.onerror = function () {
+                handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+            };
+
+            xhr.onabort = function () {
+                handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+            };
+
+            xhr.ontimeout = function () {
+                handleUploadError(strings.uploadError || 'No se pudo subir la imagen.');
+            };
+
+            xhr.send(formData);
+
+            function handleUploadError(message) {
+                const errorMessage = message || strings.uploadError || 'No se pudo subir la imagen.';
+
+                if (batch) {
+                    batch.hasError = true;
+                }
+
+                setStatus(errorMessage, true);
+                finishUpload(true);
+                reject(new Error(errorMessage));
+            }
+
+            function finishUpload(hasError) {
+                if (batch && batch.active[uploadId]) {
+                    const record = batch.active[uploadId];
+                    const completedTotal = record.total || uploadSize;
+
+                    if (!record.indeterminate && completedTotal > 0) {
+                        batch.completedBytes += completedTotal;
+                    }
+
+                    delete batch.active[uploadId];
+                }
+
+                pendingUploads = Math.max(0, pendingUploads - 1);
+
+                if (pendingUploads > 0 && !hasError) {
+                    updateUploadStatus(batch);
+                }
+
+                if (0 === pendingUploads) {
+                    if (!hasError && (!batch || !batch.hasError)) {
+                        setStatus('', false);
+                    }
+
+                    if (uploadBatch === batch) {
+                        uploadBatch = null;
+                    }
+                }
+
+                updateSubmitState();
+            }
+        });
     }
 
     function updateUploadStatus(batch) {
@@ -252,6 +287,7 @@
         images.push(image);
         render();
         syncIds();
+        dispatchImageEvent('sultana:product-image-added', { image: snapshotImage(image) });
     }
 
     function removeImage(imageId) {
@@ -265,6 +301,7 @@
 
         render();
         syncIds();
+        dispatchImageEvent('sultana:product-image-removed', { id: imageId });
 
         if (removed && removed.temporary) {
             deleteTemporaryImage(imageId);
@@ -304,6 +341,7 @@
         images.splice(toIndex, 0, moved);
         render();
         syncIds();
+        dispatchImageEvent('sultana:product-images-reordered', { images: images.map(snapshotImage) });
     }
 
     function render() {

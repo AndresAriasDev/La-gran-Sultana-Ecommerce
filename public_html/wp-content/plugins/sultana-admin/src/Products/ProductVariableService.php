@@ -86,7 +86,7 @@ class ProductVariableService
     {
         $base_service  = new ProductService();
         $image_service = new ProductImageService();
-        $image_ids     = $image_service->product_image_ids( $product->get_id() );
+        $image_ids     = $image_service->product_and_variation_image_ids( $product->get_id() );
         $attributes    = [];
         $variation_listing = $this->variation_listing( $product->get_id(), $variation_page, self::VARIATIONS_PER_PAGE );
 
@@ -244,7 +244,7 @@ class ProductVariableService
             $base_service->validate_brand_for_form( $clean, $errors );
         }
 
-        $image_ids = $image_service->validate_product_image_ids( $data['product_image_ids'] ?? '', $product_id, false );
+        $image_ids = $image_service->validate_product_image_ids( $data['product_image_ids'] ?? '', $product_id, true );
 
         if ( is_wp_error( $image_ids ) ) {
             $errors[] = $image_ids->get_error_message();
@@ -255,7 +255,7 @@ class ProductVariableService
         $clean['deleted_variation_ids'] = $this->validate_deleted_variation_ids( $data['deleted_variation_ids'] ?? [], $product_id, $errors );
         $clean['variable_attributes'] = $this->validate_attributes( $data['variable_attributes'] ?? [], $errors );
         $this->validate_generation_size( $clean['variable_attributes'], $data['variations'] ?? [], $product_id, $partial_update, $errors );
-        $clean['variations'] = $this->validate_variations( $data['variations'] ?? [], $clean['variable_attributes'], $product_id, $existing_variation_ids, $clean['sku'], $clean['deleted_variation_ids'], $errors );
+        $clean['variations'] = $this->validate_variations( $data['variations'] ?? [], $clean['variable_attributes'], $product_id, $existing_variation_ids, $clean['sku'], $clean['deleted_variation_ids'], $clean['product_image_ids'], $errors );
         $clean['all_image_ids'] = $this->collect_image_ids( $clean['product_image_ids'], $clean['variations'] );
 
         if ( empty( $clean['variable_attributes'] ) ) {
@@ -474,7 +474,7 @@ class ProductVariableService
         return $valid;
     }
 
-    private function validate_variations( $raw_variations, array $attributes, int $product_id, array $existing_variation_ids, string $parent_sku, array $deleted_variation_ids, array &$errors ): array
+    private function validate_variations( $raw_variations, array $attributes, int $product_id, array $existing_variation_ids, string $parent_sku, array $deleted_variation_ids, array $product_image_ids, array &$errors ): array
     {
         if ( ! is_array( $raw_variations ) ) {
             return [];
@@ -484,7 +484,7 @@ class ProductVariableService
         $seen_keys       = [];
         $seen_skus       = [];
         $allowed_terms   = $this->allowed_attribute_terms( $attributes );
-        $image_service   = new ProductImageService();
+        $allowed_image_ids = array_fill_keys( array_map( 'absint', $product_image_ids ), true );
 
         foreach ( $raw_variations as $raw_variation ) {
             $variation_id = absint( $raw_variation['id'] ?? 0 );
@@ -610,13 +610,9 @@ class ProductVariableService
 
             $image_id = absint( $raw_variation['image_id'] ?? 0 );
 
-            if ( $image_id ) {
-                $image_id = $image_service->validate_variation_image_id( $image_id, $product_id, $variation_id );
-
-                if ( is_wp_error( $image_id ) ) {
-                    $errors[] = $image_id->get_error_message();
-                    continue;
-                }
+            if ( $image_id && ! isset( $allowed_image_ids[ $image_id ] ) ) {
+                $errors[] = __( 'La imagen de una variacion debe pertenecer a la galeria del producto.', 'sultana-admin' );
+                continue;
             }
 
             $valid[] = [

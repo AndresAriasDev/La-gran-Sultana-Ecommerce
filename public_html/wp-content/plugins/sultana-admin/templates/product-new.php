@@ -130,6 +130,34 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
 
         </section>
 
+        <?php if ( 'combo' !== $product_type ) : ?>
+            <section class="sultana-admin-form-section sultana-admin-form-section--images" aria-labelledby="sultana-admin-product-images-title">
+                <div
+                    class="sultana-admin-product-images"
+                    data-sultana-product-images
+                    data-initial-images="<?php echo esc_attr( wp_json_encode( array_values( $selected_images ) ) ); ?>"
+                >
+                    <input type="hidden" name="product_image_ids" value="<?php echo esc_attr( $product_image_ids ); ?>" data-sultana-product-image-ids>
+
+                    <button type="button" class="sultana-admin-image-upload-button sultana-admin-image-upload-zone" data-sultana-product-image-trigger>
+                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'images' ) ); ?>');" aria-hidden="true"></span>
+                        <span><?php esc_html_e( 'Agregar imágenes', 'sultana-admin' ); ?></span>
+                    </button>
+                    <input
+                        id="sultana-admin-product-images-input"
+                        class="sultana-admin-image-upload-input"
+                        type="file"
+                        accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif"
+                        multiple
+                        data-sultana-product-image-input
+                    >
+
+                    <div class="sultana-admin-image-status" aria-live="polite" data-sultana-product-image-status></div>
+                    <div class="sultana-admin-image-grid" data-sultana-product-image-grid></div>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <?php if ( 'combo' === $product_type ) : ?>
             <section
                 class="sultana-admin-form-section sultana-admin-combo-editor"
@@ -242,34 +270,6 @@ $combo_current_price = (string) ( $form['current_price'] ?? '' );
                 <?php endif; ?>
                 </section>
             </div>
-        <?php endif; ?>
-
-        <?php if ( 'combo' !== $product_type ) : ?>
-            <section class="sultana-admin-form-section sultana-admin-form-section--images" aria-labelledby="sultana-admin-product-images-title">
-                <div
-                    class="sultana-admin-product-images"
-                    data-sultana-product-images
-                    data-initial-images="<?php echo esc_attr( wp_json_encode( array_values( $selected_images ) ) ); ?>"
-                >
-                    <input type="hidden" name="product_image_ids" value="<?php echo esc_attr( $product_image_ids ); ?>" data-sultana-product-image-ids>
-
-                    <button type="button" class="sultana-admin-image-upload-button sultana-admin-image-upload-zone" data-sultana-product-image-trigger>
-                        <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'images' ) ); ?>');" aria-hidden="true"></span>
-                        <span><?php esc_html_e( 'Agregar imágenes', 'sultana-admin' ); ?></span>
-                    </button>
-                    <input
-                        id="sultana-admin-product-images-input"
-                        class="sultana-admin-image-upload-input"
-                        type="file"
-                        accept=".jpg,.jpeg,.jfif,.png,.webp,.avif,.gif,image/jpeg,image/png,image/gif,image/webp,image/avif"
-                        multiple
-                        data-sultana-product-image-input
-                    >
-
-                    <div class="sultana-admin-image-status" aria-live="polite" data-sultana-product-image-status></div>
-                    <div class="sultana-admin-image-grid" data-sultana-product-image-grid></div>
-                </div>
-            </section>
         <?php endif; ?>
 
             </div>

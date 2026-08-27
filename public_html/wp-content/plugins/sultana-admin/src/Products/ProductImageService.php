@@ -128,31 +128,6 @@ class ProductImageService
         return $validated[0] ?? 0;
     }
 
-    public function validate_variation_image_id( int $attachment_id, int $product_id, int $variation_id )
-    {
-        if ( ! $attachment_id ) {
-            return 0;
-        }
-
-        $variation = $variation_id > 0 ? wc_get_product( $variation_id ) : null;
-
-        if (
-            $variation
-            && method_exists( $variation, 'get_parent_id' )
-            && absint( $variation->get_parent_id() ) === $product_id
-            && absint( $variation->get_image_id() ) === $attachment_id
-            && $this->is_valid_image_attachment( $attachment_id )
-        ) {
-            return $attachment_id;
-        }
-
-        if ( $this->is_current_user_temporary_image( $attachment_id ) ) {
-            return $attachment_id;
-        }
-
-        return $this->validate_single_product_image_id( $attachment_id, $product_id );
-    }
-
     public function get_temporary_image_items( $raw_ids ): array
     {
         return $this->get_product_image_items_for_form( $raw_ids, 0 );

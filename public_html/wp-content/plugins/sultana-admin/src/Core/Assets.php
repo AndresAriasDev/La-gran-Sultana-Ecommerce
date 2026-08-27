@@ -202,14 +202,15 @@ class Assets
             'sultana-admin-product-variables',
             'SultanaAdminProductVariables',
             [
-                'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-                'nonce'        => wp_create_nonce( ProductController::IMAGE_UPLOAD_NONCE_ACTION ),
-                'uploadAction' => ProductController::IMAGE_UPLOAD_ACTION,
                 'strings'      => [
                     'selectAttribute' => __( 'Selecciona atributo', 'sultana-admin' ),
                     'chooseValues'    => __( 'Selecciona valores', 'sultana-admin' ),
                     'removeAttribute' => __( 'Quitar atributo', 'sultana-admin' ),
                     'uploadImage'     => __( 'Imagen', 'sultana-admin' ),
+                    'selectImage'     => __( 'Seleccionar imagen', 'sultana-admin' ),
+                    'addImage'        => __( 'Agregar nueva', 'sultana-admin' ),
+                    'noImageSelected' => __( 'Sin imagen seleccionada', 'sultana-admin' ),
+                    'noGalleryImages' => __( 'No hay imagenes disponibles.', 'sultana-admin' ),
                     'removeImage'     => __( 'Quitar imagen', 'sultana-admin' ),
                     'uploading'       => __( 'Subiendo imagen...', 'sultana-admin' ),
                     'uploadError'     => __( 'No se pudo subir la imagen.', 'sultana-admin' ),
@@ -217,6 +218,7 @@ class Assets
                 ],
                 'icons'        => [
                     'chevron' => Icons::url( 'chevron-right' ),
+                    'close'   => Icons::url( 'close' ),
                     'images'  => Icons::url( 'images' ),
                     'trash'   => Icons::url( 'trash' ),
                 ],
