@@ -67,8 +67,7 @@ if ( $total_pages > 1 ) {
     <section class="ve-account-section-title ve-wishlist-title">
         <span aria-hidden="true"><?php variedadesexpress_icon( 'heart', 've-account-section-title__icon' ); ?></span>
         <div>
-            <span><?php esc_html_e( 'Lista de deseos', 'sultana-storefront' ); ?></span>
-            <h1><?php esc_html_e( 'Tus favoritos', 'sultana-storefront' ); ?></h1>
+            <h1><?php esc_html_e( 'Lista de deseos', 'sultana-storefront' ); ?></h1>
             <p><?php esc_html_e( 'Guardá productos para comprarlos o recibirlos de regalo.', 'sultana-storefront' ); ?></p>
         </div>
 
@@ -92,8 +91,6 @@ if ( $total_pages > 1 ) {
             </a>
         </section>
     <?php else : ?>
-        <?php echo wp_kses_post( $wishlist_pagination ); ?>
-
         <section class="ve-wishlist-grid" data-wishlist-list>
             <?php foreach ( $paged_items as $item ) : ?>
                 <?php
@@ -113,6 +110,14 @@ if ( $total_pages > 1 ) {
                 $permalink = get_permalink( $product_id );
                 $key       = sanitize_text_field( $item['key'] ?? '' );
                 $options   = method_exists( $wishlist, 'get_item_variation_options' ) ? $wishlist::get_item_variation_options( $item ) : [];
+                $display_options = array_values(
+                    array_filter(
+                        $options,
+                        static function ( $option ): bool {
+                            return is_array( $option ) && '' !== trim( (string) ( $option['value'] ?? '' ) );
+                        }
+                    )
+                );
                 $can_add_to_cart = $key
                     && $product->is_purchasable()
                     && $product->is_in_stock()
@@ -131,18 +136,14 @@ if ( $total_pages > 1 ) {
                             <?php echo esc_html( $parent->get_name() ); ?>
                         </a>
 
-                        <?php if ( ! empty( $options ) ) : ?>
+                        <?php if ( ! empty( $display_options ) ) : ?>
                             <ul class="ve-wishlist-card__options" aria-label="<?php esc_attr_e( 'Opciones seleccionadas', 'sultana-storefront' ); ?>">
-                                <?php foreach ( $options as $option ) : ?>
+                                <?php foreach ( $display_options as $option ) : ?>
                                     <li>
                                         <?php echo esc_html( $option['value'] ); ?>
                                     </li>
                                 <?php endforeach; ?>
                             </ul>
-                        <?php elseif ( $parent && $parent->is_type( 'variable' ) ) : ?>
-                            <p class="ve-wishlist-card__variation-missing">
-                                <?php esc_html_e( 'Opciones no seleccionadas', 'sultana-storefront' ); ?>
-                            </p>
                         <?php endif; ?>
 
                         <div class="ve-wishlist-card__meta">

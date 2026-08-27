@@ -57,6 +57,7 @@
 .ve-wishlist-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
   gap: 1.6rem 1rem;
   margin-top: 1.4rem;
 }
@@ -65,10 +66,6 @@
   display: flex;
   justify-content: flex-end;
   margin-top: clamp(1.4rem, 3vw, 1.4rem);
-}
-
-.ve-wishlist-pagination + .ve-wishlist-grid {
-  margin-top: 1.4rem;
 }
 
 .ve-wishlist-grid + .ve-wishlist-pagination {
@@ -153,8 +150,9 @@
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 4;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
+  border-radius: 10px;
   background: var(--color-surface);
 }
 
@@ -168,6 +166,7 @@
   width: 100%;
   height: 100%;
   max-width: none;
+  background: var(--color-surface);
   object-fit: cover;
 }
 
@@ -212,8 +211,7 @@
   list-style: none;
 }
 
-.ve-wishlist-card__options li,
-.ve-wishlist-card__variation-missing {
+.ve-wishlist-card__options li {
   display: inline-flex;
   align-items: center;
   width: fit-content;
@@ -229,13 +227,6 @@
   line-height: 1.2;
 }
 
-.ve-wishlist-card__variation-missing {
-  margin: 0;
-  border-color: rgba(245, 101, 101, 0.24);
-  background: var(--color-error-soft);
-  color: var(--color-error);
-}
-
 .ve-wishlist-card__meta {
   display: grid;
   justify-items: start;
@@ -244,6 +235,11 @@
 }
 
 .ve-wishlist-card__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.35rem;
+  min-width: 0;
   color: var(--color-accent);
   font-size: 1rem;
   font-weight: 700;
@@ -251,14 +247,38 @@
 }
 
 .ve-wishlist-card__price del {
+  order: 2;
   color: var(--color-brand);
   font-size: 0.72rem;
   font-weight: 600;
   line-height: 1;
+  text-decoration: line-through;
 }
 
 .ve-wishlist-card__price ins {
+  order: 1;
+  color: var(--color-accent);
   text-decoration: none;
+}
+
+.ve-wishlist-card__price > .woocommerce-Price-amount {
+  color: var(--color-accent);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.ve-wishlist-card__price ins .woocommerce-Price-amount,
+.ve-wishlist-card__price ins bdi {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.ve-wishlist-card__price del .woocommerce-Price-amount,
+.ve-wishlist-card__price del bdi {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
 .ve-wishlist-card__cart {
