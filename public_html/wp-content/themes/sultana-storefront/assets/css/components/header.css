@@ -484,10 +484,14 @@
   .site-brand__logo {
     max-height: 48px;
     max-width: 172px;
+    width: auto;
+    object-position: left center;
   }
 
   .site-brand {
-    width: 172px;
+    justify-content: flex-start;
+    justify-self: start;
+    width: auto;
   }
 
   .site-search__button {

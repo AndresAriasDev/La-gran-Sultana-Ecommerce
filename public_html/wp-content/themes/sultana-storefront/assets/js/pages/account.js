@@ -496,6 +496,108 @@
     });
   };
 
+  const setupAccountNavigationLoaders = function () {
+    const navList = document.querySelector("[data-account-mobile-nav-list]");
+    let loadingLink = null;
+    let keyboardLoadingLink = null;
+
+    if (!navList) {
+      return;
+    }
+
+    const getNavigationUrl = function (link) {
+      if (!link || link.hasAttribute("download")) {
+        return null;
+      }
+
+      const target = (link.getAttribute("target") || "").toLowerCase();
+
+      if (target && target !== "_self") {
+        return null;
+      }
+
+      try {
+        return new URL(link.href, window.location.href);
+      } catch (error) {
+        return null;
+      }
+    };
+
+    const isCurrentTabNavigation = function (link) {
+      const nextUrl = getNavigationUrl(link);
+      const currentUrl = new URL(window.location.href);
+
+      if (!nextUrl || nextUrl.origin !== currentUrl.origin) {
+        return false;
+      }
+
+      if (nextUrl.pathname === currentUrl.pathname && nextUrl.search === currentUrl.search) {
+        return false;
+      }
+
+      return nextUrl.href !== currentUrl.href;
+    };
+
+    const setLoadingLink = function (link) {
+      if (loadingLink && loadingLink !== link) {
+        loadingLink.classList.remove("is-loading");
+        loadingLink.removeAttribute("aria-busy");
+      }
+
+      loadingLink = link;
+      loadingLink.classList.add("is-loading");
+      loadingLink.setAttribute("aria-busy", "true");
+    };
+
+    navList.addEventListener("click", function (event) {
+      const link = event.target.closest(".ve-account-nav__list a");
+
+      if (!link || !navList.contains(link)) {
+        return;
+      }
+
+      if (link.classList.contains("is-loading")) {
+        if (keyboardLoadingLink === link && event.detail === 0) {
+          keyboardLoadingLink = null;
+          return;
+        }
+
+        event.preventDefault();
+        return;
+      }
+
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      if (!isCurrentTabNavigation(link)) {
+        return;
+      }
+
+      setLoadingLink(link);
+    });
+
+    navList.addEventListener("keydown", function (event) {
+      const link = event.target.closest(".ve-account-nav__list a");
+
+      if (event.key !== "Enter" || !link || !navList.contains(link)) {
+        return;
+      }
+
+      if (link.classList.contains("is-loading")) {
+        event.preventDefault();
+        return;
+      }
+
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || !isCurrentTabNavigation(link)) {
+        return;
+      }
+
+      keyboardLoadingLink = link;
+      setLoadingLink(link);
+    });
+  };
+
   const setupCouponInfoPopovers = function () {
     const scope = document.querySelector("[data-account-coupons]");
     let activeButton = null;
@@ -754,6 +856,7 @@
   setupWishlistAddToCart();
   setupWishlistRemovals();
   setupProfileAvatarUpload();
+  setupAccountNavigationLoaders();
   setupCouponInfoPopovers();
   setupCopyButtons();
   setupOrderStatusFilters();
