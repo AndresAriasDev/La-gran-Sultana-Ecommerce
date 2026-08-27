@@ -2,6 +2,7 @@
 
 namespace Sultana\CommerceCore\Modules\Accounts;
 
+use Sultana\CommerceCore\Core\CheckoutPerformanceLogger;
 use Sultana\CommerceCore\Core\StoreBranding;
 use Sultana\CommerceCore\Core\TemplateLoader;
 use Sultana\CommerceCore\Modules\Emails\EmailRenderer;
@@ -184,12 +185,24 @@ class AccountPasswordReset
             StoreBranding::get_name()
         );
 
-        return wp_mail(
+        $scc_perf_start = CheckoutPerformanceLogger::start();
+        $sent = wp_mail(
             $user->user_email,
             $subject,
             self::account_created_email_body( self::frontend_reset_url( $key, $user->user_login ) ),
             self::html_email_headers( [] )
         );
+
+        CheckoutPerformanceLogger::log_duration(
+            'mail:account_created_password',
+            $scc_perf_start,
+            [
+                'sent'    => $sent,
+                'user_id' => absint( $user->ID ),
+            ]
+        );
+
+        return $sent;
     }
 
     public static function frontend_reset_url( string $key, string $login ): string

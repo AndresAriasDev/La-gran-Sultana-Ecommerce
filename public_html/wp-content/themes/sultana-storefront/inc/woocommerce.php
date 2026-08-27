@@ -1436,6 +1436,20 @@ add_filter( 'woocommerce_checkout_posted_data', 'variedadesexpress_force_single_
 
 function variedadesexpress_validate_checkout_phone( array $data, WP_Error $errors ): void
 {
+    $scc_perf_class = '\Sultana\CommerceCore\Core\CheckoutPerformanceLogger';
+    $scc_perf_start = class_exists( $scc_perf_class ) ? $scc_perf_class::start() : microtime( true );
+
+    try {
+        variedadesexpress_validate_checkout_phone_instrumented( $data, $errors );
+    } finally {
+        if ( class_exists( $scc_perf_class ) ) {
+            $scc_perf_class::log_duration( 'checkout:phone_validation', $scc_perf_start );
+        }
+    }
+}
+
+function variedadesexpress_validate_checkout_phone_instrumented( array $data, WP_Error $errors ): void
+{
     $phone = variedadesexpress_normalize_nicaragua_phone( sanitize_text_field( (string) ( $data['billing_phone'] ?? '' ) ) );
 
     if ( '' === $phone ) {

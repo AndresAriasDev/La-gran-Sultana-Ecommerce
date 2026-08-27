@@ -2,6 +2,7 @@
 
 namespace Sultana\CommerceCore\Modules\Emails;
 
+use Sultana\CommerceCore\Core\CheckoutPerformanceLogger;
 use Sultana\CommerceCore\Core\StoreBranding;
 use WC_Order;
 
@@ -11,7 +12,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class OrderStatusEmails
 {
-    private const CREATED_META_KEY    = '_scc_created_email_sent';
     private const PROCESSING_META_KEY = '_scc_processing_email_sent';
     private const COMPLETED_META_KEY  = '_scc_completed_email_sent';
     private const GIFT_COMPLETED_META_KEY = '_scc_gift_recipient_completed_email_sent';
@@ -22,22 +22,8 @@ class OrderStatusEmails
         add_filter( 'woocommerce_email_enabled_customer_processing_order', '__return_false' );
         add_filter( 'woocommerce_email_enabled_customer_completed_order', '__return_false' );
 
-        add_action( 'woocommerce_checkout_order_processed', [ self::class, 'send_created_email' ], 30, 3 );
         add_action( 'woocommerce_order_status_processing', [ self::class, 'send_processing_email' ], 20, 2 );
         add_action( 'woocommerce_order_status_completed', [ self::class, 'send_completed_email' ], 20, 2 );
-    }
-
-    public static function send_created_email( int $order_id, array $posted_data, WC_Order $order ): void
-    {
-        self::send_once(
-            $order,
-            self::CREATED_META_KEY,
-            __( 'Completa tu compra', 'sultana-commerce-core' ),
-            __( 'Tu pedido fue creado correctamente. Transfiere el total a la cuenta de banco de tu preferencia.', 'sultana-commerce-core' ),
-            __( 'Pendiente de pago', 'sultana-commerce-core' ),
-            __( 'Ver datos para transferir', 'sultana-commerce-core' ),
-            self::payment_url( $order )
-        );
     }
 
     public static function send_processing_email( int $order_id, WC_Order $order ): void
@@ -121,11 +107,22 @@ class OrderStatusEmails
             return;
         }
 
+        $scc_perf_start = CheckoutPerformanceLogger::start();
         $sent = wp_mail(
             $recipient,
             self::email_subject( $subject, $order ),
             self::email_body( $subject, $message, $status_label, $button_label, $button_url, $order, $customer_name ),
             self::email_headers()
+        );
+
+        CheckoutPerformanceLogger::log_duration(
+            'mail:order_status',
+            $scc_perf_start,
+            [
+                'meta_key' => $meta_key,
+                'order_id' => $order->get_id(),
+                'sent'     => $sent,
+            ]
         );
 
         if ( ! $sent ) {
@@ -143,11 +140,6 @@ class OrderStatusEmails
             $subject,
             $order->get_order_number()
         );
-    }
-
-    private static function payment_url( WC_Order $order ): string
-    {
-        return $order->get_checkout_order_received_url();
     }
 
     private static function email_body( string $headline, string $message, string $status_label, string $button_label, string $button_url, WC_Order $order, string $customer_name = '' ): string

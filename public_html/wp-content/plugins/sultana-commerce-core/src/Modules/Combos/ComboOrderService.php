@@ -2,6 +2,7 @@
 
 namespace Sultana\CommerceCore\Modules\Combos;
 
+use Sultana\CommerceCore\Core\CheckoutPerformanceLogger;
 use WC_Order;
 use WC_Order_Item_Product;
 use WC_Product;
@@ -48,6 +49,26 @@ class ComboOrderService
 
     public static function reduce_combo_component_stock( $order ): void
     {
+        $scc_perf_start = CheckoutPerformanceLogger::start();
+        $combo_items = 0;
+        $components_reduced = 0;
+
+        try {
+            self::reduce_combo_component_stock_instrumented( $order, $combo_items, $components_reduced );
+        } finally {
+            CheckoutPerformanceLogger::log_duration(
+                'checkout:combo_stock_reduction',
+                $scc_perf_start,
+                [
+                    'combo_items'        => $combo_items,
+                    'components_reduced' => $components_reduced,
+                ]
+            );
+        }
+    }
+
+    private static function reduce_combo_component_stock_instrumented( $order, int &$combo_items, int &$components_reduced ): void
+    {
         if ( ! $order instanceof WC_Order || ! function_exists( 'wc_update_product_stock' ) ) {
             return;
         }
@@ -63,6 +84,7 @@ class ComboOrderService
                 continue;
             }
 
+            $combo_items++;
             $components = self::get_item_components_snapshot( $item, $product );
 
             if ( empty( $components ) ) {
@@ -79,6 +101,7 @@ class ComboOrderService
                 $quantity = max( 1, absint( $component['quantity'] ?? 0 ) ) * max( 1, absint( $item->get_quantity() ) );
                 wc_update_product_stock( $component_product, $quantity, 'decrease' );
                 ComboStockService::sync_combos_for_component_product( $component_product );
+                $components_reduced++;
             }
 
             $item->update_meta_data( self::STOCK_REDUCED_META, 'yes' );

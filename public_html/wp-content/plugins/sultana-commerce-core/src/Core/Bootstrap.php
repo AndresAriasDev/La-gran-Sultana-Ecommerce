@@ -10,6 +10,8 @@ use Sultana\CommerceCore\Modules\Accounts\ProfileAvatar;
 use Sultana\CommerceCore\Modules\Checkout\CheckoutAccounts;
 use Sultana\CommerceCore\Modules\Combos\ComboProducts;
 use Sultana\CommerceCore\Modules\Coupons\AccountCoupons;
+use Sultana\CommerceCore\Modules\Emails\AsyncAdminOrderEmails;
+use Sultana\CommerceCore\Modules\Emails\AsyncStockEmails;
 use Sultana\CommerceCore\Modules\Emails\OrderStatusEmails;
 use Sultana\CommerceCore\Modules\HomePromotions\HomePromotions;
 use Sultana\CommerceCore\Modules\Reviews\ProductReviews;
@@ -32,6 +34,7 @@ class Bootstrap
     {
         require_once SCC_PLUGIN_PATH . 'src/Core/StoreBranding.php';
         require_once SCC_PLUGIN_PATH . 'src/Core/TemplateLoader.php';
+        require_once SCC_PLUGIN_PATH . 'src/Core/CheckoutPerformanceLogger.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountLogin.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountRegistration.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountPasswordReset.php';
@@ -47,6 +50,8 @@ class Bootstrap
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ComboProducts.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Coupons/AccountCoupons.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Emails/EmailRenderer.php';
+        require_once SCC_PLUGIN_PATH . 'src/Modules/Emails/AsyncAdminOrderEmails.php';
+        require_once SCC_PLUGIN_PATH . 'src/Modules/Emails/AsyncStockEmails.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Emails/OrderStatusEmails.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/HomePromotions/HomePromotions.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Reviews/ProductReviews.php';
@@ -62,6 +67,7 @@ class Bootstrap
         require_once SCC_PLUGIN_PATH . 'src/Modules/Shipping/Admin/ShippingAdmin.php';
 
         AccountLogin::register();
+        CheckoutPerformanceLogger::register();
         AccountRegistration::register();
         AccountPasswordReset::register();
         AccountAccess::register();
@@ -69,6 +75,8 @@ class Bootstrap
         CheckoutAccounts::register();
         ComboProducts::register();
         AccountCoupons::register();
+        AsyncAdminOrderEmails::register();
+        AsyncStockEmails::register();
         OrderStatusEmails::register();
         HomePromotions::register();
         ProductReviews::register();

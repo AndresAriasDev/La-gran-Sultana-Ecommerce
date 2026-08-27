@@ -2,6 +2,7 @@
 
 namespace Sultana\CommerceCore\Modules\Checkout;
 
+use Sultana\CommerceCore\Core\CheckoutPerformanceLogger;
 use Sultana\CommerceCore\Modules\Accounts\AccountPasswordReset;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -51,6 +52,23 @@ class CheckoutAccounts
     }
 
     public static function create_guest_customer( array $data, \WP_Error $errors ): void
+    {
+        $scc_perf_start = CheckoutPerformanceLogger::start();
+
+        try {
+            self::create_guest_customer_instrumented( $data, $errors );
+        } finally {
+            CheckoutPerformanceLogger::log_duration(
+                'checkout:guest_account_creation',
+                $scc_perf_start,
+                [
+                    'created_customer_id' => self::$checkout_customer_id,
+                ]
+            );
+        }
+    }
+
+    private static function create_guest_customer_instrumented( array $data, \WP_Error $errors ): void
     {
         self::$checkout_customer_id = 0;
 
