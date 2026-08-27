@@ -246,8 +246,6 @@ if ( $total_pages > 1 ) {
     </header>
 
     <?php if ( $display_has_orders ) : ?>
-        <?php echo wp_kses_post( $orders_pagination ); ?>
-
         <div class="ve-account-orders__list" data-order-status-list>
             <?php foreach ( $display_orders as $order ) : ?>
                 <?php

@@ -543,8 +543,12 @@ a.single-product-summary__brand-pill:hover {
   transform: translateY(0);
 }
 
-.single-product-combo + .single-product-summary__actions .single-product-summary__variation-notice.is-visible {
+.single-product-summary__actions .single-product-summary__variation-notice.is-visible {
   margin-bottom: 1.4rem;
+}
+
+.single-product-summary__actions form.variations_form > .single-product-summary__variation-notice.is-visible {
+  margin-bottom: 0;
 }
 
 .single-product-summary__variation-notice--static.is-visible {

@@ -13,4 +13,5 @@ require_once get_template_directory() . '/inc/menus.php';
 require_once get_template_directory() . '/inc/sidebars.php';
 require_once get_template_directory() . '/inc/woocommerce.php';
 require_once get_template_directory() . '/inc/helpers.php';
+require_once get_template_directory() . '/inc/wishlist.php';
 require_once get_template_directory() . '/inc/home-recommendations.php';

@@ -219,10 +219,37 @@
     });
   };
 
+  const getWishlistCurrentPage = function () {
+    const currentUrl = new URL(window.location.href);
+
+    return currentUrl.searchParams.get("wishlist_page") || "1";
+  };
+
+  const updateWishlistContent = function (data) {
+    const content = document.querySelector("[data-wishlist-content]");
+
+    if (!content || !data || typeof data.content_html !== "string") {
+      return false;
+    }
+
+    content.innerHTML = data.content_html;
+
+    if (data.page_url && window.history && window.history.replaceState) {
+      const nextUrl = new URL(data.page_url, window.location.href);
+
+      if (nextUrl.href !== window.location.href) {
+        window.history.replaceState(null, "", nextUrl.href);
+      }
+    }
+
+    return true;
+  };
+
   const setupWishlistAddToCart = function () {
-    document.querySelectorAll("[data-wishlist-add-to-cart]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        if (!window.sultanaStorefront || button.disabled) {
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-wishlist-add-to-cart]");
+
+        if (!button || !window.sultanaStorefront || button.disabled) {
           return;
         }
 
@@ -242,6 +269,7 @@
         formData.append("action", "scc_wishlist_add_to_cart");
         formData.append("nonce", window.sultanaStorefront.wishlistNonce || "");
         formData.append("key", key);
+        formData.append("wishlist_page", getWishlistCurrentPage());
 
         fetch(window.sultanaStorefront.ajaxUrl, {
           method: "POST",
@@ -256,9 +284,7 @@
               throw new Error(result.data && result.data.message ? result.data.message : "No pudimos agregar este producto.");
             }
 
-            if (card) {
-              card.remove();
-            }
+          updateWishlistContent(result.data);
 
             if (window.sultanaStorefrontUpdateWishlistCount && result.data && typeof result.data.wishlist_count !== "undefined") {
               window.sultanaStorefrontUpdateWishlistCount(result.data.wishlist_count);
@@ -277,24 +303,26 @@
             );
           })
           .catch(function (error) {
-            button.disabled = false;
-            button.classList.remove("is-loading");
+            if (button.isConnected) {
+              button.disabled = false;
+              button.classList.remove("is-loading");
+            }
+
             showWishlistFeedback(error.message, "error");
           });
-      });
     });
   };
 
   const setupWishlistRemovals = function () {
-    document.querySelectorAll("[data-wishlist-remove]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        if (!window.sultanaStorefront) {
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-wishlist-remove]");
+
+        if (!button || !window.sultanaStorefront || button.disabled) {
           return;
         }
 
         const key = button.dataset.wishlistRemove || "";
-        const card = button.closest("[data-wishlist-item]");
-        const formData = new FormData();
+      const formData = new FormData();
 
         if (!key) {
           return;
@@ -306,6 +334,7 @@
         formData.append("action", "scc_remove_wishlist_item");
         formData.append("nonce", window.sultanaStorefront.wishlistNonce || "");
         formData.append("key", key);
+        formData.append("wishlist_page", getWishlistCurrentPage());
 
         fetch(window.sultanaStorefront.ajaxUrl, {
           method: "POST",
@@ -320,27 +349,7 @@
               throw new Error(result.data && result.data.message ? result.data.message : "No pudimos eliminar este producto.");
             }
 
-            if (card) {
-              card.remove();
-            }
-
-            const wishlistList = document.querySelector("[data-wishlist-list]");
-            const visibleItems = wishlistList ? wishlistList.querySelectorAll("[data-wishlist-item]") : [];
-            const currentUrl = new URL(window.location.href);
-            const currentPage = parseInt(currentUrl.searchParams.get("wishlist_page") || "1", 10);
-
-            if (wishlistList && visibleItems.length === 0 && currentPage > 1) {
-              const previousPage = currentPage - 1;
-
-              if (previousPage <= 1) {
-                currentUrl.searchParams.delete("wishlist_page");
-              } else {
-                currentUrl.searchParams.set("wishlist_page", String(previousPage));
-              }
-
-              window.location.href = currentUrl.toString();
-              return;
-            }
+          updateWishlistContent(result.data);
 
             if (window.sultanaStorefrontUpdateWishlistCount && result.data && typeof result.data.count !== "undefined") {
               window.sultanaStorefrontUpdateWishlistCount(result.data.count);
@@ -351,14 +360,15 @@
             }
           })
           .catch(function (error) {
-            button.disabled = false;
-            button.classList.remove("is-loading");
+            if (button.isConnected) {
+              button.disabled = false;
+              button.classList.remove("is-loading");
+            }
 
             if (window.sultanaStorefrontShowToast) {
               window.sultanaStorefrontShowToast(error.message, "error");
             }
           });
-      });
     });
   };
 

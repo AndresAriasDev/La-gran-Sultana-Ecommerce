@@ -403,28 +403,37 @@ class Wishlist
     {
         self::verify_ajax_request();
 
-        $user_id = get_current_user_id();
-        $key     = sanitize_text_field( wp_unslash( $_POST['key'] ?? '' ) );
-        $result  = self::remove_wishlist_item( $user_id, $key );
+        $user_id           = get_current_user_id();
+        $key               = sanitize_text_field( wp_unslash( $_POST['key'] ?? '' ) );
+        $raw_wishlist_page = $_POST['wishlist_page'] ?? 1;
+        $requested_page    = is_scalar( $raw_wishlist_page ) ? absint( wp_unslash( $raw_wishlist_page ) ) : 1;
+        $result            = self::remove_wishlist_item( $user_id, $key );
 
         if ( is_wp_error( $result ) ) {
             self::send_error( __( 'Este producto ya no está en tu lista de deseos.', 'sultana-commerce-core' ), 404 );
         }
 
-        wp_send_json_success(
-            [
-                'message' => __( 'Producto eliminado de tu lista de deseos.', 'sultana-commerce-core' ),
-                'count'   => $result['wishlist_count'],
-            ]
-        );
+        $payload = [
+            'message' => __( 'Producto eliminado de tu lista de deseos.', 'sultana-commerce-core' ),
+            'count'   => $result['wishlist_count'],
+        ];
+
+        if ( function_exists( 'variedadesexpress_account_wishlist_ajax_payload' ) ) {
+            $payload = array_merge( $payload, variedadesexpress_account_wishlist_ajax_payload( $user_id, $requested_page ) );
+        }
+
+        wp_send_json_success( $payload );
     }
 
     public static function add_to_cart_ajax(): void
     {
         self::verify_ajax_request();
 
+        $user_id           = get_current_user_id();
+        $raw_wishlist_page = $_POST['wishlist_page'] ?? 1;
+        $requested_page    = is_scalar( $raw_wishlist_page ) ? absint( wp_unslash( $raw_wishlist_page ) ) : 1;
         $result = self::add_wishlist_item_to_cart(
-            get_current_user_id(),
+            $user_id,
             sanitize_text_field( wp_unslash( $_POST['key'] ?? '' ) )
         );
 
@@ -432,13 +441,17 @@ class Wishlist
             self::send_error( $result->get_error_message() );
         }
 
-        wp_send_json_success(
-            [
-                'message'        => __( 'Producto agregado al carrito.', 'sultana-commerce-core' ),
-                'wishlist_count' => $result['wishlist_count'],
-                'cart_count'     => $result['cart_count'],
-            ]
-        );
+        $payload = [
+            'message'        => __( 'Producto agregado al carrito.', 'sultana-commerce-core' ),
+            'wishlist_count' => $result['wishlist_count'],
+            'cart_count'     => $result['cart_count'],
+        ];
+
+        if ( function_exists( 'variedadesexpress_account_wishlist_ajax_payload' ) ) {
+            $payload = array_merge( $payload, variedadesexpress_account_wishlist_ajax_payload( $user_id, $requested_page ) );
+        }
+
+        wp_send_json_success( $payload );
 
     }
 
