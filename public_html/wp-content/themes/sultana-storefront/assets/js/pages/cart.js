@@ -649,6 +649,138 @@
     });
   };
 
+  const setupCartShippingInfoPopovers = function () {
+    let activeButton = null;
+    let activePopover = null;
+    let closeTimer = null;
+
+    const clearCloseTimer = function () {
+      if (closeTimer) {
+        window.clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+    };
+
+    const closeActivePopover = function () {
+      clearCloseTimer();
+
+      if (activeButton) {
+        activeButton.setAttribute("aria-expanded", "false");
+      }
+
+      if (activePopover) {
+        activePopover.style.transform = "";
+        activePopover.style.removeProperty("--ve-cart-shipping-popover-arrow-left");
+        activePopover.style.removeProperty("--ve-cart-shipping-popover-arrow-right");
+        activePopover.hidden = true;
+      }
+
+      activeButton = null;
+      activePopover = null;
+    };
+
+    const scheduleClose = function () {
+      clearCloseTimer();
+
+      closeTimer = window.setTimeout(function () {
+        closeActivePopover();
+      }, 5000);
+    };
+
+    const keepPopoverInViewport = function (button, popover) {
+      const margin = 12;
+      const arrowSize = 13;
+      const arrowMargin = 12;
+      let offset = 0;
+
+      popover.style.transform = "";
+      popover.style.removeProperty("--ve-cart-shipping-popover-arrow-left");
+      popover.style.removeProperty("--ve-cart-shipping-popover-arrow-right");
+
+      const rect = popover.getBoundingClientRect();
+
+      if (rect.left < margin) {
+        offset = margin - rect.left;
+      } else if (rect.right > window.innerWidth - margin) {
+        offset = window.innerWidth - margin - rect.right;
+      }
+
+      if (offset) {
+        popover.style.transform = "translateX(" + offset + "px)";
+      }
+
+      const adjustedRect = popover.getBoundingClientRect();
+      const buttonRect = button.getBoundingClientRect();
+      const buttonCenter = buttonRect.left + buttonRect.width / 2;
+      const minLeft = arrowMargin;
+      const maxLeft = Math.max(minLeft, adjustedRect.width - arrowSize - arrowMargin);
+      const arrowLeft = Math.min(
+        maxLeft,
+        Math.max(minLeft, buttonCenter - adjustedRect.left - arrowSize / 2)
+      );
+
+      popover.style.setProperty("--ve-cart-shipping-popover-arrow-left", arrowLeft + "px");
+      popover.style.setProperty("--ve-cart-shipping-popover-arrow-right", "auto");
+    };
+
+    const openPopover = function (button, popover) {
+      if (activePopover && activePopover !== popover) {
+        closeActivePopover();
+      }
+
+      activeButton = button;
+      activePopover = popover;
+      activeButton.setAttribute("aria-expanded", "true");
+      activePopover.hidden = false;
+      keepPopoverInViewport(activeButton, activePopover);
+      scheduleClose();
+    };
+
+    document.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-cart-shipping-info-toggle]");
+
+      if (button) {
+        const popoverId = button.getAttribute("aria-controls") || "";
+        const popover = popoverId ? document.getElementById(popoverId) : null;
+        const isOpen = button.getAttribute("aria-expanded") === "true";
+
+        if (!popover) {
+          return;
+        }
+
+        event.preventDefault();
+
+        if (isOpen) {
+          closeActivePopover();
+          return;
+        }
+
+        openPopover(button, popover);
+        return;
+      }
+
+      if (
+        activePopover &&
+        !activePopover.contains(event.target) &&
+        (!activeButton || !activeButton.contains(event.target))
+      ) {
+        closeActivePopover();
+      }
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && activePopover) {
+        closeActivePopover();
+      }
+    });
+
+    window.addEventListener("resize", function () {
+      if (activeButton && activePopover) {
+        keepPopoverInViewport(activeButton, activePopover);
+      }
+    });
+  };
+
   const setupCartRecommendationsCarousel = function () {
     document.querySelectorAll("[data-cart-recommendations-track]").forEach(function (track) {
       if (track.dataset.cartRecommendationsReady === "true") {
@@ -735,6 +867,7 @@
   setupQuantityControls();
   setupCartRemovals();
   setupCartCoupons();
+  setupCartShippingInfoPopovers();
   setupCartImageSkeletons(document);
   setupCartRecommendationsCarousel();
   setupCartLoaders();

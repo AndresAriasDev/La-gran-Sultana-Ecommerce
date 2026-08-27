@@ -50,7 +50,6 @@
 }
 
 .ve-cart-hero span,
-.ve-cart-summary header span,
 .ve-cart-item__gift {
   color: #4d4260;
   font-size: 0.68rem;
@@ -396,7 +395,7 @@
 }
 
 .ve-cart-summary h2 {
-  margin: 0.1rem 0 0;
+  margin: 0;
   color: var(--color-ink);
   font-size: 1.15rem;
   font-weight: 600;
@@ -459,7 +458,7 @@
 
 .ve-cart-summary__totals div {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 0.8rem 0;
@@ -467,7 +466,7 @@
 }
 
 .ve-cart-summary__totals .ve-cart-summary__shipping {
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
 }
 
@@ -493,16 +492,89 @@
 }
 
 .ve-cart-summary__shipping dd {
-  display: grid;
-  justify-items: start;
-  gap: 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   max-width: min(72%, 280px);
-  text-align: left;
+  text-align: right;
 }
 
 .ve-cart-summary__shipping strong {
   font-weight: 600;
   line-height: 1.35;
+}
+
+.ve-cart-summary__shipping-value {
+  min-width: 0;
+}
+
+.ve-cart-summary__shipping-info {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+.ve-cart-summary__shipping-info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid rgba(74, 134, 160, 0.22);
+  border-radius: 999px;
+  background: rgba(222, 242, 247, 0.9);
+  color: var(--color-info);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ve-cart-summary__shipping-info-button:hover,
+.ve-cart-summary__shipping-info-button:focus-visible,
+.ve-cart-summary__shipping-info-button[aria-expanded="true"] {
+  border-color: rgba(74, 134, 160, 0.34);
+  background: rgba(202, 235, 242, 0.95);
+  color: #2f6d85;
+  outline: 0;
+}
+
+.ve-cart-summary__shipping-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  z-index: 20;
+  width: min(270px, calc(100vw - 2rem));
+  padding: 0.85rem;
+  border: 1px solid rgba(74, 134, 160, 0.16);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 38px rgba(35, 33, 41, 0.14);
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.42;
+  text-align: left;
+}
+
+.ve-cart-summary__shipping-popover[hidden] {
+  display: none;
+}
+
+.ve-cart-summary__shipping-popover::after {
+  content: "";
+  position: absolute;
+  right: var(--ve-cart-shipping-popover-arrow-right, 8px);
+  bottom: -7px;
+  left: var(--ve-cart-shipping-popover-arrow-left, auto);
+  width: 13px;
+  height: 13px;
+  border-right: 1px solid rgba(74, 134, 160, 0.16);
+  border-bottom: 1px solid rgba(74, 134, 160, 0.16);
+  background: var(--color-surface);
+  transform: rotate(45deg);
 }
 
 .ve-cart-summary__coupon dd {
@@ -536,16 +608,8 @@
   opacity: 0.65;
 }
 
-.ve-cart-summary__shipping small {
-  color: #6d627b;
-  font-size: 0.78rem;
-  font-weight: 500;
-  line-height: 1.45;
-}
-
 .ve-cart-summary__totals div:last-child {
   padding-top: 0.7rem;
-  border-top: 1px solid rgba(85, 74, 105, 0.12);
   border-bottom: 0;
 }
 

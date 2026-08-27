@@ -218,6 +218,18 @@ $cart_count = WC()->cart ? WC()->cart->get_cart_contents_count() : 0;
 $cart_count_label = _n( 'producto', 'productos', $cart_count, 'sultana-storefront' );
 $cart_title = $is_gift_cart ? __( 'Carrito de regalo', 'sultana-storefront' ) : __( 'Mi carrito', 'sultana-storefront' );
 $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) : __( 'Compra personal', 'sultana-storefront' );
+$cart_summary_shipping_info = '';
+
+if ( $is_gift_cart && $gift_shipping_rate && '' !== $gift_shipping_department ) {
+    $cart_summary_shipping_info = sprintf(
+        /* translators: 1: department name, 2: shipping method label. */
+        __( 'Este es el costo del envío al departamento %1$s por medio de %2$s.', 'sultana-storefront' ),
+        $gift_shipping_department,
+        sanitize_text_field( $gift_shipping_rate->get_label() )
+    );
+} elseif ( ! empty( $personal_shipping_rates ) ) {
+    $cart_summary_shipping_info = __( 'Calculado según tu dirección registrada. Podrás cambiar la dirección de envío en finalizar compra.', 'sultana-storefront' );
+}
 ?>
 
 <div class="ve-cart-page">
@@ -418,9 +430,25 @@ $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) :
                 <aside class="ve-cart-summary" aria-label="<?php esc_attr_e( 'Resumen del pedido', 'sultana-storefront' ); ?>">
                 <header>
                     <div>
-                        <span><?php esc_html_e( 'Resumen', 'sultana-storefront' ); ?></span>
-                        <h2><?php esc_html_e( 'Total de la compra', 'sultana-storefront' ); ?></h2>
+                        <h2><?php esc_html_e( 'RESUMEN', 'sultana-storefront' ); ?></h2>
                     </div>
+                    <?php if ( '' !== $cart_summary_shipping_info ) : ?>
+                        <span class="ve-cart-summary__shipping-info">
+                            <button
+                                type="button"
+                                class="ve-cart-summary__shipping-info-button"
+                                aria-label="<?php esc_attr_e( 'Ver información del envío', 'sultana-storefront' ); ?>"
+                                aria-expanded="false"
+                                aria-controls="ve-cart-shipping-info"
+                                data-cart-shipping-info-toggle
+                            >
+                                <span aria-hidden="true">!</span>
+                            </button>
+                            <span id="ve-cart-shipping-info" class="ve-cart-summary__shipping-popover" role="status" hidden data-cart-shipping-info-popover>
+                                <?php echo esc_html( $cart_summary_shipping_info ); ?>
+                            </span>
+                        </span>
+                    <?php endif; ?>
                 </header>
 
                 <?php if ( $is_gift_cart && $gift_owner_name ) : ?>
@@ -441,7 +469,7 @@ $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) :
 
                 <dl class="ve-cart-summary__totals">
                     <div>
-                        <dt><?php esc_html_e( 'Subtotal', 'sultana-storefront' ); ?></dt>
+                        <dt><?php esc_html_e( 'SUBTOTAL', 'sultana-storefront' ); ?></dt>
                         <dd><?php echo wp_kses_post( WC()->cart->get_cart_subtotal() ); ?></dd>
                     </div>
                     <?php foreach ( $applied_coupons as $coupon_code => $coupon ) : ?>
@@ -484,64 +512,53 @@ $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) :
                         $shipping_cost  = (float) $gift_shipping_rate->get_cost() + array_sum( (array) $gift_shipping_rate->get_taxes() );
                         ?>
                         <div class="ve-cart-summary__shipping">
-                            <dt><?php esc_html_e( 'Envío', 'sultana-storefront' ); ?></dt>
+                            <dt><?php esc_html_e( 'ENVÍO', 'sultana-storefront' ); ?></dt>
                             <dd>
-                                <strong>
-                                    <?php
-                                    echo wp_kses_post(
-                                        sprintf(
-                                            /* translators: 1: shipping method label, 2: shipping cost. */
-                                            __( '%1$s: %2$s', 'sultana-storefront' ),
-                                            esc_html( $shipping_label ),
-                                            wc_price( $shipping_cost )
-                                        )
-                                    );
-                                    ?>
-                                </strong>
-                                <?php if ( '' !== $gift_shipping_department ) : ?>
-                                    <small>
-                                        <?php
-                                        echo esc_html(
-                                            sprintf(
-                                                /* translators: 1: department name, 2: shipping method label. */
-                                                __( 'Este es el costo del envío al departamento %1$s por medio de %2$s.', 'sultana-storefront' ),
-                                                $gift_shipping_department,
-                                                $shipping_label
-                                            )
-                                        );
-                                        ?>
-                                    </small>
-                                <?php endif; ?>
-                            </dd>
-                        </div>
-                    <?php elseif ( ! empty( $personal_shipping_rates ) ) : ?>
-                        <div class="ve-cart-summary__shipping">
-                            <dt><?php esc_html_e( 'Envío', 'sultana-storefront' ); ?></dt>
-                            <dd>
-                                <?php foreach ( $personal_shipping_rates as $personal_shipping_rate ) : ?>
-                                    <?php
-                                    $personal_shipping_label = sanitize_text_field( $personal_shipping_rate->get_label() );
-                                    $personal_shipping_cost  = (float) $personal_shipping_rate->get_cost() + array_sum( (array) $personal_shipping_rate->get_taxes() );
-                                    ?>
+                                <span class="ve-cart-summary__shipping-value">
                                     <strong>
                                         <?php
                                         echo wp_kses_post(
                                             sprintf(
                                                 /* translators: 1: shipping method label, 2: shipping cost. */
                                                 __( '%1$s: %2$s', 'sultana-storefront' ),
-                                                esc_html( $personal_shipping_label ),
-                                                wc_price( $personal_shipping_cost )
+                                                esc_html( $shipping_label ),
+                                                wc_price( $shipping_cost )
                                             )
                                         );
                                         ?>
                                     </strong>
-                                    <small><?php esc_html_e( 'Calculado según tu dirección registrada. Podrás cambiar la dirección de envío en finalizar compra.', 'sultana-storefront' ); ?></small>
+                                </span>
+                            </dd>
+                        </div>
+                    <?php elseif ( ! empty( $personal_shipping_rates ) ) : ?>
+                        <div class="ve-cart-summary__shipping">
+                            <dt><?php esc_html_e( 'ENVÍO', 'sultana-storefront' ); ?></dt>
+                            <dd>
+                                <?php foreach ( $personal_shipping_rates as $personal_shipping_rate ) : ?>
+                                    <?php
+                                    $personal_shipping_label = sanitize_text_field( $personal_shipping_rate->get_label() );
+                                    $personal_shipping_cost  = (float) $personal_shipping_rate->get_cost() + array_sum( (array) $personal_shipping_rate->get_taxes() );
+                                    ?>
+                                    <span class="ve-cart-summary__shipping-value">
+                                        <strong>
+                                            <?php
+                                            echo wp_kses_post(
+                                                sprintf(
+                                                    /* translators: 1: shipping method label, 2: shipping cost. */
+                                                    __( '%1$s: %2$s', 'sultana-storefront' ),
+                                                    esc_html( $personal_shipping_label ),
+                                                    wc_price( $personal_shipping_cost )
+                                                )
+                                            );
+                                            ?>
+                                        </strong>
+                                    </span>
                                 <?php endforeach; ?>
                             </dd>
                         </div>
                     <?php endif; ?>
                     <div>
-                        <dt><?php esc_html_e( 'Total', 'sultana-storefront' ); ?></dt>
+                        <dt><?php esc_html_e( 'TOTAL', 'sultana-storefront' ); ?></dt>
                         <dd><?php echo wp_kses_post( WC()->cart->get_total() ); ?></dd>
                     </div>
                 </dl>
