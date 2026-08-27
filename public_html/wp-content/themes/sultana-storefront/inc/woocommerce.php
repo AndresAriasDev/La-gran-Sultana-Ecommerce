@@ -1186,7 +1186,7 @@ function variedadesexpress_nicaragua_address_fields( array $fields ): array
     if ( isset( $fields['address_1'] ) ) {
         $fields['address_1']['label']       = __( 'Dirección de su casa u oficina', 'sultana-storefront' );
         $fields['address_1']['label_class'] = [ 'screen-reader-text' ];
-        $fields['address_1']['placeholder'] = __( 'DirecciÃ³n de su casa u oficina *', 'sultana-storefront' );
+        $fields['address_1']['placeholder'] = __( 'Dirección de su casa u oficina *', 'sultana-storefront' );
         $fields['address_1']['priority']    = 40;
         $fields['address_1']['class']       = [ 'form-row-wide' ];
     }
@@ -1245,14 +1245,14 @@ function variedadesexpress_nicaragua_billing_fields( array $fields ): array
     if ( isset( $fields['billing_address_1'] ) ) {
         $fields['billing_address_1']['label']       = __( 'Dirección de su casa u oficina', 'sultana-storefront' );
         $fields['billing_address_1']['label_class'] = [ 'screen-reader-text' ];
-        $fields['billing_address_1']['placeholder'] = __( 'DirecciÃ³n de su casa u oficina *', 'sultana-storefront' );
+        $fields['billing_address_1']['placeholder'] = __( 'Dirección de su casa u oficina *', 'sultana-storefront' );
         $fields['billing_address_1']['class']       = [ 'form-row-wide' ];
     }
 
     if ( isset( $fields['billing_phone'] ) ) {
         $fields['billing_phone']['label']    = __( 'Teléfono', 'sultana-storefront' );
         $fields['billing_phone']['label_class'] = [ 'screen-reader-text' ];
-        $fields['billing_phone']['placeholder'] = __( 'TelÃ©fono *', 'sultana-storefront' );
+        $fields['billing_phone']['placeholder'] = __( 'Teléfono *', 'sultana-storefront' );
         $fields['billing_phone']['required']    = true;
         $fields['billing_phone']['priority']    = 90;
         $fields['billing_phone']['class']       = [ 'form-row-first' ];
@@ -1282,7 +1282,7 @@ function variedadesexpress_nicaragua_billing_fields( array $fields ): array
 
     if ( isset( $fields['billing_email'] ) ) {
         $fields['billing_email']['label_class'] = [ 'screen-reader-text' ];
-        $fields['billing_email']['placeholder'] = __( 'DirecciÃ³n de correo electrÃ³nico *', 'sultana-storefront' );
+        $fields['billing_email']['placeholder'] = __( 'Dirección de correo electrónico *', 'sultana-storefront' );
         $fields['billing_email']['priority']    = 100;
         $fields['billing_email']['class']       = [ 'form-row-last' ];
 
@@ -1445,7 +1445,7 @@ function variedadesexpress_validate_checkout_phone( array $data, WP_Error $error
     if ( ! variedadesexpress_nicaragua_phone_is_valid( $phone ) ) {
         $errors->add(
             'billing_phone_invalid',
-            __( 'Telefono debe tener 8 digitos validos. Ej. 86687005.', 'sultana-storefront' )
+            __( 'Teléfono debe tener 8 dígitos válidos. Ej. 86687005.', 'sultana-storefront' )
         );
 
         return;
@@ -1456,7 +1456,7 @@ function variedadesexpress_validate_checkout_phone( array $data, WP_Error $error
     if ( variedadesexpress_phone_belongs_to_other_user( $phone, $user_id ) ) {
         $errors->add(
             'billing_phone_duplicate',
-            __( 'Telefono ya esta asociado a otra cuenta.', 'sultana-storefront' )
+            __( 'Teléfono ya está asociado a otra cuenta.', 'sultana-storefront' )
         );
     }
 }
@@ -1690,12 +1690,12 @@ function variedadesexpress_validate_account_address_phone( int $user_id, string 
     }
 
     if ( ! variedadesexpress_nicaragua_phone_is_valid( $phone ) ) {
-        wc_add_notice( __( 'Telefono debe tener 8 digitos validos. Ej. 86687005.', 'sultana-storefront' ), 'error' );
+        wc_add_notice( __( 'Teléfono debe tener 8 dígitos válidos. Ej. 86687005.', 'sultana-storefront' ), 'error' );
         return;
     }
 
     if ( variedadesexpress_phone_belongs_to_other_user( $phone, $user_id ) ) {
-        wc_add_notice( __( 'Telefono ya esta asociado a otra cuenta.', 'sultana-storefront' ), 'error' );
+        wc_add_notice( __( 'Teléfono ya está asociado a otra cuenta.', 'sultana-storefront' ), 'error' );
     }
 }
 
