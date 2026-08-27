@@ -134,6 +134,14 @@
     wrapper.appendChild(notice);
   };
 
+  const clearCartCouponNotice = function () {
+    const wrapper = document.querySelector("[data-ve-cart-coupon-feedback]");
+
+    if (wrapper) {
+      wrapper.innerHTML = "";
+    }
+  };
+
   const scrollToCouponNotice = function (notice) {
     if (!notice || !window.matchMedia("(max-width: 768px)").matches) {
       return;
@@ -414,6 +422,48 @@
     let isApplyingCoupon = false;
     const removingCoupons = new Set();
 
+    const clearCouponButtonLoadingState = function (button) {
+      if (!button) {
+        return;
+      }
+
+      button.disabled = false;
+      button.classList.remove("is-loading");
+      button.removeAttribute("aria-disabled");
+    };
+
+    const setCouponButtonMode = function (button, mode) {
+      if (!button) {
+        return;
+      }
+
+      const isClear = mode === "clear";
+
+      clearCouponButtonLoadingState(button);
+      button.dataset.veCouponButtonMode = mode;
+      button.classList.toggle("is-clear", isClear);
+      button.textContent = isClear ? "Limpiar" : "Aplicar";
+      button.setAttribute("aria-label", isClear ? "Limpiar codigo de cupon" : "Aplicar cupon");
+    };
+
+    const resetCouponFailureState = function (form) {
+      if (!form) {
+        return;
+      }
+
+      form.removeAttribute("data-ve-failed-coupon-code");
+      setCouponButtonMode(form.querySelector('[name="apply_coupon"]'), "apply");
+    };
+
+    const markCouponFailureState = function (form, couponCode) {
+      if (!form) {
+        return;
+      }
+
+      form.dataset.veFailedCouponCode = couponCode;
+      setCouponButtonMode(form.querySelector('[name="apply_coupon"]'), "clear");
+    };
+
     const markCouponFormLoading = function (form, isLoading) {
       if (!form) {
         return;
@@ -429,7 +479,12 @@
       if (couponButton) {
         couponButton.disabled = isLoading;
         couponButton.classList.toggle("is-loading", isLoading);
-        couponButton.setAttribute("aria-disabled", isLoading ? "true" : "false");
+
+        if (isLoading) {
+          couponButton.setAttribute("aria-disabled", "true");
+        } else {
+          couponButton.removeAttribute("aria-disabled");
+        }
       }
     };
 
@@ -437,6 +492,7 @@
       const form = event.target.closest("[data-ve-cart-form]");
       const submitter = event.submitter;
       const couponInput = form ? form.querySelector('[name="coupon_code"]') : null;
+      const couponButton = form ? form.querySelector('[name="apply_coupon"]') : null;
       const isCouponSubmit =
         (submitter && submitter.name === "apply_coupon") ||
         (couponInput && document.activeElement === couponInput);
@@ -451,6 +507,17 @@
 
       event.preventDefault();
 
+      if (couponButton && couponButton.dataset.veCouponButtonMode === "clear") {
+        if (couponInput) {
+          couponInput.value = "";
+          couponInput.focus();
+        }
+
+        clearCartCouponNotice();
+        resetCouponFailureState(form);
+        return;
+      }
+
       if (isApplyingCoupon) {
         return;
       }
@@ -458,6 +525,8 @@
       const couponCode = couponInput ? couponInput.value.trim() : "";
 
       if (!couponCode) {
+        markCouponFormLoading(form, false);
+        resetCouponFailureState(form);
         showCartCouponNotice("Ingresa un código de cupón.", "error");
         scrollToCurrentCouponNotice();
         return;
@@ -483,21 +552,43 @@
           const data = result.data || {};
 
           if (!result.success) {
-            throw new Error(data.message || "No pudimos aplicar este cupón.");
+            const error = new Error(data.message || "No pudimos aplicar este cupón.");
+            error.isCouponApplyFailure = true;
+            throw error;
           }
 
+          resetCouponFailureState(form);
           applyServerState(data);
           showCartCouponNotice(data.message || "Cupón aplicado correctamente.", "success");
           scrollToCurrentCouponNotice();
         })
         .catch(function (error) {
           showCartCouponNotice(error.message, "error");
+
+          if (error.isCouponApplyFailure && couponInput && couponInput.value.trim() === couponCode) {
+            markCouponFailureState(form, couponCode);
+          }
+
           scrollToCurrentCouponNotice();
         })
         .finally(function () {
           isApplyingCoupon = false;
           markCouponFormLoading(form, false);
         });
+    });
+
+    document.addEventListener("input", function (event) {
+      const couponInput = event.target.closest('[name="coupon_code"]');
+      const form = couponInput ? couponInput.closest("[data-ve-cart-form]") : null;
+      const failedCode = form ? form.dataset.veFailedCouponCode || "" : "";
+
+      if (!form || !failedCode) {
+        return;
+      }
+
+      if (couponInput.value.trim() !== failedCode) {
+        resetCouponFailureState(form);
+      }
     });
 
     document.addEventListener("click", function (event) {

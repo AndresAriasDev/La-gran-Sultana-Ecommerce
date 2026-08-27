@@ -18,29 +18,6 @@ $personal_shipping_rates = [];
 $personal_shipping_has_destination = false;
 $personal_shipping_has_rates = false;
 $applied_coupons = WC()->cart ? WC()->cart->get_coupons() : [];
-$account_coupons_class = '\Sultana\CommerceCore\Modules\Coupons\AccountCoupons';
-$show_account_coupons_link = false;
-$account_coupons_url = '';
-
-if ( class_exists( $account_coupons_class ) ) {
-    if (
-        is_user_logged_in()
-        && method_exists( $account_coupons_class, 'user_has_available_coupons' )
-        && $account_coupons_class::user_has_available_coupons( get_current_user_id() )
-    ) {
-        $show_account_coupons_link = true;
-    } elseif (
-        ! is_user_logged_in()
-        && method_exists( $account_coupons_class, 'has_public_available_coupons' )
-        && $account_coupons_class::has_public_available_coupons()
-    ) {
-        $show_account_coupons_link = true;
-    }
-
-    if ( defined( $account_coupons_class . '::ENDPOINT' ) ) {
-        $account_coupons_url = wc_get_account_endpoint_url( $account_coupons_class::ENDPOINT );
-    }
-}
 
 foreach ( $cart_items as $cart_item ) {
     if ( empty( $cart_item['scc_wishlist_gift'] ) || ! is_array( $cart_item['scc_wishlist_gift'] ) ) {
@@ -424,7 +401,21 @@ $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) :
             <div class="ve-cart-sidebar">
                 <div class="woocommerce-notices-wrapper ve-cart-coupon-feedback" data-ve-cart-coupon-feedback></div>
 
-            <aside class="ve-cart-summary" aria-label="<?php esc_attr_e( 'Resumen del pedido', 'sultana-storefront' ); ?>">
+                <?php if ( wc_coupons_enabled() && empty( $applied_coupons ) ) : ?>
+                    <div class="ve-cart-coupon">
+                        <div class="ve-cart-coupon__header">
+                            <label for="coupon_code"><?php esc_html_e( '¿Tenés un cupón?', 'sultana-storefront' ); ?></label>
+                        </div>
+                        <div class="ve-cart-coupon__form-row">
+                            <input type="text" name="coupon_code" id="coupon_code" value="" placeholder="<?php esc_attr_e( 'Código de cupón', 'sultana-storefront' ); ?>">
+                            <button type="submit" name="apply_coupon" value="<?php esc_attr_e( 'Aplicar cupón', 'sultana-storefront' ); ?>">
+                                <?php esc_html_e( 'Aplicar', 'sultana-storefront' ); ?>
+                            </button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <aside class="ve-cart-summary" aria-label="<?php esc_attr_e( 'Resumen del pedido', 'sultana-storefront' ); ?>">
                 <header>
                     <div>
                         <span><?php esc_html_e( 'Resumen', 'sultana-storefront' ); ?></span>
@@ -555,30 +546,6 @@ $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) :
                     </div>
                 </dl>
 
-                <?php if ( wc_coupons_enabled() && empty( $applied_coupons ) ) : ?>
-                    <div class="ve-cart-coupon">
-                        <div class="ve-cart-coupon__header">
-                            <label for="coupon_code"><?php esc_html_e( '¿Tenés un cupón?', 'sultana-storefront' ); ?></label>
-                            <?php if ( $show_account_coupons_link && $account_coupons_url ) : ?>
-                                <?php if ( is_user_logged_in() ) : ?>
-                                    <a class="ve-cart-coupon__account-link" href="<?php echo esc_url( $account_coupons_url ); ?>">
-                                        <?php esc_html_e( 'Mis cupones', 'sultana-storefront' ); ?>
-                                    </a>
-                                <?php else : ?>
-                                    <button class="ve-cart-coupon__account-link" type="button" data-modal-open="account" data-account-view="register">
-                                        <?php esc_html_e( 'Mis cupones', 'sultana-storefront' ); ?>
-                                    </button>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                        </div>
-                        <div class="ve-cart-coupon__form-row">
-                            <input type="text" name="coupon_code" id="coupon_code" value="" placeholder="<?php esc_attr_e( 'Código de cupón', 'sultana-storefront' ); ?>">
-                            <button type="submit" name="apply_coupon" value="<?php esc_attr_e( 'Aplicar cupón', 'sultana-storefront' ); ?>">
-                                <?php esc_html_e( 'Aplicar', 'sultana-storefront' ); ?>
-                            </button>
-                        </div>
-                    </div>
-                <?php endif; ?>
 
                 <a class="ve-cart-summary__checkout" href="<?php echo esc_url( wc_get_checkout_url() ); ?>">
                     <?php variedadesexpress_icon( 'shopping-cart', 've-cart-summary__checkout-icon' ); ?>

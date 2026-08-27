@@ -669,6 +669,13 @@ function variedadesexpress_cart_notice_message( string $type = 'error' ): string
     return '';
 }
 
+function variedadesexpress_cart_coupon_error_message( string $message ): string
+{
+    $formatted = preg_replace( '/«([^»]+)»/u', '($1)', $message );
+
+    return is_string( $formatted ) ? $formatted : $message;
+}
+
 function variedadesexpress_render_cart_page_fragment(): string
 {
     if ( function_exists( 'wc_clear_notices' ) ) {
@@ -894,6 +901,7 @@ function variedadesexpress_cart_apply_coupon_ajax(): void
 
     if ( ! $applied ) {
         $message = variedadesexpress_cart_notice_message( 'error' ) ?: __( 'No pudimos aplicar este cupón.', 'sultana-storefront' );
+        $message = variedadesexpress_cart_coupon_error_message( $message );
 
         wp_send_json_error(
             array_merge(
