@@ -36,6 +36,7 @@ class Bootstrap
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountRegistration.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountPasswordReset.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/AccountAccess.php';
+        require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/ProfileAvatarImageProcessor.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Accounts/ProfileAvatar.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Checkout/CheckoutAccounts.php';
         require_once SCC_PLUGIN_PATH . 'src/Modules/Combos/ComboStockService.php';

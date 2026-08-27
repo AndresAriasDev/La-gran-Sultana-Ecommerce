@@ -14,8 +14,7 @@ class ProfileAvatar
         'variedadesexpress/avatars/',
     ];
     private const NONCE_ACTION = 'scc_profile_avatar';
-    private const MAX_FILE_SIZE = 2097152;
-    private const AVATAR_SIZE = 512;
+    private const MAX_FILE_SIZE = 10485760;
 
     public static function register(): void
     {
@@ -55,7 +54,7 @@ class ProfileAvatar
         }
 
         if ( $file_size <= 0 || $file_size > self::MAX_FILE_SIZE ) {
-            self::send_error( __( 'La imagen debe pesar como maximo 2 MB.', 'sultana-commerce-core' ) );
+            self::send_error( __( 'La imagen no puede superar los 10 MB.', 'sultana-commerce-core' ) );
         }
 
         require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -66,23 +65,7 @@ class ProfileAvatar
         $mime_type     = sanitize_mime_type( (string) ( $file_type['type'] ?? '' ) );
 
         if ( empty( $file_type['ext'] ) || '' === $mime_type || ! in_array( $mime_type, $allowed_mimes, true ) ) {
-            self::send_error( __( 'Sube una imagen JPG, PNG o WebP valida.', 'sultana-commerce-core' ) );
-        }
-
-        $editor = wp_get_image_editor( $tmp_name );
-
-        if ( is_wp_error( $editor ) ) {
-            self::send_error( __( 'No pudimos procesar esa imagen. Proba con otra foto.', 'sultana-commerce-core' ) );
-        }
-
-        if ( is_callable( [ $editor, 'set_quality' ] ) ) {
-            $editor->set_quality( 86 );
-        }
-
-        $resize_result = $editor->resize( self::AVATAR_SIZE, self::AVATAR_SIZE, true );
-
-        if ( is_wp_error( $resize_result ) ) {
-            self::send_error( __( 'No pudimos ajustar el tamano de la imagen.', 'sultana-commerce-core' ) );
+            self::send_error( __( 'Selecciona una imagen JPG, PNG, WebP o AVIF valida.', 'sultana-commerce-core' ) );
         }
 
         $uploads = wp_upload_dir();
@@ -97,28 +80,39 @@ class ProfileAvatar
             self::send_error( __( 'No pudimos preparar la carpeta de avatares.', 'sultana-commerce-core' ), 500 );
         }
 
-        $target_mime = self::get_supported_output_mime( $mime_type );
-        $target_ext  = self::get_extension_for_mime( $target_mime );
-        $hash        = strtolower( substr( wp_generate_password( 16, false, false ), 0, 12 ) );
-        $file_base   = 'user-' . $user_id . '-' . $hash;
-        $file_path   = $target_dir . $file_base . '.' . $target_ext;
-        $saved       = $editor->save( $file_path, $target_mime );
+        $processor = new ProfileAvatarImageProcessor();
+        $processed = $processor->process(
+            [
+                'name'     => $file_name,
+                'type'     => $mime_type,
+                'tmp_name' => $tmp_name,
+                'error'    => (int) $file['error'],
+                'size'     => $file_size,
+            ],
+            $target_dir,
+            $mime_type
+        );
 
-        if ( is_wp_error( $saved ) || empty( $saved['path'] ) || ! file_exists( $saved['path'] ) ) {
-            self::send_error( __( 'No pudimos guardar la nueva foto de perfil.', 'sultana-commerce-core' ), 500 );
+        if ( is_wp_error( $processed ) ) {
+            self::send_error( $processed->get_error_message(), 400 );
         }
 
-        $relative_path = self::AVATAR_DIRECTORY . basename( (string) $saved['path'] );
+        $relative_path = self::AVATAR_DIRECTORY . basename( (string) $processed['path'] );
         $new_meta      = [
             'relative_path' => $relative_path,
-            'mime'          => sanitize_mime_type( (string) ( $saved['mime-type'] ?? $target_mime ) ),
-            'width'         => absint( $saved['width'] ?? self::AVATAR_SIZE ),
-            'height'        => absint( $saved['height'] ?? self::AVATAR_SIZE ),
+            'mime'          => sanitize_mime_type( $processed['mime'] ),
+            'width'         => absint( $processed['width'] ),
+            'height'        => absint( $processed['height'] ),
             'updated_at'    => time(),
         ];
         $old_meta      = self::get_avatar_meta( $user_id );
 
-        update_user_meta( $user_id, self::META_KEY, $new_meta );
+        $updated = update_user_meta( $user_id, self::META_KEY, $new_meta );
+
+        if ( false === $updated ) {
+            self::delete_avatar_file( $new_meta );
+            self::send_error( __( 'No pudimos guardar la nueva foto de perfil.', 'sultana-commerce-core' ), 500 );
+        }
 
         if ( ! empty( $old_meta['relative_path'] ) && $old_meta['relative_path'] !== $new_meta['relative_path'] ) {
             self::delete_avatar_file( $old_meta );
@@ -228,39 +222,11 @@ class ProfileAvatar
     private static function get_allowed_mimes(): array
     {
         return [
-            'jpg|jpeg' => 'image/jpeg',
-            'png'      => 'image/png',
-            'webp'     => 'image/webp',
+            'jpg|jpeg|jpe|jfif' => 'image/jpeg',
+            'png'               => 'image/png',
+            'webp'              => 'image/webp',
+            'avif'              => 'image/avif',
         ];
-    }
-
-    private static function get_supported_output_mime( string $source_mime ): string
-    {
-        if (
-            function_exists( 'wp_image_editor_supports' )
-            && wp_image_editor_supports(
-                [
-                    'mime_type' => 'image/webp',
-                ]
-            )
-        ) {
-            return 'image/webp';
-        }
-
-        if ( 'image/png' === $source_mime ) {
-            return 'image/png';
-        }
-
-        return 'image/jpeg';
-    }
-
-    private static function get_extension_for_mime( string $mime_type ): string
-    {
-        return match ( $mime_type ) {
-            'image/png'  => 'png',
-            'image/webp' => 'webp',
-            default      => 'jpg',
-        };
     }
 
     private static function delete_avatar_file( array $meta ): void
@@ -336,7 +302,7 @@ class ProfileAvatar
     {
         return match ( $error_code ) {
             UPLOAD_ERR_INI_SIZE,
-            UPLOAD_ERR_FORM_SIZE => __( 'La imagen debe pesar como maximo 2 MB.', 'sultana-commerce-core' ),
+            UPLOAD_ERR_FORM_SIZE => __( 'La imagen no puede superar los 10 MB.', 'sultana-commerce-core' ),
             UPLOAD_ERR_NO_FILE   => __( 'Selecciona una imagen para subir.', 'sultana-commerce-core' ),
             default              => __( 'No pudimos subir la imagen. Intenta de nuevo.', 'sultana-commerce-core' ),
         };

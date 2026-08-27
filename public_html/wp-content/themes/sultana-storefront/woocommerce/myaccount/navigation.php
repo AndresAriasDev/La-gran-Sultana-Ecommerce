@@ -82,7 +82,7 @@ $avatar_initial   = strtoupper( substr( $display_name ?: $current_user->user_ema
             <button class="ve-account-nav__avatar-button" type="button" aria-label="<?php esc_attr_e( 'Cambiar foto de perfil', 'sultana-storefront' ); ?>" data-profile-avatar-button>
                 <?php variedadesexpress_icon( 'camera', 've-account-nav__avatar-button-icon' ); ?>
             </button>
-            <input class="ve-account-nav__avatar-input" type="file" accept="image/jpeg,image/png,image/webp" data-profile-avatar-input data-profile-avatar-nonce="<?php echo esc_attr( wp_create_nonce( 'scc_profile_avatar' ) ); ?>">
+            <input class="ve-account-nav__avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif,.jfif" data-profile-avatar-input data-profile-avatar-nonce="<?php echo esc_attr( wp_create_nonce( 'scc_profile_avatar' ) ); ?>">
         </div>
         <div class="ve-account-nav__profile-text">
             <span><?php esc_html_e( 'Cuenta', 'sultana-storefront' ); ?></span>

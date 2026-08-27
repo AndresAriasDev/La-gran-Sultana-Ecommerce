@@ -406,9 +406,33 @@
           avatar.replaceChildren(image);
         }
 
+        image.removeAttribute("srcset");
+        image.removeAttribute("sizes");
         image.src = imageUrl;
 
         return true;
+      };
+
+      const preloadAndUpdateAvatarImage = function (avatarUrl) {
+        const imageUrl = getValidAvatarUrl(avatarUrl);
+
+        if (!imageUrl) {
+          return Promise.resolve(false);
+        }
+
+        return new Promise(function (resolve) {
+          const preload = new Image();
+
+          preload.onload = function () {
+            resolve(updateAvatarImage(imageUrl));
+          };
+
+          preload.onerror = function () {
+            resolve(false);
+          };
+
+          preload.src = imageUrl;
+        });
       };
 
       const setLoading = function (loading) {
@@ -423,18 +447,23 @@
       };
 
       const validateFile = function (file) {
-        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+        const allowedExtensions = [".jpg", ".jpeg", ".jfif", ".png", ".webp", ".avif"];
+        const fileName = file && typeof file.name === "string" ? file.name.toLowerCase() : "";
+        const hasAllowedExtension = allowedExtensions.some(function (extension) {
+          return fileName.endsWith(extension);
+        });
 
         if (!file) {
           return "Selecciona una imagen para subir.";
         }
 
-        if (!allowedTypes.includes(file.type)) {
-          return "Sube una imagen JPG, PNG o WebP valida.";
+        if ((file.type && !allowedTypes.includes(file.type)) || (!file.type && !hasAllowedExtension)) {
+          return "Selecciona una imagen JPG, PNG, WebP o AVIF valida.";
         }
 
-        if (file.size <= 0 || file.size > 2 * 1024 * 1024) {
-          return "La imagen debe pesar como maximo 2 MB.";
+        if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
+          return "La imagen no puede superar los 10 MB.";
         }
 
         return "";
@@ -479,11 +508,9 @@
               throw new Error(data.message || "No pudimos actualizar tu foto de perfil.");
             }
 
-            if (!updateAvatarImage(data.avatar_url)) {
-              throw new Error("No pudimos actualizar la foto de perfil.");
-            }
-
-            showToast(data.message || "Foto de perfil actualizada.", "success");
+            return preloadAndUpdateAvatarImage(data.avatar_url).then(function () {
+              showToast(data.message || "Foto de perfil actualizada.", "success");
+            });
           })
           .catch(function (error) {
             showToast(error.message || "No pudimos actualizar tu foto de perfil.", "error");
