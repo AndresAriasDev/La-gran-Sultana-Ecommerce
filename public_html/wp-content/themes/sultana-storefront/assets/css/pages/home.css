@@ -402,6 +402,8 @@
 
 .home-brands__viewport {
   position: relative;
+  margin-block-start: -3px;
+  padding-block-start: 3px;
   overflow: hidden;
 }
 
@@ -549,6 +551,8 @@
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    margin-block-start: -3px;
+    padding-block-start: 3px;
     padding-inline: 2.8rem;
   }
 

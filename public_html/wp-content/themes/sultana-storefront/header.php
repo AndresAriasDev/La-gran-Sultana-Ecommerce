@@ -12,7 +12,7 @@ $store_url     = function_exists( 'sultana_storefront_store_url' ) ? sultana_sto
 $logo_url      = function_exists( 'sultana_storefront_store_logo_url' ) ? sultana_storefront_store_logo_url() : '';
 $cart_count    = 0;
 $search_value  = function_exists( 'variedadesexpress_current_product_search_query' )
-    ? variedadesexpress_current_product_search_query()
+    ? variedadesexpress_current_product_search_query()  
     : get_search_query();
 $wishlist_count = 0;
 $product_terms = [];
