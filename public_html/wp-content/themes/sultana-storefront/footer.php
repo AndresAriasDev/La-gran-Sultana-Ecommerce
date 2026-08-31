@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $shop_url      = class_exists( 'WooCommerce' ) ? wc_get_page_permalink( 'shop' ) : home_url( '/' );
 $account_url   = class_exists( 'WooCommerce' ) ? wc_get_page_permalink( 'myaccount' ) : home_url( '/' );
+$coupons_url   = class_exists( 'WooCommerce' ) ? wc_get_account_endpoint_url( 'cupones' ) : home_url( '/mi-cuenta/cupones/' );
 $terms_page_id = class_exists( 'WooCommerce' ) ? wc_terms_and_conditions_page_id() : 0;
 $terms_url     = $terms_page_id ? get_permalink( $terms_page_id ) : home_url( '/terminos-y-condiciones/' );
 $privacy_url   = get_privacy_policy_url() ?: home_url( '/politicas-de-privacidad/' );
@@ -96,7 +97,14 @@ $social_labels = [
                     <li><a href="<?php echo esc_url( home_url( '/#site-footer-contact' ) ); ?>"><?php esc_html_e( 'Contacto', 'sultana-storefront' ); ?></a></li>
                 <?php endif; ?>
                 <li><a href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( 'Mi cuenta', 'sultana-storefront' ); ?></a></li>
-                <li><a href="<?php echo esc_url( home_url( '/cupones/' ) ); ?>"><?php esc_html_e( 'Cupones', 'sultana-storefront' ); ?></a></li>
+                <li>
+                    <a
+                        href="<?php echo esc_url( $coupons_url ); ?>"
+                        <?php echo is_user_logged_in() ? '' : 'data-modal-open="account" data-account-view="register"'; ?>
+                    >
+                        <?php esc_html_e( 'Cupones', 'sultana-storefront' ); ?>
+                    </a>
+                </li>
             </ul>
         </nav>
     </div>
