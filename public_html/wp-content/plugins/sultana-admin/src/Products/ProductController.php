@@ -52,6 +52,36 @@ class ProductController
         ];
     }
 
+    public static function prepare_inventory_screen(): array
+    {
+        $search = self::requested_list_search();
+        $filter = self::requested_inventory_filter();
+        $page   = isset( $_GET['inventory_page'] ) ? absint( wp_unslash( $_GET['inventory_page'] ) ) : 1;
+        $page   = max( 1, min( 500, $page ) );
+
+        $service = new ProductService();
+        $listing = $service->list_inventory_products(
+            [
+                'search'   => $search,
+                'filter'   => $filter,
+                'page'     => $page,
+                'per_page' => 20,
+            ]
+        );
+
+        return [
+            'search'      => $search,
+            'filter'      => $listing['filter'],
+            'filters'     => $listing['filters'],
+            'page'        => $listing['page'],
+            'per_page'    => $listing['per_page'],
+            'total'       => $listing['total'],
+            'total_pages' => $listing['total_pages'],
+            'products'    => $listing['products'],
+            'pagination'  => self::inventory_pagination_links( $listing['page'], $listing['total_pages'], $search, $listing['filter'] ),
+        ];
+    }
+
     public static function prepare_create_screen(): array
     {
         $service      = new ProductService();
@@ -300,6 +330,33 @@ class ProductController
         ];
     }
 
+    private static function inventory_pagination_links( int $page, int $total_pages, string $search, string $filter ): array
+    {
+        $base_args = [];
+
+        if ( '' !== $search ) {
+            $base_args['s'] = $search;
+        }
+
+        if ( 'attention' !== $filter ) {
+            $base_args['inventory_filter'] = $filter;
+        }
+
+        $page_url = static function ( int $target_page ) use ( $base_args ): string {
+            return add_query_arg( array_merge( $base_args, [ 'inventory_page' => $target_page ] ), Router::product_inventory_url() );
+        };
+
+        return [
+            'previous' => $page > 1
+                ? $page_url( $page - 1 )
+                : '',
+            'next'     => $page < $total_pages
+                ? $page_url( $page + 1 )
+                : '',
+            'items'    => self::pagination_items( $page, $total_pages, $page_url ),
+        ];
+    }
+
     private static function pagination_items( int $page, int $total_pages, callable $page_url ): array
     {
         if ( $total_pages <= 1 ) {
@@ -373,6 +430,13 @@ class ProductController
         }
 
         return substr( trim( sanitize_text_field( $raw_search ) ), 0, 120 );
+    }
+
+    private static function requested_inventory_filter(): string
+    {
+        $filter = isset( $_GET['inventory_filter'] ) ? sanitize_key( wp_unslash( $_GET['inventory_filter'] ) ) : 'attention';
+
+        return in_array( $filter, [ 'attention', 'outofstock', 'low_stock' ], true ) ? $filter : 'attention';
     }
 
     private static function list_notice(): string

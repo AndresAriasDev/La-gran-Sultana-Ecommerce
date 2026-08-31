@@ -390,6 +390,94 @@ class ProductService
         ];
     }
 
+    public function list_inventory_products( array $args ): array
+    {
+        $search   = isset( $args['search'] ) ? trim( (string) $args['search'] ) : '';
+        $filter   = isset( $args['filter'] ) && in_array( (string) $args['filter'], [ 'attention', 'outofstock', 'low_stock' ], true )
+            ? (string) $args['filter']
+            : 'attention';
+        $page     = isset( $args['page'] ) ? max( 1, absint( $args['page'] ) ) : 1;
+        $per_page = isset( $args['per_page'] ) ? max( 1, min( 50, absint( $args['per_page'] ) ) ) : 20;
+
+        $query_args = [
+            'status'  => [ 'publish', 'draft', 'pending', 'private' ],
+            'type'    => self::ALLOWED_TYPES,
+            'limit'   => -1,
+            'orderby' => 'date',
+            'order'   => 'DESC',
+            'return'  => 'objects',
+        ];
+
+        if ( '' !== $search ) {
+            $query_args['s'] = $search;
+        }
+
+        $products = wc_get_products( $query_args );
+        $products = is_array( $products ) ? $products : [];
+
+        if ( '' !== $search ) {
+            [ $products ] = $this->include_exact_sku_match( $search, $products, count( $products ), 0 );
+        }
+
+        $inventory_products = [];
+        $counts = [
+            'attention'  => 0,
+            'outofstock' => 0,
+            'low_stock'  => 0,
+        ];
+
+        foreach ( array_filter( $products, [ $this, 'is_supported_product' ] ) as $product ) {
+            $inventory_data = $this->inventory_data_for_product( $product );
+
+            if ( empty( $inventory_data ) ) {
+                continue;
+            }
+
+            $inventory_products[] = $this->format_inventory_product( $product, $inventory_data );
+            $counts['attention']++;
+
+            if ( ! empty( $inventory_data['has_outofstock'] ) ) {
+                $counts['outofstock']++;
+            }
+
+            if ( ! empty( $inventory_data['has_low_stock'] ) ) {
+                $counts['low_stock']++;
+            }
+        }
+
+        $filtered_products = array_values(
+            array_filter(
+                $inventory_products,
+                static function ( array $product ) use ( $filter ): bool {
+                    if ( 'outofstock' === $filter ) {
+                        return ! empty( $product['inventory_flags']['outofstock'] );
+                    }
+
+                    if ( 'low_stock' === $filter ) {
+                        return ! empty( $product['inventory_flags']['low_stock'] );
+                    }
+
+                    return true;
+                }
+            )
+        );
+
+        $total       = count( $filtered_products );
+        $total_pages = max( 1, (int) ceil( $total / $per_page ) );
+        $page        = min( $page, $total_pages );
+        $offset      = ( $page - 1 ) * $per_page;
+
+        return [
+            'products'    => array_slice( $filtered_products, $offset, $per_page ),
+            'filters'     => $counts,
+            'filter'      => $filter,
+            'page'        => $page,
+            'per_page'    => $per_page,
+            'total'       => $total,
+            'total_pages' => $total_pages,
+        ];
+    }
+
     private function include_exact_sku_match( string $search, array $products, int $total, int $per_page ): array
     {
         if ( ! function_exists( 'wc_get_product_id_by_sku' ) ) {
@@ -416,7 +504,7 @@ class ProductService
 
         array_unshift( $products, $sku_product );
 
-        if ( count( $products ) > $per_page ) {
+        if ( $per_page > 0 && count( $products ) > $per_page ) {
             array_pop( $products );
         }
 
@@ -690,6 +778,188 @@ class ProductService
             'can_edit'   => $can_manage && current_user_can( 'edit_product', $product_id ),
             'can_delete' => $can_manage && current_user_can( 'delete_product', $product_id ),
         ];
+    }
+
+    private function format_inventory_product( WC_Product $product, array $inventory_data ): array
+    {
+        $formatted = $this->format_product( $product );
+
+        $formatted['inventory_summary'] = (string) ( $inventory_data['summary'] ?? '' );
+        $formatted['inventory_detail'] = (string) ( $inventory_data['detail'] ?? '' );
+        $formatted['inventory_status'] = ! empty( $inventory_data['has_outofstock'] )
+            ? __( 'Sin existencias', 'sultana-admin' )
+            : __( 'Pocas unidades', 'sultana-admin' );
+        $formatted['inventory_flags'] = [
+            'outofstock' => ! empty( $inventory_data['has_outofstock'] ),
+            'low_stock'  => ! empty( $inventory_data['has_low_stock'] ),
+        ];
+
+        return $formatted;
+    }
+
+    private function inventory_data_for_product( WC_Product $product ): array
+    {
+        if ( 'variable' === $product->get_type() && $product instanceof \WC_Product_Variable ) {
+            return $this->inventory_data_for_variable_product( $product );
+        }
+
+        if ( 'combo' === $product->get_type() ) {
+            return $this->inventory_data_for_combo_product( $product );
+        }
+
+        return $this->inventory_data_for_stock_product( $product, __( 'unidades', 'sultana-admin' ) );
+    }
+
+    private function inventory_data_for_variable_product( \WC_Product_Variable $product ): array
+    {
+        $outofstock_count = 0;
+        $low_stock_count  = 0;
+
+        foreach ( $product->get_children() as $variation_id ) {
+            $variation = wc_get_product( absint( $variation_id ) );
+
+            if ( ! $variation instanceof \WC_Product_Variation ) {
+                continue;
+            }
+
+            $variation_data = $this->inventory_data_for_stock_product( $variation, __( 'unidades', 'sultana-admin' ) );
+
+            if ( empty( $variation_data ) ) {
+                continue;
+            }
+
+            if ( ! empty( $variation_data['has_outofstock'] ) ) {
+                $outofstock_count++;
+            }
+
+            if ( ! empty( $variation_data['has_low_stock'] ) ) {
+                $low_stock_count++;
+            }
+        }
+
+        $attention_count = $outofstock_count + $low_stock_count;
+
+        if ( $attention_count <= 0 ) {
+            return [];
+        }
+
+        $detail_parts = [];
+
+        if ( $outofstock_count > 0 ) {
+            $detail_parts[] = sprintf(
+                /* translators: %d: variations without stock. */
+                _n( '%d sin existencias', '%d sin existencias', $outofstock_count, 'sultana-admin' ),
+                $outofstock_count
+            );
+        }
+
+        if ( $low_stock_count > 0 ) {
+            $detail_parts[] = sprintf(
+                /* translators: %d: low stock variations. */
+                _n( '%d con pocas unidades', '%d con pocas unidades', $low_stock_count, 'sultana-admin' ),
+                $low_stock_count
+            );
+        }
+
+        return [
+            'summary' => sprintf(
+                /* translators: %d: variations requiring inventory attention. */
+                _n( '%d variacion requiere atencion', '%d variaciones requieren atencion', $attention_count, 'sultana-admin' ),
+                $attention_count
+            ),
+            'detail' => implode( ' / ', $detail_parts ),
+            'has_outofstock' => $outofstock_count > 0,
+            'has_low_stock'  => $low_stock_count > 0,
+        ];
+    }
+
+    private function inventory_data_for_combo_product( WC_Product $product ): array
+    {
+        $combo_stock_service = '\Sultana\CommerceCore\Modules\Combos\ComboStockService';
+
+        if ( ! class_exists( $combo_stock_service ) || ! method_exists( $combo_stock_service, 'get_max_combo_quantity' ) ) {
+            return [];
+        }
+
+        $quantity = $combo_stock_service::get_max_combo_quantity( $product->get_id() );
+
+        if ( $quantity < 0 ) {
+            return [];
+        }
+
+        return $this->inventory_data_from_quantity(
+            $product,
+            $quantity,
+            sprintf(
+                /* translators: %d: available combo quantity. */
+                _n( '%d combo disponible', '%d combos disponibles', $quantity, 'sultana-admin' ),
+                max( 0, $quantity )
+            )
+        );
+    }
+
+    private function inventory_data_for_stock_product( WC_Product $product, string $unit_label ): array
+    {
+        if ( ! $product->managing_stock() ) {
+            if ( 'outofstock' !== $product->get_stock_status() && $product->is_in_stock() ) {
+                return [];
+            }
+
+            return [
+                'summary' => __( '0 unidades', 'sultana-admin' ),
+                'detail' => __( 'Sin existencias', 'sultana-admin' ),
+                'has_outofstock' => true,
+                'has_low_stock'  => false,
+            ];
+        }
+
+        $quantity = $product->get_stock_quantity();
+        $quantity = null === $quantity ? 0 : (int) floor( (float) $quantity );
+
+        return $this->inventory_data_from_quantity(
+            $product,
+            $quantity,
+            sprintf(
+                /* translators: 1: stock quantity, 2: unit label. */
+                __( '%1$d %2$s', 'sultana-admin' ),
+                max( 0, $quantity ),
+                $unit_label
+            )
+        );
+    }
+
+    private function inventory_data_from_quantity( WC_Product $product, int $quantity, string $summary ): array
+    {
+        if ( $quantity <= 0 || 'outofstock' === $product->get_stock_status() || ! $product->is_in_stock() ) {
+            return [
+                'summary' => $summary,
+                'detail' => __( 'Sin existencias', 'sultana-admin' ),
+                'has_outofstock' => true,
+                'has_low_stock'  => false,
+            ];
+        }
+
+        $low_stock_amount = $this->low_stock_amount_for_product( $product );
+
+        if ( $low_stock_amount > 0 && $quantity <= $low_stock_amount ) {
+            return [
+                'summary' => $summary,
+                'detail' => __( 'Pocas unidades', 'sultana-admin' ),
+                'has_outofstock' => false,
+                'has_low_stock'  => true,
+            ];
+        }
+
+        return [];
+    }
+
+    private function low_stock_amount_for_product( WC_Product $product ): int
+    {
+        if ( function_exists( 'wc_get_low_stock_amount' ) ) {
+            return max( 0, (int) wc_get_low_stock_amount( $product ) );
+        }
+
+        return max( 0, (int) get_option( 'woocommerce_notify_low_stock_amount', 2 ) );
     }
 
     private function price_label_for_list( WC_Product $product, string $type ): string

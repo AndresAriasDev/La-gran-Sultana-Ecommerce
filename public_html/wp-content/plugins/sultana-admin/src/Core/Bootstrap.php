@@ -45,7 +45,7 @@ class Bootstrap
     public static function maybe_flush_rewrite_rules(): void
     {
         $option_key = 'sultana_admin_rewrite_rules_version';
-        $version    = ( defined( 'SULTANA_ADMIN_VERSION' ) ? SULTANA_ADMIN_VERSION : '1' ) . '-banners-ui-routes-v1';
+        $version    = ( defined( 'SULTANA_ADMIN_VERSION' ) ? SULTANA_ADMIN_VERSION : '1' ) . '-product-inventory-routes-v1';
 
         if ( get_option( $option_key ) === $version ) {
             return;

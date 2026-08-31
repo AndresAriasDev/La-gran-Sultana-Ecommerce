@@ -3,6 +3,126 @@
     display: grid;
 }
 
+.sultana-admin-products--inventory {
+    gap: var(--sultana-admin-space-4);
+}
+
+.sultana-admin-inventory-title {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-inventory-title h2 {
+    font-weight: var(--sultana-admin-font-weight-bold);
+}
+
+.sultana-admin-inventory-help {
+    position: relative;
+    z-index: var(--sultana-admin-z-popover);
+    flex: 0 0 auto;
+    line-height: 1;
+}
+
+.sultana-admin-inventory-help__button {
+    display: inline-grid;
+    width: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    place-items: center;
+    border: 1px solid rgba(74, 134, 160, 0.22);
+    border-radius: var(--sultana-admin-radius-pill);
+    background: rgba(222, 242, 247, 0.9);
+    color: var(--sultana-admin-info);
+    cursor: pointer;
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    line-height: 1;
+    padding: 0;
+}
+
+.sultana-admin-inventory-help__button:hover,
+.sultana-admin-inventory-help__button:focus-visible {
+    border-color: rgba(74, 134, 160, 0.34);
+    background: rgba(202, 235, 242, 0.95);
+    color: #2f6d85;
+    outline: 0;
+}
+
+.sultana-admin-inventory-help__popover {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.65rem);
+    z-index: var(--sultana-admin-z-popover);
+    width: min(270px, calc(100vw - 2rem));
+    border: 1px solid rgba(74, 134, 160, 0.16);
+    border-radius: 10px;
+    background: var(--sultana-admin-surface);
+    box-shadow: 0 18px 38px rgba(35, 33, 41, 0.14);
+    color: var(--sultana-admin-muted);
+    font-size: var(--sultana-admin-font-size-sm);
+    font-weight: var(--sultana-admin-font-weight-medium);
+    line-height: 1.42;
+    opacity: 0;
+    padding: 0.85rem;
+    pointer-events: none;
+    text-align: left;
+    transform: translateY(4px);
+    transition: opacity var(--sultana-admin-transition-fast), transform var(--sultana-admin-transition-fast);
+    visibility: hidden;
+    white-space: normal;
+}
+
+.sultana-admin-inventory-help:hover .sultana-admin-inventory-help__popover,
+.sultana-admin-inventory-help:focus-within .sultana-admin-inventory-help__popover {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+}
+
+.sultana-admin-inventory-help__popover::after {
+    position: absolute;
+    right: 8px;
+    bottom: -7px;
+    width: 13px;
+    height: 13px;
+    border-right: 1px solid rgba(74, 134, 160, 0.16);
+    border-bottom: 1px solid rgba(74, 134, 160, 0.16);
+    background: var(--sultana-admin-surface);
+    content: "";
+    transform: rotate(45deg);
+}
+
+.sultana-admin-products--inventory .sultana-admin-actions {
+    gap: var(--sultana-admin-space-3);
+    margin-top: var(--sultana-admin-space-1);
+}
+
+.sultana-admin-products--inventory .sultana-admin-search {
+    margin-top: var(--sultana-admin-space-2);
+}
+
+.sultana-admin-products--inventory .sultana-admin-list-summary {
+    margin: 0;
+}
+
+.sultana-admin-products--inventory .sultana-admin-pagination--compact {
+    margin-top: var(--sultana-admin-space-1);
+}
+
+.sultana-admin-products--inventory .sultana-admin-section-header label,
+.sultana-admin-products--inventory .sultana-admin-muted-action,
+.sultana-admin-products--inventory .sultana-admin-secondary-action,
+.sultana-admin-products--inventory .sultana-admin-product-table th,
+.sultana-admin-products--inventory .sultana-admin-product-table strong,
+.sultana-admin-products--inventory .sultana-admin-product-card__name,
+.sultana-admin-products--inventory .sultana-admin-product-card dt,
+.sultana-admin-products--inventory .sultana-admin-product-card dd,
+.sultana-admin-products--inventory .sultana-admin-empty h2 {
+    font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
 
 /* Products table and media */
 .sultana-admin-product-table-wrap {
@@ -47,6 +167,13 @@
 
 .sultana-admin-product-table th:nth-child(7),
 .sultana-admin-product-table td:nth-child(7) {
+    width: 124px;
+    padding-right: 12px;
+    text-align: right;
+}
+
+.sultana-admin-product-table--inventory th:nth-child(6),
+.sultana-admin-product-table--inventory td:nth-child(6) {
     width: 124px;
     padding-right: 12px;
     text-align: right;
@@ -218,6 +345,45 @@
 }
 
 @media (max-width: 760px) {
+    .sultana-admin-products--inventory {
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-products--inventory > .sultana-admin-section-header {
+        align-items: center;
+        gap: var(--sultana-admin-space-3);
+    }
+
+    .sultana-admin-products--inventory > .sultana-admin-section-header .sultana-admin-section-header__content {
+        min-width: 0;
+    }
+
+    .sultana-admin-products--inventory > .sultana-admin-section-header .sultana-admin-secondary-action {
+        flex: 0 0 auto;
+        min-height: 38px;
+        gap: 6px;
+        padding: 7px 11px;
+    }
+
+    .sultana-admin-products--inventory .sultana-admin-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--sultana-admin-space-2);
+    }
+
+    .sultana-admin-products--inventory .sultana-admin-actions .sultana-admin-muted-action:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .sultana-admin-products--inventory .sultana-admin-muted-action {
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 9px 10px;
+        text-align: center;
+        white-space: normal;
+    }
+
     .sultana-admin-search__controls {
         grid-template-columns: minmax(0, 1fr) auto;
     }
@@ -425,6 +591,29 @@
     .sultana-admin-pagination--compact .sultana-admin-pagination__link--icon {
         width: 42px;
         min-width: 42px;
+    }
+}
+
+@media (max-width: 520px) {
+    .sultana-admin-inventory-title {
+        gap: var(--sultana-admin-space-1);
+    }
+
+    .sultana-admin-inventory-help__popover {
+        right: auto;
+        left: 50%;
+        width: min(250px, calc(100vw - 2rem));
+        transform: translate(-50%, 4px);
+    }
+
+    .sultana-admin-inventory-help:hover .sultana-admin-inventory-help__popover,
+    .sultana-admin-inventory-help:focus-within .sultana-admin-inventory-help__popover {
+        transform: translate(-50%, 0);
+    }
+
+    .sultana-admin-inventory-help__popover::after {
+        right: auto;
+        left: calc(50% - 6px);
     }
 }
 

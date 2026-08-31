@@ -17,7 +17,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Router
 {
     private const QUERY_VAR = 'sultana_admin_route';
-    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_new', 'product_edit', 'banners', 'banner_new', 'banner_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
+    private const ROUTES = [ 'dashboard', 'login', 'logout', 'password_request', 'password_reset', 'products', 'product_inventory', 'product_new', 'product_edit', 'banners', 'banner_new', 'banner_edit', 'orders', 'order_view', 'customers', 'customer_view', 'coupons', 'coupon_new', 'coupon_edit', 'reviews', 'statistics' ];
 
     public static function register_rewrite_rules(): void
     {
@@ -26,6 +26,7 @@ class Router
         add_rewrite_rule( '^gestion/recuperar-contrasena/?$', 'index.php?' . self::QUERY_VAR . '=password_request', 'top' );
         add_rewrite_rule( '^gestion/restablecer-contrasena/?$', 'index.php?' . self::QUERY_VAR . '=password_reset', 'top' );
         add_rewrite_rule( '^gestion/logout/?$', 'index.php?' . self::QUERY_VAR . '=logout', 'top' );
+        add_rewrite_rule( '^gestion/productos/inventario/?$', 'index.php?' . self::QUERY_VAR . '=product_inventory', 'top' );
         add_rewrite_rule( '^gestion/productos/nuevo/?$', 'index.php?' . self::QUERY_VAR . '=product_new', 'top' );
         add_rewrite_rule( '^gestion/productos/([0-9]+)/?$', 'index.php?' . self::QUERY_VAR . '=product_edit&sultana_admin_product_id=$matches[1]', 'top' );
         add_rewrite_rule( '^gestion/productos/?$', 'index.php?' . self::QUERY_VAR . '=products', 'top' );
@@ -173,6 +174,11 @@ class Router
         return home_url( '/gestion/productos/' );
     }
 
+    public static function product_inventory_url(): string
+    {
+        return home_url( '/gestion/productos/inventario/' );
+    }
+
     public static function new_product_url(): string
     {
         return home_url( '/gestion/productos/nuevo/' );
@@ -266,7 +272,7 @@ class Router
 
         $current_user = wp_get_current_user();
         $logout_url   = self::logout_url();
-        $active_route = in_array( $route, [ 'product_new', 'product_edit' ], true ) ? 'products' : $route;
+        $active_route = in_array( $route, [ 'product_inventory', 'product_new', 'product_edit' ], true ) ? 'products' : $route;
         $active_route = 'order_view' === $active_route ? 'orders' : $active_route;
         $active_route = 'customer_view' === $active_route ? 'customers' : $active_route;
         $active_route = in_array( $active_route, [ 'coupon_new', 'coupon_edit' ], true ) ? 'coupons' : $active_route;
@@ -337,6 +343,11 @@ class Router
                 'title'    => __( 'Productos', 'sultana-admin' ),
                 'subtitle' => __( 'Productos', 'sultana-admin' ),
                 'template' => SULTANA_ADMIN_PATH . 'templates/products.php',
+            ],
+            'product_inventory' => [
+                'title'    => __( 'Inventario', 'sultana-admin' ),
+                'subtitle' => __( 'Productos', 'sultana-admin' ),
+                'template' => SULTANA_ADMIN_PATH . 'templates/product-inventory.php',
             ],
             'banners' => [
                 'title'    => __( 'Banners', 'sultana-admin' ),
@@ -417,6 +428,10 @@ class Router
     {
         if ( 'products' === $route ) {
             return ProductController::prepare_list_screen();
+        }
+
+        if ( 'product_inventory' === $route ) {
+            return ProductController::prepare_inventory_screen();
         }
 
         if ( 'product_new' === $route ) {

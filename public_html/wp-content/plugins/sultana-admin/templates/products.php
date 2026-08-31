@@ -52,10 +52,15 @@ $icon_url    = static fn( string $name ): string => \Sultana\Admin\Core\Icons::u
     <form class="sultana-admin-search" method="get" action="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>" role="search" data-applied-search="<?php echo esc_attr( $search ); ?>" data-clear-url="<?php echo esc_url( \Sultana\Admin\Core\Router::products_url() ); ?>">
         <div class="sultana-admin-section-header sultana-admin-search__header">
             <label for="sultana-admin-product-search"><?php esc_html_e( 'Buscar productos', 'sultana-admin' ); ?></label>
-            <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
-                <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'box' ) ); ?>');" aria-hidden="true"></span>
-                <?php esc_html_e( 'Nuevo', 'sultana-admin' ); ?>
-            </a>
+            <div class="sultana-admin-actions">
+                <a class="sultana-admin-muted-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::product_inventory_url() ); ?>">
+                    <?php esc_html_e( 'Inventario', 'sultana-admin' ); ?>
+                </a>
+                <a class="sultana-admin-secondary-action" href="<?php echo esc_url( \Sultana\Admin\Core\Router::new_product_url() ); ?>">
+                    <span class="sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'box' ) ); ?>');" aria-hidden="true"></span>
+                    <?php esc_html_e( 'Nuevo', 'sultana-admin' ); ?>
+                </a>
+            </div>
         </div>
         <div class="sultana-admin-search__controls">
             <input
