@@ -8,9 +8,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class AccountRegistration
 {
+    private static bool $creating_registered_customer = false;
+
     public static function register(): void
     {
         add_action( 'wp_ajax_nopriv_scc_register_account', [ self::class, 'register_user' ] );
+        add_filter( 'woocommerce_email_enabled_customer_new_account', [ self::class, 'disable_native_new_account_email' ], 10, 3 );
     }
 
     public static function register_user(): void
@@ -50,9 +53,7 @@ class AccountRegistration
         }
 
         $username = self::unique_username_from_email( $email );
-        $user_id  = function_exists( 'wc_create_new_customer' )
-            ? wc_create_new_customer( $email, $username, $password )
-            : wp_create_user( $username, $password, $email );
+        $user_id  = self::create_customer( $email, $username, $password );
 
         if ( is_wp_error( $user_id ) ) {
             self::send_wp_error( $user_id );
@@ -100,6 +101,15 @@ class AccountRegistration
         );
     }
 
+    public static function disable_native_new_account_email( bool $enabled, $user = null, $email = null ): bool
+    {
+        if ( self::$creating_registered_customer ) {
+            return false;
+        }
+
+        return $enabled;
+    }
+
     private static function send_wp_error( \WP_Error $error ): void
     {
         $error_codes = $error->get_error_codes();
@@ -121,6 +131,21 @@ class AccountRegistration
             ],
             $status_code
         );
+    }
+
+    private static function create_customer( string $email, string $username, string $password )
+    {
+        if ( ! function_exists( 'wc_create_new_customer' ) ) {
+            return wp_create_user( $username, $password, $email );
+        }
+
+        self::$creating_registered_customer = true;
+
+        try {
+            return wc_create_new_customer( $email, $username, $password );
+        } finally {
+            self::$creating_registered_customer = false;
+        }
     }
 
     private static function unique_username_from_email( string $email ): string

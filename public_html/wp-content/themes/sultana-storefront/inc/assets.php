@@ -150,6 +150,10 @@ function variedadesexpress_enqueue_assets(): void
 
     variedadesexpress_enqueue_style( 'sultana-storefront-responsive', 'assets/css/base/responsive.css', [ 'sultana-storefront-woocommerce' ] );
 
+    if ( is_404() ) {
+        variedadesexpress_enqueue_style( 'sultana-storefront-404', 'assets/css/pages/404.css', [ 'sultana-storefront-responsive' ] );
+    }
+
     variedadesexpress_enqueue_script( 'sultana-storefront-header', 'assets/js/global/header.js' );
     variedadesexpress_enqueue_script( 'sultana-storefront-toast', 'assets/js/global/toast.js', [ 'sultana-storefront-header' ] );
     variedadesexpress_enqueue_script( 'sultana-storefront-account-modal', 'assets/js/global/account-modal.js', [ 'sultana-storefront-toast' ] );

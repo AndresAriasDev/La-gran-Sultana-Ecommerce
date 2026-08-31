@@ -15,7 +15,6 @@ $logo_url      = function_exists( 'sultana_storefront_store_logo_url' ) ? sultan
 $whatsapp_text = '+505 8668 7005';
 $whatsapp_url  = 'https://wa.me/50586687005?text=Hola%20Andr%C3%A9s%2C%20me%20interesa%20la%20tienda%20en%20l%C3%ADnea%20y%20me%20gustar%C3%ADa%20recibir%20m%C3%A1s%20informaci%C3%B3n.';
 $contact_emails = [
-    'andresariasdev02@gmail.com',
     'contacto@lagransultana.com',
 ];
 $social_urls   = function_exists( 'sultana_storefront_store_social_url' )
@@ -63,7 +62,6 @@ $social_labels = [
             <ul class="site-footer__menu">
                 <li><a href="<?php echo esc_url( $shop_url ); ?>"><?php esc_html_e( 'Tienda', 'sultana-storefront' ); ?></a></li>
                 <li><a href="<?php echo esc_url( add_query_arg( 'on_sale', '1', $shop_url ) ); ?>"><?php esc_html_e( 'Promociones', 'sultana-storefront' ); ?></a></li>
-                <li><a href="<?php echo esc_url( home_url( '/#home-brands-title' ) ); ?>"><?php esc_html_e( 'Marcas', 'sultana-storefront' ); ?></a></li>
             </ul>
         </nav>
 
@@ -99,7 +97,6 @@ $social_labels = [
                 <?php endif; ?>
                 <li><a href="<?php echo esc_url( $account_url ); ?>"><?php esc_html_e( 'Mi cuenta', 'sultana-storefront' ); ?></a></li>
                 <li><a href="<?php echo esc_url( home_url( '/cupones/' ) ); ?>"><?php esc_html_e( 'Cupones', 'sultana-storefront' ); ?></a></li>
-                <li><a href="<?php echo esc_url( home_url( '/faq/' ) ); ?>"><?php esc_html_e( 'FAQ', 'sultana-storefront' ); ?></a></li>
             </ul>
         </nav>
     </div>

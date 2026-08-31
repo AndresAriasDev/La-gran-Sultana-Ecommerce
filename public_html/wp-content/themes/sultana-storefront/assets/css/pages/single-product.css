@@ -1317,13 +1317,34 @@ a.single-product-summary__variation-notice-message {
 }
 
 .review-modal p {
-  color: var(--color-muted);
+  color: var(--color-on-brand);
 }
 
 .product-review-form {
   display: grid;
   gap: 0.85rem;
   margin-top: 1rem;
+}
+
+.product-review-form__message {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 0;
+  border-radius: 7px;
+  background: var(--color-error);
+  color: #ffffff;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.review-modal .product-review-form__message {
+  margin: 0;
+}
+
+.product-review-form__message[hidden],
+.product-review-form__message:empty {
+  display: none;
 }
 
 .product-review-form label {
@@ -1339,6 +1360,12 @@ a.single-product-summary__variation-notice-message {
   border: 1px solid var(--color-line);
   border-radius: var(--radius);
   background: var(--color-surface);
+}
+
+.product-review-form textarea:focus {
+  border-color: var(--color-accent);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.14);
 }
 
 .product-review-form textarea::placeholder {
@@ -1360,6 +1387,8 @@ a.single-product-summary__variation-notice-message {
   flex-direction: row-reverse;
   justify-content: flex-end;
   gap: 0.08rem;
+  min-inline-size: 0;
+  margin: 0;
   padding: 0;
   border: 0;
 }
@@ -1370,6 +1399,11 @@ a.single-product-summary__variation-notice-message {
   color: var(--color-muted);
   font-size: 0.86rem;
   font-weight: 700;
+}
+
+.product-review-form__rating legend.screen-reader-text {
+  width: 1px;
+  margin: -1px;
 }
 
 .product-review-form__rating input {
@@ -1387,7 +1421,7 @@ a.single-product-summary__variation-notice-message {
 .product-review-form__rating input:checked ~ label,
 .product-review-form__rating label:hover,
 .product-review-form__rating label:hover ~ label {
-  color: var(--color-warning);
+  color: var(--color-brand);
 }
 
 @media (max-width: 900px) {

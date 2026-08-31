@@ -201,9 +201,10 @@ if ( $current_user_id ) {
                 <img src="<?php echo esc_url( get_template_directory_uri() . '/assets/icons/close-icon-blanco.png' ); ?>" alt="" width="18" height="18" aria-hidden="true">
             </button>
             <h3 id="review-form-title"><?php esc_html_e( 'Reseña del producto', 'sultana-storefront' ); ?></h3>
-            <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="product-review-form" data-product-review-form>
+            <form action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" method="post" class="product-review-form" data-product-review-form novalidate>
+                <p class="product-review-form__message" data-product-review-message hidden></p>
                 <fieldset class="product-review-form__rating">
-                    <legend><?php esc_html_e( 'Tu puntuación', 'sultana-storefront' ); ?></legend>
+                    <legend class="screen-reader-text"><?php esc_html_e( 'Puntuación de la reseña', 'sultana-storefront' ); ?></legend>
                     <?php for ( $rating = 5; $rating >= 1; $rating-- ) : ?>
                         <input id="rating-<?php echo esc_attr( (string) $rating ); ?>" type="radio" name="rating" value="<?php echo esc_attr( (string) $rating ); ?>" required>
                         <label for="rating-<?php echo esc_attr( (string) $rating ); ?>">&#9733;</label>
@@ -213,7 +214,6 @@ if ( $current_user_id ) {
                     <span class="screen-reader-text"><?php esc_html_e( 'Tu reseña', 'sultana-storefront' ); ?></span>
                     <textarea name="comment" rows="6" placeholder="<?php esc_attr_e( 'Dinos que opinas...', 'sultana-storefront' ); ?>" required></textarea>
                 </label>
-                <p><?php esc_html_e( 'Tu reseña ayuda a otras personas a comprar con más confianza.', 'sultana-storefront' ); ?></p>
                 <input type="hidden" name="comment_post_ID" value="<?php echo esc_attr( (string) $product_id ); ?>">
                 <input type="hidden" name="comment_parent" value="0">
                 <input type="hidden" name="comment_type" value="review">

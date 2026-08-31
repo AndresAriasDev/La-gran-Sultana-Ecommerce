@@ -90,8 +90,8 @@
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--color-ink);
+  background: var(--color-brand);
+  color: var(--color-on-brand);
   box-shadow: 0 8px 18px rgba(35, 33, 41, 0.1);
   transform: translateY(-50%);
 }
@@ -110,13 +110,14 @@
 }
 
 .home-categories-carousel__arrow:disabled:hover {
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--color-ink);
+  background: var(--color-brand);
+  color: var(--color-on-brand);
 }
 
 .home-categories-carousel__arrow img {
   width: 22px;
   height: 22px;
+  filter: brightness(0) invert(1);
 }
 
 .home-promotion-carousel {

@@ -1286,6 +1286,18 @@
       productNotice.show(text, type);
     };
 
+    const isLoggedIn = function () {
+      return document.body.classList.contains("logged-in");
+    };
+
+    const openAccountModal = function () {
+      const accountButton = document.querySelector('[data-modal-open="account"]');
+
+      if (accountButton) {
+        accountButton.click();
+      }
+    };
+
     const getProductId = function () {
       const productInput = form
         ? form.querySelector('[name="add-to-cart"]')
@@ -1463,9 +1475,13 @@
     refreshWishlistState();
 
     wishlistButton.addEventListener("click", function () {
-      const formData = new FormData();
-
       showNotice("", "");
+
+      if (!isLoggedIn()) {
+        showNotice("Inicia sesión para usar tu lista de deseos.", "error");
+        openAccountModal();
+        return;
+      }
 
       if (!hasSelectedRequiredVariation()) {
         const missingLabels = getMissingVariationLabels();
@@ -1483,6 +1499,7 @@
 
       const stateKey = getStateKey();
       const isRemoving = Boolean(stateKey && wishlistState[stateKey]);
+      const formData = new FormData();
 
       wishlistButton.disabled = true;
       wishlistButton.classList.add("is-loading");

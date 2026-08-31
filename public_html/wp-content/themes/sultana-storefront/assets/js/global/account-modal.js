@@ -146,8 +146,10 @@
       const reviewIdField = form.querySelector("[data-review-id-field]");
       const textarea = form.querySelector('textarea[name="comment"]');
       const rating = button.dataset.reviewRating || "";
+      const message = form.querySelector("[data-product-review-message]");
 
       form.reset();
+      clearReviewFormMessage(message);
 
       if (reviewIdField) {
         reviewIdField.value = button.dataset.reviewEdit ? button.dataset.reviewId || "" : "";
@@ -169,10 +171,15 @@
     const closeModals = function () {
       modals.forEach(function (modal) {
         const recoveryForm = modal.querySelector("[data-account-recovery-form]");
+        const reviewForm = modal.querySelector("[data-product-review-form]");
 
         if (recoveryForm) {
           clearRecoveryCooldown();
           setRecoveryInitialState(recoveryForm, true);
+        }
+
+        if (reviewForm) {
+          clearReviewFormMessage(reviewForm.querySelector("[data-product-review-message]"));
         }
 
         modal.setAttribute("aria-hidden", "true");
@@ -532,6 +539,48 @@
     }, 1000);
   };
 
+  const clearReviewFormMessage = function (message) {
+    if (!message) {
+      return;
+    }
+
+    message.textContent = "";
+    message.hidden = true;
+    message.classList.remove("is-error", "is-success");
+  };
+
+  const showReviewFormError = function (message, text) {
+    if (!message) {
+      return;
+    }
+
+    message.hidden = false;
+    message.textContent = text;
+    message.classList.remove("is-success");
+    message.classList.add("is-error");
+  };
+
+  const validateReviewForm = function (form) {
+    const checkedRating = form.querySelector('input[name="rating"]:checked');
+    const textarea = form.querySelector('textarea[name="comment"]');
+
+    if (!checkedRating) {
+      return {
+        field: form.querySelector('input[name="rating"]'),
+        message: "Seleccioná una puntuación para continuar.",
+      };
+    }
+
+    if (!textarea || !textarea.value.trim()) {
+      return {
+        field: textarea,
+        message: "Escribí tu reseña para continuar.",
+      };
+    }
+
+    return null;
+  };
+
   const setupReviewFormLoading = function () {
     const form = document.querySelector("[data-product-review-form]");
 
@@ -539,8 +588,23 @@
       return;
     }
 
-    form.addEventListener("submit", function () {
+    form.addEventListener("submit", function (event) {
+      const message = form.querySelector("[data-product-review-message]");
       const submitButton = form.querySelector('button[type="submit"]');
+      const validationError = validateReviewForm(form);
+
+      clearReviewFormMessage(message);
+
+      if (validationError) {
+        event.preventDefault();
+        showReviewFormError(message, validationError.message);
+
+        if (validationError.field) {
+          validationError.field.focus();
+        }
+
+        return;
+      }
 
       if (!submitButton) {
         return;
