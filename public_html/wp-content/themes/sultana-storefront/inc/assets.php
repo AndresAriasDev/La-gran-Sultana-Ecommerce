@@ -135,7 +135,6 @@ function variedadesexpress_enqueue_assets(): void
         || $is_product_search;
 
     variedadesexpress_enqueue_style( 'sultana-storefront-tokens', 'assets/css/base/tokens.css' );
-    variedadesexpress_add_dynamic_brand_color();
     variedadesexpress_enqueue_style( 'sultana-storefront-reset', 'assets/css/base/reset.css', [ 'sultana-storefront-tokens' ] );
     variedadesexpress_enqueue_style( 'sultana-storefront-global', 'assets/css/base/global.css', [ 'sultana-storefront-reset' ] );
     variedadesexpress_enqueue_style( 'sultana-storefront-forms', 'assets/css/base/forms.css', [ 'sultana-storefront-global' ] );

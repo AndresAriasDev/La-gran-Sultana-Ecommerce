@@ -398,6 +398,84 @@
   white-space: nowrap;
 }
 
+.ve-view-order__status-group {
+  display: inline-flex;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.ve-view-order__info {
+  position: relative;
+  z-index: 4;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+.ve-view-order__info-button {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid rgba(74, 134, 160, 0.22);
+  border-radius: 999px;
+  background: rgba(222, 242, 247, 0.9);
+  color: var(--color-info);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ve-view-order__info-button:hover,
+.ve-view-order__info-button:focus-visible,
+.ve-view-order__info-button[aria-expanded="true"] {
+  border-color: rgba(74, 134, 160, 0.34);
+  background: rgba(202, 235, 242, 0.95);
+  color: #2f6d85;
+  outline: 0;
+}
+
+.ve-view-order__info-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.65rem);
+  z-index: 20;
+  width: min(270px, calc(100vw - 2rem));
+  padding: 0.85rem;
+  border: 1px solid rgba(74, 134, 160, 0.16);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 18px 38px rgba(35, 33, 41, 0.14);
+  color: var(--color-muted);
+  font-size: 0.84rem;
+  font-weight: 500;
+  line-height: 1.42;
+  text-align: left;
+  white-space: normal;
+}
+
+.ve-view-order__info-popover[hidden] {
+  display: none;
+}
+
+.ve-view-order__info-popover::after {
+  content: "";
+  position: absolute;
+  right: var(--ve-view-order-popover-arrow-right, 8px);
+  bottom: -7px;
+  left: var(--ve-view-order-popover-arrow-left, auto);
+  width: 13px;
+  height: 13px;
+  border-right: 1px solid rgba(74, 134, 160, 0.16);
+  border-bottom: 1px solid rgba(74, 134, 160, 0.16);
+  background: var(--color-surface);
+  transform: rotate(45deg);
+}
+
 .ve-view-order-item__qty {
   display: block;
   color: var(--color-brand);
@@ -479,16 +557,6 @@
 .ve-view-order__meta strong {
   display: block;
   margin-top: 0.2rem;
-}
-
-.ve-view-order__message {
-  margin: 0;
-  padding: 0.9rem 1rem;
-  border-radius: 8px;
-  background: rgba(168, 209, 231, 0.18);
-  color: var(--color-ink);
-  font-size: 0.92rem;
-  font-weight: 600;
 }
 
 .ve-view-order__grid {
@@ -824,6 +892,10 @@
   }
 
   .ve-view-order__status {
+    justify-self: start;
+  }
+
+  .ve-view-order__status-group {
     grid-column: 1 / -1;
     justify-self: start;
   }

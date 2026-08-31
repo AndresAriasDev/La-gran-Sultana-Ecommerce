@@ -126,7 +126,7 @@ $social_labels = [
 
     <div class="site-footer__bar">
         <p>
-            &copy; <?php echo esc_html( wp_date( 'Y' ) ); ?> <?php echo esc_html( $store_name ); ?> |
+            <?php esc_html_e( 'Tienda Maes®', 'sultana-storefront' ); ?> |
             <?php esc_html_e( 'Desarrollado y diseñado por AndresAriasDev', 'sultana-storefront' ); ?>
         </p>
     </div>

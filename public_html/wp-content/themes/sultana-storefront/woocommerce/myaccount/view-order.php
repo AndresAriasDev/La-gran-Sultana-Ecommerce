@@ -66,6 +66,8 @@ $status_message = $is_received_gift
         $giver_name
     )
     : ( $status_messages[ $status ] ?? __( 'Revisa el estado actual de tu pedido.', 'sultana-storefront' ) );
+$status_message = trim( $status_message );
+$status_info_id = 've-view-order-status-info-' . absint( $order->get_id() );
 $state_code     = $is_received_gift ? $order->get_shipping_state() : $order->get_billing_state();
 $states         = WC()->countries->get_states( 'NI' );
 $state_label    = isset( $states[ $state_code ] ) ? $states[ $state_code ] : $state_code;
@@ -97,12 +99,29 @@ $totals = $order->get_order_item_totals();
                     <p><?php echo esc_html( sprintf( __( 'Realizado el %s', 'sultana-storefront' ), wc_format_datetime( $date_created ) ) ); ?></p>
                 <?php endif; ?>
             </div>
-            <span class="ve-view-order__status ve-view-order__status--<?php echo esc_attr( $status_class ); ?>">
-                <?php echo esc_html( $status_label ); ?>
+            <span class="ve-view-order__status-group">
+                <?php if ( '' !== $status_message ) : ?>
+                    <span class="ve-view-order__info" data-view-order-info>
+                        <button
+                            type="button"
+                            class="ve-view-order__info-button"
+                            aria-label="<?php esc_attr_e( 'Ver información del pedido', 'sultana-storefront' ); ?>"
+                            aria-expanded="false"
+                            aria-controls="<?php echo esc_attr( $status_info_id ); ?>"
+                            data-order-info-toggle
+                        >
+                            <span aria-hidden="true">!</span>
+                        </button>
+                        <span id="<?php echo esc_attr( $status_info_id ); ?>" class="ve-view-order__info-popover" role="status" hidden data-order-info-popover>
+                            <?php echo esc_html( $status_message ); ?>
+                        </span>
+                    </span>
+                <?php endif; ?>
+                <span class="ve-view-order__status ve-view-order__status--<?php echo esc_attr( $status_class ); ?>">
+                    <?php echo esc_html( $status_label ); ?>
+                </span>
             </span>
         </div>
-
-        <p class="ve-view-order__message"><?php echo esc_html( $status_message ); ?></p>
     </header>
 
     <div class="ve-view-order__grid">

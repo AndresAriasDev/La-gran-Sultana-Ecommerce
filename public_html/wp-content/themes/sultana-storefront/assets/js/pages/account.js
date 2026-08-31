@@ -635,8 +635,8 @@
     });
   };
 
-  const setupCouponInfoPopovers = function () {
-    const scope = document.querySelector("[data-account-coupons]");
+  const setupScopedInfoPopovers = function (settings) {
+    const scope = document.querySelector(settings.scopeSelector);
     let activeButton = null;
     let activePopover = null;
     let closeTimer = null;
@@ -661,8 +661,8 @@
 
       if (activePopover) {
         activePopover.style.transform = "";
-        activePopover.style.removeProperty("--ve-coupon-popover-arrow-left");
-        activePopover.style.removeProperty("--ve-coupon-popover-arrow-right");
+        activePopover.style.removeProperty(settings.arrowLeftProperty);
+        activePopover.style.removeProperty(settings.arrowRightProperty);
         activePopover.hidden = true;
       }
 
@@ -685,8 +685,8 @@
       let offset = 0;
 
       popover.style.transform = "";
-      popover.style.removeProperty("--ve-coupon-popover-arrow-left");
-      popover.style.removeProperty("--ve-coupon-popover-arrow-right");
+      popover.style.removeProperty(settings.arrowLeftProperty);
+      popover.style.removeProperty(settings.arrowRightProperty);
 
       const rect = popover.getBoundingClientRect();
 
@@ -710,8 +710,8 @@
         Math.max(minLeft, buttonCenter - adjustedRect.left - arrowSize / 2)
       );
 
-      popover.style.setProperty("--ve-coupon-popover-arrow-left", arrowLeft + "px");
-      popover.style.setProperty("--ve-coupon-popover-arrow-right", "auto");
+      popover.style.setProperty(settings.arrowLeftProperty, arrowLeft + "px");
+      popover.style.setProperty(settings.arrowRightProperty, "auto");
     };
 
     const openPopover = function (button, popover) {
@@ -728,7 +728,7 @@
     };
 
     document.addEventListener("click", function (event) {
-      const button = event.target.closest("[data-coupon-info-toggle]");
+      const button = event.target.closest(settings.toggleSelector);
 
       if (button && scope.contains(button)) {
         const popoverId = button.getAttribute("aria-controls") || "";
@@ -769,6 +769,24 @@
       if (activeButton && activePopover) {
         keepPopoverInViewport(activeButton, activePopover);
       }
+    });
+  };
+
+  const setupCouponInfoPopovers = function () {
+    setupScopedInfoPopovers({
+      scopeSelector: "[data-account-coupons]",
+      toggleSelector: "[data-coupon-info-toggle]",
+      arrowLeftProperty: "--ve-coupon-popover-arrow-left",
+      arrowRightProperty: "--ve-coupon-popover-arrow-right",
+    });
+  };
+
+  const setupOrderInfoPopovers = function () {
+    setupScopedInfoPopovers({
+      scopeSelector: "[data-view-order-info]",
+      toggleSelector: "[data-order-info-toggle]",
+      arrowLeftProperty: "--ve-view-order-popover-arrow-left",
+      arrowRightProperty: "--ve-view-order-popover-arrow-right",
     });
   };
 
@@ -895,6 +913,7 @@
   setupProfileAvatarUpload();
   setupAccountNavigationLoaders();
   setupCouponInfoPopovers();
+  setupOrderInfoPopovers();
   setupCopyButtons();
   setupOrderStatusFilters();
 })();

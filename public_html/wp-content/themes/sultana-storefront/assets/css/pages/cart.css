@@ -587,6 +587,7 @@
   display: inline-grid;
   place-items: center;
   width: 22px;
+  height: 22px;
   min-height: 22px;
   padding: 0;
   border: 1px solid rgba(245, 101, 101, 0.22);
@@ -596,6 +597,11 @@
   font-size: 1rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.ve-cart-summary__coupon-remove-icon {
+  width: 12px;
+  height: 12px;
 }
 
 .ve-cart-summary__coupon-remove:hover {

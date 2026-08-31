@@ -220,6 +220,10 @@ $cart_title = $is_gift_cart ? __( 'Carrito de regalo', 'sultana-storefront' ) : 
 $cart_eyebrow = $is_gift_cart ? __( 'Compra de regalo', 'sultana-storefront' ) : __( 'Compra personal', 'sultana-storefront' );
 $cart_summary_shipping_info = '';
 
+if ( ! $is_gift_cart && ! $personal_shipping_has_rates ) {
+    $cart_summary_shipping_info = __( 'El costo de envío se calcula en la página de finalizar compra.', 'sultana-storefront' );
+}
+
 if ( $is_gift_cart && $gift_shipping_rate && '' !== $gift_shipping_department ) {
     $cart_summary_shipping_info = sprintf(
         /* translators: 1: department name, 2: shipping method label. */
@@ -463,7 +467,7 @@ if ( $is_gift_cart && $gift_shipping_rate && '' !== $gift_shipping_department ) 
                         );
                         ?>
                     </p>
-                <?php elseif ( ! $personal_shipping_has_rates ) : ?>
+                <?php elseif ( $is_gift_cart && ! $personal_shipping_has_rates ) : ?>
                     <p class="ve-cart-summary__note"><?php esc_html_e( 'El costo de envío se calcula en la página de finalizar compra.', 'sultana-storefront' ); ?></p>
                 <?php endif; ?>
 
@@ -501,7 +505,7 @@ if ( $is_gift_cart && $gift_shipping_rate && '' !== $gift_shipping_department ) 
                                     data-ve-remove-coupon="<?php echo esc_attr( $coupon_code ); ?>"
                                     aria-label="<?php echo esc_attr( sprintf( __( 'Quitar cupón %s', 'sultana-storefront' ), $coupon_code ) ); ?>"
                                 >
-                                    <span aria-hidden="true">&times;</span>
+                                    <?php variedadesexpress_icon( 'close', 've-cart-summary__coupon-remove-icon' ); ?>
                                 </button>
                             </dd>
                         </div>

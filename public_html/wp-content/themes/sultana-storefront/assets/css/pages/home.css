@@ -304,7 +304,7 @@
   background: var(--color-surface);
   color: var(--color-brand);
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -449,7 +449,7 @@
 .home-brand-card__fallback {
   color: var(--color-brand);
   font-size: 0.95rem;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.15;
 }
 

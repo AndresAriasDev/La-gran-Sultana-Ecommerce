@@ -1,9 +1,7 @@
 .site-footer {
   padding-top: clamp(2rem, 4vw, 3.4rem);
   border-top: 1px solid rgba(194, 67, 102, 0.16);
-  background:
-    linear-gradient(180deg, rgba(255, 105, 180, 0.09), rgba(252, 250, 242, 0.88)),
-    #fff6fb;
+  background:#ffd4fb;
   color: var(--color-ink);
 }
 
@@ -189,6 +187,7 @@
 
 .site-footer__bar {
   padding: 1px;
+  border-top: 1px solid rgba(194, 67, 102, 0.2);
   background: var(--color-brand);
   text-align: center;
 }
