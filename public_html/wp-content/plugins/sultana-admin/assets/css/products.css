@@ -43,7 +43,8 @@
 }
 
 .sultana-admin-inventory-help__button:hover,
-.sultana-admin-inventory-help__button:focus-visible {
+.sultana-admin-inventory-help__button:focus-visible,
+.sultana-admin-inventory-help__button[aria-expanded="true"] {
     border-color: rgba(74, 134, 160, 0.34);
     background: rgba(202, 235, 242, 0.95);
     color: #2f6d85;
@@ -51,11 +52,12 @@
 }
 
 .sultana-admin-inventory-help__popover {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 0.65rem);
+    position: fixed;
+    top: var(--sultana-admin-inventory-popover-top, 0);
+    left: var(--sultana-admin-inventory-popover-left, 0);
     z-index: var(--sultana-admin-z-popover);
-    width: min(270px, calc(100vw - 2rem));
+    width: var(--sultana-admin-inventory-popover-width, min(270px, calc(100vw - 24px)));
+    max-width: calc(100vw - 24px);
     border: 1px solid rgba(74, 134, 160, 0.16);
     border-radius: 10px;
     background: var(--sultana-admin-surface);
@@ -64,34 +66,35 @@
     font-size: var(--sultana-admin-font-size-sm);
     font-weight: var(--sultana-admin-font-weight-medium);
     line-height: 1.42;
-    opacity: 0;
     padding: 0.85rem;
-    pointer-events: none;
     text-align: left;
-    transform: translateY(4px);
-    transition: opacity var(--sultana-admin-transition-fast), transform var(--sultana-admin-transition-fast);
-    visibility: hidden;
     white-space: normal;
 }
 
-.sultana-admin-inventory-help:hover .sultana-admin-inventory-help__popover,
-.sultana-admin-inventory-help:focus-within .sultana-admin-inventory-help__popover {
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible;
+.sultana-admin-inventory-help__popover[hidden] {
+    display: none;
 }
 
 .sultana-admin-inventory-help__popover::after {
     position: absolute;
-    right: 8px;
-    bottom: -7px;
+    left: var(--sultana-admin-inventory-popover-arrow-left, 50%);
     width: 13px;
     height: 13px;
-    border-right: 1px solid rgba(74, 134, 160, 0.16);
-    border-bottom: 1px solid rgba(74, 134, 160, 0.16);
     background: var(--sultana-admin-surface);
     content: "";
-    transform: rotate(45deg);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.sultana-admin-inventory-help__popover[data-placement="top"]::after {
+    bottom: -7px;
+    border-right: 1px solid rgba(74, 134, 160, 0.16);
+    border-bottom: 1px solid rgba(74, 134, 160, 0.16);
+}
+
+.sultana-admin-inventory-help__popover[data-placement="bottom"]::after {
+    top: -7px;
+    border-top: 1px solid rgba(74, 134, 160, 0.16);
+    border-left: 1px solid rgba(74, 134, 160, 0.16);
 }
 
 .sultana-admin-products--inventory .sultana-admin-actions {
@@ -121,6 +124,12 @@
 .sultana-admin-products--inventory .sultana-admin-product-card dd,
 .sultana-admin-products--inventory .sultana-admin-empty h2 {
     font-weight: var(--sultana-admin-font-weight-semibold);
+}
+
+.sultana-admin-inventory-status {
+    min-height: 28px;
+    font-weight: var(--sultana-admin-font-weight-semibold);
+    white-space: nowrap;
 }
 
 
@@ -477,6 +486,26 @@
         overflow-wrap: anywhere;
     }
 
+    .sultana-admin-product-card__meta {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        min-width: 0;
+        gap: 5px 8px;
+    }
+
+    .sultana-admin-product-card__meta .sultana-admin-product-card__sku {
+        min-width: 0;
+    }
+
+    .sultana-admin-product-card__meta .sultana-admin-inventory-status {
+        max-width: 100%;
+        min-height: 24px;
+        font-size: var(--sultana-admin-font-size-xs);
+        padding: 3px 8px;
+        white-space: normal;
+    }
+
     .sultana-admin-product-card__chevron {
         color: var(--sultana-admin-muted);
         transform: rotate(90deg);
@@ -600,20 +629,7 @@
     }
 
     .sultana-admin-inventory-help__popover {
-        right: auto;
-        left: 50%;
         width: min(250px, calc(100vw - 2rem));
-        transform: translate(-50%, 4px);
-    }
-
-    .sultana-admin-inventory-help:hover .sultana-admin-inventory-help__popover,
-    .sultana-admin-inventory-help:focus-within .sultana-admin-inventory-help__popover {
-        transform: translate(-50%, 0);
-    }
-
-    .sultana-admin-inventory-help__popover::after {
-        right: auto;
-        left: calc(50% - 6px);
     }
 }
 

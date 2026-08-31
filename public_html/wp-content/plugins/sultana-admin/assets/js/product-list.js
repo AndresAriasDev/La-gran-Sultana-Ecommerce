@@ -118,6 +118,123 @@
         }
     });
 
+    document.querySelectorAll('[data-inventory-help]').forEach(function (root) {
+        var button = root.querySelector('[data-inventory-help-toggle]');
+        var popover = root.querySelector('[data-inventory-help-popover]');
+        var closeTimer = null;
+
+        if (!button || !popover) {
+            return;
+        }
+
+        function clearCloseTimer() {
+            if (closeTimer) {
+                window.clearTimeout(closeTimer);
+                closeTimer = null;
+            }
+        }
+
+        function keepPopoverInViewport() {
+            var margin = 12;
+            var arrowMargin = 12;
+            var buttonRect;
+            var buttonCenter;
+            var arrowLeft;
+            var maxLeft;
+            var idealWidth = 270;
+            var maxWidth = Math.max(180, window.innerWidth - margin * 2);
+            var width = Math.min(idealWidth, maxWidth);
+            var gap = 10;
+            var height;
+            var left;
+            var top;
+            var placement;
+
+            popover.style.width = width + 'px';
+            popover.style.removeProperty('--sultana-admin-inventory-popover-top');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-left');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-width');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-arrow-left');
+
+            buttonRect = button.getBoundingClientRect();
+            buttonCenter = buttonRect.left + buttonRect.width / 2;
+            left = Math.min(window.innerWidth - margin - width, Math.max(margin, buttonCenter - width / 2));
+
+            popover.style.setProperty('--sultana-admin-inventory-popover-left', left + 'px');
+            popover.style.setProperty('--sultana-admin-inventory-popover-width', width + 'px');
+
+            height = popover.getBoundingClientRect().height;
+            placement = buttonRect.top >= height + gap + margin ? 'top' : 'bottom';
+            top = placement === 'top' ? buttonRect.top - height - gap : buttonRect.bottom + gap;
+            top = Math.min(window.innerHeight - margin - height, Math.max(margin, top));
+
+            popover.dataset.placement = placement;
+            popover.style.setProperty('--sultana-admin-inventory-popover-top', top + 'px');
+            maxLeft = Math.max(arrowMargin, width - arrowMargin);
+            arrowLeft = Math.min(
+                maxLeft,
+                Math.max(arrowMargin, buttonCenter - left)
+            );
+
+            popover.style.setProperty('--sultana-admin-inventory-popover-arrow-left', arrowLeft + 'px');
+        }
+
+        function closePopover() {
+            clearCloseTimer();
+            button.setAttribute('aria-expanded', 'false');
+            popover.hidden = true;
+            popover.style.width = '';
+            delete popover.dataset.placement;
+            popover.style.removeProperty('--sultana-admin-inventory-popover-top');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-left');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-width');
+            popover.style.removeProperty('--sultana-admin-inventory-popover-arrow-left');
+        }
+
+        function scheduleClose() {
+            clearCloseTimer();
+            closeTimer = window.setTimeout(closePopover, 6000);
+        }
+
+        function openPopover() {
+            button.setAttribute('aria-expanded', 'true');
+            popover.hidden = false;
+            keepPopoverInViewport();
+            scheduleClose();
+        }
+
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+
+            if (button.getAttribute('aria-expanded') === 'true') {
+                closePopover();
+                return;
+            }
+
+            openPopover();
+        });
+
+        document.addEventListener('click', function (event) {
+            if (popover.hidden || root.contains(event.target)) {
+                return;
+            }
+
+            closePopover();
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !popover.hidden) {
+                closePopover();
+            }
+        });
+
+        window.addEventListener('resize', function () {
+            if (!popover.hidden) {
+                keepPopoverInViewport();
+            }
+        });
+    });
+
     function disableSubmitButtons(form) {
         form.querySelectorAll('button[type="submit"], input[type="submit"]').forEach(function (button) {
             button.disabled = true;

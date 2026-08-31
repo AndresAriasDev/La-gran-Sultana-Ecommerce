@@ -20,6 +20,27 @@ if ( ! function_exists( 'sultana_admin_product_image' ) ) {
     }
 }
 
+if ( ! function_exists( 'sultana_admin_inventory_status_badge' ) ) {
+    function sultana_admin_inventory_status_badge( array $product ): void
+    {
+        $flags = is_array( $product['inventory_flags'] ?? null ) ? $product['inventory_flags'] : [];
+        $class = ! empty( $flags['outofstock'] ) ? 'sultana-admin-badge--danger' : 'sultana-admin-badge--warning';
+
+        ?>
+        <span class="<?php echo esc_attr( 'sultana-admin-badge sultana-admin-inventory-status ' . $class ); ?>">
+            <?php echo esc_html( (string) ( $product['inventory_status'] ?? '' ) ); ?>
+        </span>
+        <?php
+    }
+}
+
+if ( ! function_exists( 'sultana_admin_inventory_show_detail' ) ) {
+    function sultana_admin_inventory_show_detail( array $product ): bool
+    {
+        return 'variable' === (string) ( $product['type_key'] ?? '' ) && '' !== (string) ( $product['inventory_detail'] ?? '' );
+    }
+}
+
 $products    = $screen_data['products'] ?? [];
 $search      = $screen_data['search'] ?? '';
 $filter      = (string) ( $screen_data['filter'] ?? 'attention' );
@@ -43,10 +64,10 @@ $filter_items = [
             <div class="sultana-admin-inventory-title">
                 <h2><?php esc_html_e( 'Inventario', 'sultana-admin' ); ?></h2>
                 <span class="sultana-admin-inventory-help" data-inventory-help>
-                    <button class="sultana-admin-inventory-help__button" type="button" aria-label="<?php esc_attr_e( 'Ver ayuda de inventario', 'sultana-admin' ); ?>" aria-describedby="sultana-admin-inventory-help-popover">
+                    <button class="sultana-admin-inventory-help__button" type="button" aria-label="<?php esc_attr_e( 'Ver ayuda de inventario', 'sultana-admin' ); ?>" aria-expanded="false" aria-controls="sultana-admin-inventory-help-popover" data-inventory-help-toggle>
                         <span aria-hidden="true">!</span>
                     </button>
-                    <span id="sultana-admin-inventory-help-popover" class="sultana-admin-inventory-help__popover" role="tooltip">
+                    <span id="sultana-admin-inventory-help-popover" class="sultana-admin-inventory-help__popover" role="tooltip" hidden data-inventory-help-popover>
                         <?php esc_html_e( 'Productos y variaciones que necesitan revision por stock bajo o agotado.', 'sultana-admin' ); ?>
                     </span>
                 </span>
@@ -146,9 +167,11 @@ $filter_items = [
                             <td><?php echo esc_html( $product['type'] ); ?></td>
                             <td>
                                 <strong><?php echo esc_html( $product['inventory_summary'] ); ?></strong>
-                                <small><?php echo esc_html( $product['inventory_detail'] ); ?></small>
+                                <?php if ( sultana_admin_inventory_show_detail( $product ) ) : ?>
+                                    <small><?php echo esc_html( $product['inventory_detail'] ); ?></small>
+                                <?php endif; ?>
                             </td>
-                            <td><?php echo esc_html( $product['inventory_status'] ); ?></td>
+                            <td><?php sultana_admin_inventory_status_badge( $product ); ?></td>
                             <td>
                                 <div class="sultana-admin-row-actions">
                                     <?php if ( ! empty( $product['can_edit'] ) ) : ?>
@@ -176,7 +199,10 @@ $filter_items = [
                         <?php sultana_admin_product_image( $product ); ?>
                         <span class="sultana-admin-product-card__identity">
                             <span class="sultana-admin-product-card__name"><?php echo esc_html( $product['name'] ); ?></span>
-                            <span class="sultana-admin-product-card__sku"><?php echo esc_html( '' !== $product['sku'] ? $product['sku'] : __( 'Sin SKU', 'sultana-admin' ) ); ?></span>
+                            <span class="sultana-admin-product-card__meta">
+                                <span class="sultana-admin-product-card__sku"><?php echo esc_html( '' !== $product['sku'] ? $product['sku'] : __( 'Sin SKU', 'sultana-admin' ) ); ?></span>
+                                <?php sultana_admin_inventory_status_badge( $product ); ?>
+                            </span>
                         </span>
                         <span class="sultana-admin-product-card__chevron sultana-admin-icon" style="--sultana-admin-icon-url: url('<?php echo esc_url( $icon_url( 'chevron-right' ) ); ?>');" aria-hidden="true"></span>
                     </button>
@@ -190,14 +216,10 @@ $filter_items = [
                                 <dt><?php esc_html_e( 'Inventario', 'sultana-admin' ); ?></dt>
                                 <dd>
                                     <?php echo esc_html( $product['inventory_summary'] ); ?>
-                                    <?php if ( '' !== $product['inventory_detail'] ) : ?>
+                                    <?php if ( sultana_admin_inventory_show_detail( $product ) ) : ?>
                                         <small><?php echo esc_html( $product['inventory_detail'] ); ?></small>
                                     <?php endif; ?>
                                 </dd>
-                            </div>
-                            <div>
-                                <dt><?php esc_html_e( 'Estado', 'sultana-admin' ); ?></dt>
-                                <dd><?php echo esc_html( $product['inventory_status'] ); ?></dd>
                             </div>
                         </dl>
                         <div class="sultana-admin-card-actions">
