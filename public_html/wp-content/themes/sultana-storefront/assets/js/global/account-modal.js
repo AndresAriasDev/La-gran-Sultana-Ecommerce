@@ -302,6 +302,53 @@
     });
   };
 
+  const setAccountFormMessage = function (message, text, type) {
+    if (!message) {
+      return;
+    }
+
+    message.hidden = false;
+    message.textContent = text;
+    message.classList.remove("is-error", "is-success");
+
+    if (type) {
+      message.classList.add(type);
+    }
+  };
+
+  const validateAccountRegisterForm = function (form) {
+    const name = form.querySelector('input[name="name"]');
+    const email = form.querySelector('input[name="email"]');
+    const password = form.querySelector('input[name="password"]');
+
+    if (!name || !email || !password) {
+      return null;
+    }
+
+    if (!name.value.trim() || !email.value.trim() || !password.value) {
+      return {
+        field: !name.value.trim() ? name : !email.value.trim() ? email : password,
+        message: "Completá todos los campos para crear tu cuenta.",
+      };
+    }
+
+    if (email.validity && email.validity.typeMismatch) {
+      return {
+        field: email,
+        message: "Ingresá un correo válido.",
+      };
+    }
+
+    if (password.value.length < 8) {
+      return {
+        field: password,
+        message: "La contraseña debe tener al menos 8 caracteres.",
+      };
+    }
+
+    return null;
+  };
+
   const setupAccountAjaxForm = function (form, config) {
     if (!form || !window.sultanaStorefront) {
       return;
@@ -319,16 +366,31 @@
       const buttonLabel = submitButton ? submitButton.querySelector("[data-button-label]") : null;
       const buttonIcon = submitButton ? submitButton.querySelector(".account-form__button-icon") : null;
       const shouldReloadOnSuccess = config.reloadOnSuccess !== false;
-      const formData = new FormData(form);
       let shouldReload = false;
-
-      formData.append("action", config.action);
-      formData.append("nonce", config.nonce);
 
       if (message) {
         message.textContent = "";
         message.classList.remove("is-error", "is-success");
       }
+
+      if (config.validateForm) {
+        const validationError = config.validateForm(form);
+
+        if (validationError) {
+          setAccountFormMessage(message, validationError.message, "is-error");
+
+          if (validationError.field) {
+            validationError.field.focus();
+          }
+
+          return;
+        }
+      }
+
+      const formData = new FormData(form);
+
+      formData.append("action", config.action);
+      formData.append("nonce", config.nonce);
 
       if (submitButton) {
         submitButton.dataset.defaultText = buttonLabel ? buttonLabel.textContent : submitButton.textContent;
@@ -404,11 +466,7 @@
           }, 500);
         })
         .catch(function (error) {
-          if (message) {
-            message.hidden = false;
-            message.textContent = error.message;
-            message.classList.add("is-error");
-          }
+          setAccountFormMessage(message, error.message, "is-error");
         })
         .finally(function () {
           if (submitButton && !shouldReload) {
@@ -599,6 +657,7 @@
     successMessage: "Registro exitoso",
     errorMessage: "No se pudo crear la cuenta.",
     defaultText: "Crear cuenta",
+    validateForm: validateAccountRegisterForm,
   });
 
   setupAccountAjaxForm(document.querySelector("[data-account-login-form]"), {

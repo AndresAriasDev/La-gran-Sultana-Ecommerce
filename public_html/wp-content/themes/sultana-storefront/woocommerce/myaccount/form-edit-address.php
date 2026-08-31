@@ -33,11 +33,10 @@ do_action( 'woocommerce_before_edit_account_address_form' );
     <?php wc_get_template( 'myaccount/my-address.php' ); ?>
 <?php else : ?>
     <form method="post" class="ve-account-form ve-address-form">
-        <section class="ve-account-panel">
+        <section class="ve-account-panel ve-account-panel--address-edit">
             <header class="ve-account-section-title">
                 <span aria-hidden="true"><?php variedadesexpress_icon( 'map-pin', 've-account-section-title__icon' ); ?></span>
                 <div>
-                    <span><?php esc_html_e( 'Dirección principal', 'sultana-storefront' ); ?></span>
                     <h1><?php echo esc_html( apply_filters( 'woocommerce_my_account_edit_address_title', $page_title, $load_address ) ); ?></h1>
                     <p><?php esc_html_e( 'Usaremos esta misma dirección para facturación y envío.', 'sultana-storefront' ); ?></p>
                 </div>

@@ -19,6 +19,7 @@ $owner_id   = $owner ? (int) $owner->ID : 0;
 $owner_name = $owner ? trim( (string) $owner->display_name ) : '';
 $owner_name = $owner_name ?: __( 'alguien especial', 'sultana-storefront' );
 $items      = $owner_id && class_exists( $wishlist_class ) ? $wishlist_class::get_items( $owner_id ) : [];
+$items      = function_exists( 'variedadesexpress_wishlist_visible_items' ) ? variedadesexpress_wishlist_visible_items( $items ) : $items;
 $is_owner   = is_user_logged_in() && get_current_user_id() === $owner_id;
 
 get_header();

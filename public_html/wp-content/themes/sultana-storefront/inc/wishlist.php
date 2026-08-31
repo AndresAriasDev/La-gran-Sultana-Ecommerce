@@ -27,19 +27,70 @@ function variedadesexpress_account_wishlist_page_url( int $page ): string
         : remove_query_arg( 'wishlist_page', $wishlist_url );
 }
 
+function variedadesexpress_wishlist_item_products( array $item ): array
+{
+    if ( ! function_exists( 'wc_get_product' ) ) {
+        return [
+            'product' => null,
+            'parent'  => null,
+        ];
+    }
+
+    $product_id   = absint( $item['product_id'] ?? 0 );
+    $variation_id = absint( $item['variation_id'] ?? 0 );
+    $product      = $variation_id ? wc_get_product( $variation_id ) : wc_get_product( $product_id );
+    $parent       = $variation_id ? wc_get_product( $product_id ) : $product;
+
+    return [
+        'product' => $product,
+        'parent'  => $parent,
+    ];
+}
+
+function variedadesexpress_wishlist_item_is_visible( array $item ): bool
+{
+    $products = variedadesexpress_wishlist_item_products( $item );
+    $product  = $products['product'];
+    $parent   = $products['parent'];
+
+    if ( ! $product || ! $parent ) {
+        return false;
+    }
+
+    if ( $parent->is_type( 'variable' ) && ! absint( $item['variation_id'] ?? 0 ) ) {
+        return false;
+    }
+
+    return $product->is_purchasable() && $product->is_in_stock();
+}
+
+function variedadesexpress_wishlist_visible_items( array $items ): array
+{
+    return array_filter( $items, 'variedadesexpress_wishlist_item_is_visible' );
+}
+
+function variedadesexpress_wishlist_visible_count( int $user_id ): int
+{
+    $wishlist_class = '\Sultana\CommerceCore\Modules\Wishlist\Wishlist';
+    $items          = class_exists( $wishlist_class ) ? $wishlist_class::get_items( $user_id ) : [];
+
+    return count( variedadesexpress_wishlist_visible_items( $items ) );
+}
+
 function variedadesexpress_account_wishlist_state( int $user_id, int $requested_page = 1 ): array
 {
     $wishlist_class = '\Sultana\CommerceCore\Modules\Wishlist\Wishlist';
     $items          = class_exists( $wishlist_class ) ? $wishlist_class::get_items( $user_id ) : [];
+    $visible_items  = variedadesexpress_wishlist_visible_items( $items );
     $per_page       = variedadesexpress_account_wishlist_per_page();
-    $total_items    = count( $items );
+    $total_items    = count( $visible_items );
     $total_pages    = $total_items > 0 ? (int) ceil( $total_items / $per_page ) : 1;
     $current_page   = min( max( 1, $requested_page ), $total_pages );
     $offset         = ( $current_page - 1 ) * $per_page;
-    $paged_items    = array_slice( $items, $offset, $per_page, true );
+    $paged_items    = array_slice( $visible_items, $offset, $per_page, true );
 
     return [
-        'items'        => $items,
+        'items'        => $visible_items,
         'paged_items'  => $paged_items,
         'per_page'     => $per_page,
         'total_items'  => $total_items,
@@ -118,8 +169,9 @@ function variedadesexpress_account_wishlist_card( array $item, string $wishlist_
 {
     $product_id   = absint( $item['product_id'] ?? 0 );
     $variation_id = absint( $item['variation_id'] ?? 0 );
-    $product      = wc_get_product( $variation_id ?: $product_id );
-    $parent       = $variation_id ? wc_get_product( $product_id ) : $product;
+    $products     = variedadesexpress_wishlist_item_products( $item );
+    $product      = $products['product'];
+    $parent       = $products['parent'];
 
     if ( ! $product || ! $parent ) {
         return '';
@@ -148,12 +200,28 @@ function variedadesexpress_account_wishlist_card( array $item, string $wishlist_
     ob_start();
     ?>
     <article class="ve-wishlist-card" data-wishlist-item="<?php echo esc_attr( $key ); ?>">
-        <a class="ve-wishlist-card__media" href="<?php echo esc_url( $permalink ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver %s', 'sultana-storefront' ), $parent->get_name() ) ); ?>">
-            <?php echo wp_kses_post( $image ); ?>
-            <span class="ve-wishlist-card__stock <?php echo $product->is_in_stock() ? 'is-in' : 'is-out'; ?>">
-                <?php echo esc_html( $product->is_in_stock() ? __( 'En existencia', 'sultana-storefront' ) : __( 'Agotado', 'sultana-storefront' ) ); ?>
-            </span>
-        </a>
+        <div class="ve-wishlist-card__media">
+            <a class="ve-wishlist-card__media-link" href="<?php echo esc_url( $permalink ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Ver %s', 'sultana-storefront' ), $parent->get_name() ) ); ?>">
+                <?php echo wp_kses_post( $image ); ?>
+            </a>
+
+            <div class="ve-wishlist-card__media-actions">
+                <span class="ve-wishlist-card__stock is-in">
+                    <?php esc_html_e( 'En existencia', 'sultana-storefront' ); ?>
+                </span>
+
+                <?php if ( $can_add_to_cart ) : ?>
+                    <button
+                        class="ve-wishlist-card__cart"
+                        type="button"
+                        data-wishlist-add-to-cart="<?php echo esc_attr( $key ); ?>"
+                        aria-label="<?php echo esc_attr( sprintf( __( 'Agregar %s al carrito', 'sultana-storefront' ), $parent->get_name() ) ); ?>"
+                    >
+                        <?php variedadesexpress_icon( 'shopping-cart', 've-wishlist-card__cart-icon' ); ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+        </div>
 
         <div class="ve-wishlist-card__body">
             <a class="ve-wishlist-card__title" href="<?php echo esc_url( $permalink ); ?>">
@@ -172,17 +240,6 @@ function variedadesexpress_account_wishlist_card( array $item, string $wishlist_
                 <span class="ve-wishlist-card__price">
                     <?php echo wp_kses_post( $product->get_price_html() ); ?>
                 </span>
-
-                <?php if ( $can_add_to_cart ) : ?>
-                    <button
-                        class="ve-wishlist-card__cart"
-                        type="button"
-                        data-wishlist-add-to-cart="<?php echo esc_attr( $key ); ?>"
-                        aria-label="<?php echo esc_attr( sprintf( __( 'Agregar %s al carrito', 'sultana-storefront' ), $parent->get_name() ) ); ?>"
-                    >
-                        <?php variedadesexpress_icon( 'shopping-cart', 've-wishlist-card__cart-icon' ); ?>
-                    </button>
-                <?php endif; ?>
             </div>
         </div>
 

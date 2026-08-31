@@ -21,7 +21,7 @@ if ( is_user_logged_in() ) {
 
         <div class="account-modal__view is-active" data-account-view-panel="register">
             <h3 id="account-register-title"><?php esc_html_e( 'Crea tu cuenta', 'sultana-storefront' ); ?></h3>
-            <form class="account-form account-register-form" data-account-register-form>
+            <form class="account-form account-register-form" data-account-register-form novalidate>
                 <p class="account-form__message" data-account-register-message></p>
                 <fieldset class="account-form__field">
                     <legend><?php esc_html_e( 'Nombres', 'sultana-storefront' ); ?></legend>

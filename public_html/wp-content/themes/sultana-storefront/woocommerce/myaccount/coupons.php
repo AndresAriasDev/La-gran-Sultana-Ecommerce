@@ -69,7 +69,7 @@ $coupons = isset( $coupons ) && is_array( $coupons ) ? $coupons : [];
                                         aria-controls="<?php echo esc_attr( $details_id ); ?>"
                                         data-coupon-info-toggle
                                     >
-                                        <?php variedadesexpress_icon( 'message-circle-warning', 've-account-coupon-card__info-icon' ); ?>
+                                        <span aria-hidden="true">!</span>
                                     </button>
                                     <div id="<?php echo esc_attr( $details_id ); ?>" class="ve-account-coupon-card__popover" role="status" hidden data-coupon-info-popover>
                                         <?php if ( '' !== $description ) : ?>

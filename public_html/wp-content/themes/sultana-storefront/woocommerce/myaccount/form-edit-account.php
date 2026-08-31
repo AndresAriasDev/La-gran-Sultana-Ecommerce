@@ -34,11 +34,10 @@ do_action( 'woocommerce_before_edit_account_form' );
 <form class="woocommerce-EditAccountForm edit-account ve-account-form" action="" method="post" autocomplete="off" <?php do_action( 'woocommerce_edit_account_form_tag' ); ?>>
     <?php do_action( 'woocommerce_edit_account_form_start' ); ?>
 
-    <section class="ve-account-panel">
+    <section class="ve-account-panel ve-account-panel--account-details">
         <header class="ve-account-section-title">
             <span aria-hidden="true"><?php variedadesexpress_icon( 'user-pen', 've-account-section-title__icon' ); ?></span>
             <div>
-                <span><?php esc_html_e( 'Perfil', 'sultana-storefront' ); ?></span>
                 <h1><?php esc_html_e( 'Detalles de cuenta', 'sultana-storefront' ); ?></h1>
                 <p><?php esc_html_e( 'Mantené tus datos actualizados para pedidos, cupones y reseñas.', 'sultana-storefront' ); ?></p>
             </div>
@@ -60,9 +59,25 @@ do_action( 'woocommerce_before_edit_account_form' );
 
             <div class="ve-account-form__grid ve-account-form__grid--spaced">
                 <p class="woocommerce-form-row woocommerce-form-row--first form-row form-row-first">
-                    <label for="account_display_name"><?php esc_html_e( 'Nombre visible', 'sultana-storefront' ); ?>&nbsp;<span class="required">*</span></label>
+                    <span class="ve-account-form__label-row">
+                        <label for="account_display_name"><?php esc_html_e( 'Nombre visible', 'sultana-storefront' ); ?>&nbsp;<span class="required">*</span></label>
+                        <span class="ve-account-form__field-info" data-account-field-info>
+                            <button
+                                type="button"
+                                class="ve-account-form__field-info-button"
+                                aria-label="<?php esc_attr_e( 'Ver información del nombre visible', 'sultana-storefront' ); ?>"
+                                aria-expanded="false"
+                                aria-controls="ve-account-display-name-info"
+                                data-account-field-info-toggle
+                            >
+                                <span aria-hidden="true">!</span>
+                            </button>
+                            <span id="ve-account-display-name-info" class="ve-account-form__field-info-popover" role="status" hidden data-account-field-info-popover>
+                                <?php esc_html_e( 'Así se mostrará tu nombre en tu cuenta y reseñas.', 'sultana-storefront' ); ?>
+                            </span>
+                        </span>
+                    </span>
                     <input type="text" class="woocommerce-Input woocommerce-Input--text input-text" name="account_display_name" id="account_display_name" value="<?php echo esc_attr( $account_display_name ); ?>" />
-                    <span><em><?php esc_html_e( 'Así se mostrará tu nombre en tu cuenta y reseñas.', 'sultana-storefront' ); ?></em></span>
                 </p>
 
                 <p class="woocommerce-form-row woocommerce-form-row--last form-row form-row-last">
@@ -73,8 +88,24 @@ do_action( 'woocommerce_before_edit_account_form' );
         </div>
 
         <div class="ve-account-card">
-            <h2><?php esc_html_e( 'Contraseña', 'sultana-storefront' ); ?></h2>
-            <p class="ve-account-card__hint"><?php esc_html_e( 'Dejá estos campos vacíos si no querés cambiar tu contraseña.', 'sultana-storefront' ); ?></p>
+            <header class="ve-account-card__heading-row">
+                <h2><?php esc_html_e( 'Contraseña', 'sultana-storefront' ); ?></h2>
+                <span class="ve-account-form__field-info" data-account-field-info>
+                    <button
+                        type="button"
+                        class="ve-account-form__field-info-button"
+                        aria-label="<?php esc_attr_e( 'Ver información de la contraseña', 'sultana-storefront' ); ?>"
+                        aria-expanded="false"
+                        aria-controls="ve-account-password-info"
+                        data-account-field-info-toggle
+                    >
+                        <span aria-hidden="true">!</span>
+                    </button>
+                    <span id="ve-account-password-info" class="ve-account-form__field-info-popover" role="status" hidden data-account-field-info-popover>
+                        <?php esc_html_e( 'Dejá estos campos vacíos si no querés cambiar tu contraseña.', 'sultana-storefront' ); ?>
+                    </span>
+                </span>
+            </header>
 
             <p class="woocommerce-form-row woocommerce-form-row--wide form-row form-row-wide">
                 <label for="password_current"><?php esc_html_e( 'Contraseña actual', 'sultana-storefront' ); ?></label>

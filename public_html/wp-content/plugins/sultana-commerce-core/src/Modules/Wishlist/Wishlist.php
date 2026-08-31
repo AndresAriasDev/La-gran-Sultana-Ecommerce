@@ -142,8 +142,7 @@ class Wishlist
             return;
         }
 
-        $items       = self::get_items( get_current_user_id() );
-        $total_items = count( $items );
+        $total_items = self::get_count( get_current_user_id() );
         $total_pages = $total_items > 0 ? (int) ceil( $total_items / 12 ) : 1;
 
         if ( $requested_page <= 1 ) {
@@ -293,6 +292,10 @@ class Wishlist
 
     public static function get_count( int $user_id ): int
     {
+        if ( function_exists( 'variedadesexpress_wishlist_visible_count' ) ) {
+            return variedadesexpress_wishlist_visible_count( $user_id );
+        }
+
         return count( self::get_items( $user_id ) );
     }
 
@@ -393,7 +396,7 @@ class Wishlist
         wp_send_json_success(
             [
                 'message' => __( 'Producto agregado a tu lista de deseos.', 'sultana-commerce-core' ),
-                'count'   => count( $items ),
+                'count'   => self::get_count( $user_id ),
                 'key'     => $key,
             ]
         );
@@ -916,7 +919,7 @@ class Wishlist
         update_user_meta( $user_id, self::META_KEY, $items );
 
         return [
-            'wishlist_count' => count( $items ),
+            'wishlist_count' => self::get_count( $user_id ),
         ];
     }
 
@@ -1026,7 +1029,7 @@ class Wishlist
         update_user_meta( $user_id, self::META_KEY, $items );
 
         return [
-            'wishlist_count' => count( $items ),
+            'wishlist_count' => self::get_count( $user_id ),
             'cart_count'     => WC()->cart->get_cart_contents_count(),
         ];
     }

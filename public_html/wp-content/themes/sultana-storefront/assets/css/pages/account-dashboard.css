@@ -98,6 +98,12 @@
   line-height: 1.15;
 }
 
+.ve-dashboard .ve-account-hero h1,
+.ve-dashboard-card__header:not(.ve-dashboard-card__header--inline) h2,
+.ve-dashboard-card__header--inline h2 {
+  margin-top: 0;
+}
+
 .ve-dashboard-card__header a {
   color: var(--color-brand);
   font-size: 0.82rem;

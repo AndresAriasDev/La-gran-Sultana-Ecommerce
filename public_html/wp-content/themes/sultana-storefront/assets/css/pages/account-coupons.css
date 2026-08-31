@@ -81,6 +81,9 @@
   background: rgba(222, 242, 247, 0.9);
   color: var(--color-info);
   cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .ve-account-coupon-card__info-button:hover,
@@ -90,12 +93,6 @@
   background: rgba(202, 235, 242, 0.95);
   color: #2f6d85;
   outline: 0;
-}
-
-.ve-account-coupon-card__info-icon {
-  width: 17px;
-  height: 17px;
-  pointer-events: none;
 }
 
 .ve-account-coupon-card__popover {
@@ -172,7 +169,7 @@
   border-radius: 8px;
   background: rgba(245, 243, 250, 0.95);
   color: #5f567c;
-  cursor: copy;
+  cursor: pointer;
   text-align: left;
   transition:
     background-color 160ms ease,

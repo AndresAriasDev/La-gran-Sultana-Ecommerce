@@ -790,6 +790,15 @@
     });
   };
 
+  const setupAccountFieldInfoPopovers = function () {
+    setupScopedInfoPopovers({
+      scopeSelector: ".ve-account-form",
+      toggleSelector: "[data-account-field-info-toggle]",
+      arrowLeftProperty: "--ve-account-field-popover-arrow-left",
+      arrowRightProperty: "--ve-account-field-popover-arrow-right",
+    });
+  };
+
   const setupCopyButtons = function () {
     document.querySelectorAll("[data-copy-text]").forEach(function (button) {
       button.addEventListener("click", function () {
@@ -914,6 +923,7 @@
   setupAccountNavigationLoaders();
   setupCouponInfoPopovers();
   setupOrderInfoPopovers();
+  setupAccountFieldInfoPopovers();
   setupCopyButtons();
   setupOrderStatusFilters();
 })();

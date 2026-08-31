@@ -117,7 +117,6 @@ $recommended_terms = array_values( $recommended_terms );
             <?php variedadesexpress_icon( 'layout-panel-left', 've-account-hero__svg' ); ?>
         </span>
         <div>
-            <span><?php esc_html_e( 'Panel', 'sultana-storefront' ); ?></span>
             <h1><?php echo esc_html( sprintf( __( 'Hola, %s', 'sultana-storefront' ), $display_name ) ); ?></h1>
             <p><?php esc_html_e( 'Un resumen rápido de tu actividad.', 'sultana-storefront' ); ?></p>
         </div>
@@ -152,7 +151,6 @@ $recommended_terms = array_values( $recommended_terms );
     <div class="ve-dashboard__grid">
         <section class="ve-dashboard-card">
             <header class="ve-dashboard-card__header">
-                <span><?php esc_html_e( 'Para vos', 'sultana-storefront' ); ?></span>
                 <h2><?php esc_html_e( 'Seguí explorando', 'sultana-storefront' ); ?></h2>
             </header>
 
@@ -175,15 +173,6 @@ $recommended_terms = array_values( $recommended_terms );
                                     );
                                     ?>
                                 </strong>
-                                <small>
-                                    <?php
-                                    echo esc_html(
-                                        $recent_product_ids
-                                            ? __( 'Basado en los productos que viste recientemente.', 'sultana-storefront' )
-                                            : __( 'Una categoría popular para descubrir productos.', 'sultana-storefront' )
-                                    );
-                                    ?>
-                                </small>
                             </span>
                             <span class="ve-dashboard-action__arrow" aria-hidden="true">›</span>
                         </a>
@@ -193,7 +182,6 @@ $recommended_terms = array_values( $recommended_terms );
                         <span class="ve-dashboard-action__icon" aria-hidden="true"><?php variedadesexpress_icon( 'search', 've-dashboard-action__svg' ); ?></span>
                         <span>
                             <strong><?php esc_html_e( 'Explorar la tienda', 'sultana-storefront' ); ?></strong>
-                            <small><?php esc_html_e( 'Encontrá productos seleccionados para tu día a día.', 'sultana-storefront' ); ?></small>
                         </span>
                         <span class="ve-dashboard-action__arrow" aria-hidden="true">›</span>
                     </a>
@@ -204,7 +192,6 @@ $recommended_terms = array_values( $recommended_terms );
         <section class="ve-dashboard-card">
             <header class="ve-dashboard-card__header ve-dashboard-card__header--inline">
                 <div>
-                    <span><?php esc_html_e( 'Compras', 'sultana-storefront' ); ?></span>
                     <h2><?php esc_html_e( 'Pedidos recientes', 'sultana-storefront' ); ?></h2>
                 </div>
                 <a href="<?php echo esc_url( $orders_url ); ?>"><?php esc_html_e( 'Ver todo', 'sultana-storefront' ); ?></a>

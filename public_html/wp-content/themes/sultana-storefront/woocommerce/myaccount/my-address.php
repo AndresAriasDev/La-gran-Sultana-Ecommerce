@@ -33,7 +33,6 @@ do_action( 'woocommerce_before_edit_account_address_form' );
     <header class="ve-account-section-title">
         <span aria-hidden="true"><?php variedadesexpress_icon( 'map-pin', 've-account-section-title__icon' ); ?></span>
         <div>
-            <span><?php esc_html_e( 'Dirección principal', 'sultana-storefront' ); ?></span>
             <h1><?php esc_html_e( 'Mi dirección', 'sultana-storefront' ); ?></h1>
             <p><?php esc_html_e( 'Usaremos esta misma dirección para facturación y envío.', 'sultana-storefront' ); ?></p>
         </div>
@@ -66,7 +65,7 @@ do_action( 'woocommerce_before_edit_account_address_form' );
                             esc_html(
                                 sprintf(
                                     /* translators: %s: billing email. */
-                                    __( 'Correo electrónico: %s', 'sultana-storefront' ),
+                                    __( 'Correo: %s', 'sultana-storefront' ),
                                     $billing_email
                                 )
                             )

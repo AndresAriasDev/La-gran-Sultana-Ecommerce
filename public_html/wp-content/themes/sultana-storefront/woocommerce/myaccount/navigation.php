@@ -85,7 +85,6 @@ $avatar_initial   = strtoupper( substr( $display_name ?: $current_user->user_ema
             <input class="ve-account-nav__avatar-input" type="file" accept="image/jpeg,image/png,image/webp,image/avif,.jfif" data-profile-avatar-input data-profile-avatar-nonce="<?php echo esc_attr( wp_create_nonce( 'scc_profile_avatar' ) ); ?>">
         </div>
         <div class="ve-account-nav__profile-text">
-            <span><?php esc_html_e( 'Cuenta', 'sultana-storefront' ); ?></span>
             <strong><?php echo esc_html( $display_name ); ?></strong>
             <small><?php echo esc_html( $current_user->user_email ); ?></small>
         </div>

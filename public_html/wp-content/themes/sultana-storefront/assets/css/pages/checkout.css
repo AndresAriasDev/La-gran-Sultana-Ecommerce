@@ -333,9 +333,30 @@ body.woocommerce-checkout textarea {
 }
 
 body.woocommerce-checkout select {
-  padding-right: 2.2rem !important;
-  -webkit-appearance: auto;
-  appearance: auto;
+  padding-right: 2.35rem !important;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+body.woocommerce-checkout .woocommerce-billing-fields #billing_state_field,
+body.woocommerce-checkout .woocommerce-billing-fields #billing_city_field {
+  position: relative;
+}
+
+body.woocommerce-checkout .woocommerce-billing-fields #billing_state_field::after,
+body.woocommerce-checkout .woocommerce-billing-fields #billing_city_field::after {
+  content: "";
+  position: absolute;
+  right: 0.85rem;
+  bottom: 16px;
+  width: 16px;
+  height: 16px;
+  background: var(--color-muted);
+  mask: url("../../icons/chevron-right.svg") center / contain no-repeat;
+  -webkit-mask: url("../../icons/chevron-right.svg") center / contain no-repeat;
+  pointer-events: none;
+  transform: rotate(90deg);
 }
 
 body.woocommerce-checkout input.input-text:-webkit-autofill,

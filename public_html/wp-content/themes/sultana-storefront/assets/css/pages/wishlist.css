@@ -161,6 +161,12 @@
   content: none;
 }
 
+.ve-wishlist-card__media-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .ve-wishlist-card__media .ve-wishlist-card__image {
   display: block;
   width: 100%;
@@ -172,6 +178,19 @@
 
 .ve-wishlist-card__media:hover .ve-wishlist-card__image {
   transform: scale(1.035);
+}
+
+.ve-wishlist-card__media-actions {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
 }
 
 .ve-wishlist-card__body {
@@ -285,6 +304,7 @@
   display: inline-grid;
   place-items: center;
   width: 34px;
+  height: 30px;
   min-height: 30px;
   padding: 0;
   border: 1px solid rgba(194, 67, 102, 0.2);
@@ -292,6 +312,7 @@
   background: var(--color-surface);
   color: var(--color-brand);
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .ve-wishlist-card__cart:hover {
@@ -311,19 +332,17 @@
 }
 
 .ve-wishlist-card__stock {
-  position: absolute;
-  left: 0.5rem;
-  bottom: 0.5rem;
-  z-index: 2;
   display: inline-flex;
   align-items: center;
   width: fit-content;
   min-height: 24px;
+  min-width: 0;
   padding: 0.28rem 0.5rem;
   border-radius: 999px;
   font-size: 0.7rem;
   font-weight: 600;
   line-height: 1.2;
+  pointer-events: none;
 }
 
 .ve-wishlist-card__stock.is-in {
